@@ -215,6 +215,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
     <span class="logo-txt">Finanças</span>
   </div>
   <div class="topbar-right">
+    <div id="version-badge" onclick="showVersionInfo()" title="Versão deployada" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);background:var(--s2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;cursor:pointer;user-select:none;letter-spacing:.3px;transition:all .2s">4c304cb</div>
     <div class="notif-btn" onclick="goTab('notif')" title="Notificações">
       🔔<div class="notif-badge" id="notif-badge"></div>
     </div>
@@ -1408,6 +1409,64 @@ document.getElementById('clear-sheet').addEventListener('touchstart',e=>{startY=
 document.getElementById('clear-sheet').addEventListener('touchmove',e=>{if(e.touches[0].clientY-startY>70)closeClear()},{passive:true});
 document.getElementById('text-sheet').addEventListener('touchstart',e=>{startY=e.touches[0].clientY},{passive:true});
 document.getElementById('text-sheet').addEventListener('touchmove',e=>{if(e.touches[0].clientY-startY>70)closeTextSheet()},{passive:true});
+
+/* ── VERSION / DEPLOY CHECK ── */
+const DEPLOY_COMMIT='4c304cb';
+const GITHUB_REPO='akasacrypto-droid/financeiro'; // ajuste se necessário
+const VERSION_KEY='fin_last_seen_commit';
+
+function showVersionInfo(){
+  const seen=localStorage.getItem(VERSION_KEY);
+  const badge=document.getElementById('version-badge');
+  // mark as seen
+  localStorage.setItem(VERSION_KEY,DEPLOY_COMMIT);
+  badge.style.color='var(--muted)';
+  badge.style.borderColor='var(--border2)';
+  badge.style.background='var(--s2)';
+  showToast('✓ Versão atual: '+DEPLOY_COMMIT);
+}
+
+async function checkForNewDeploy(){
+  try{
+    const res=await fetch(`https://api.github.com/repos/${GITHUB_REPO}/commits/HEAD`,{headers:{'Accept':'application/vnd.github.v3+json'}});
+    if(!res.ok)return;
+    const data=await res.json();
+    const latestSha=data.sha?data.sha.slice(0,7):null;
+    const badge=document.getElementById('version-badge');
+    if(!latestSha)return;
+
+    if(latestSha!==DEPLOY_COMMIT){
+      // novo commit detectado — ainda não foi feito o deploy
+      badge.textContent=DEPLOY_COMMIT+' → '+latestSha;
+      badge.style.color='var(--amber)';
+      badge.style.borderColor='rgba(255,184,77,.35)';
+      badge.style.background='var(--amber-bg)';
+      badge.title='Novo commit disponível: '+latestSha;
+    } else {
+      // deploy em dia
+      const seen=localStorage.getItem(VERSION_KEY);
+      if(seen!==DEPLOY_COMMIT){
+        // primeiro acesso após deploy novo
+        badge.textContent='✓ '+DEPLOY_COMMIT;
+        badge.style.color='var(--green)';
+        badge.style.borderColor='rgba(0,200,150,.35)';
+        badge.style.background='var(--green-bg)';
+        badge.title='Deploy atualizado!';
+        setTimeout(()=>{
+          badge.textContent=DEPLOY_COMMIT;
+          badge.style.color='var(--muted)';
+          badge.style.borderColor='var(--border2)';
+          badge.style.background='var(--s2)';
+        },5000);
+      }
+      localStorage.setItem(VERSION_KEY,DEPLOY_COMMIT);
+    }
+  }catch(e){/* silencioso se offline */}
+}
+
+// Checa ao carregar e a cada 5 min
+checkForNewDeploy();
+setInterval(checkForNewDeploy,5*60*1000);
 </script>
 
 <script>
