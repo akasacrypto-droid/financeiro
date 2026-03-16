@@ -1314,8 +1314,10 @@ function parseTextInput(raw){
     if(/^despesas?$/.test(tl)||tl==='gastos'||tl==='saidas'||tl==='saídas'){type='expense';continue;}
     if(/^receitas?$/.test(tl)||tl==='entradas'||tl==='renda'||tl==='salarios'){type='income';continue;}
 
-    // parse item: * Descrição → R$valor
-    const itemMatch=line.match(/^\s*[\*\-\•·]\s*(.+?)[\s→\->–]+R?\$?\s*([\d.,]+)\s*$/i);
+    // parse item: supports "* Desc → val", "Desc - val", "Desc → val", "* Desc - val"
+    const itemMatch=line.match(/^\s*[\*\•·]\s*(.+?)\s*[→\-–>]+\s*R?\$?\s*([\d.,]+)\s*$/i)
+      ||line.match(/^\s*(.+?)\s+[→>–]\s*R?\$?\s*([\d.,]+)\s*$/i)
+      ||line.match(/^\s*(.+?)\s+-\s+R?\$?([\d.,]+)\s*$/i);
     if(itemMatch){
       const desc=itemMatch[1].trim();
       const valRaw=itemMatch[2].replace(/\.(?=\d{3})/g,'').replace(',','.');
