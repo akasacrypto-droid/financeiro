@@ -1079,7 +1079,7 @@ function goPlanTab(sub){
   });
   if(sub==='regra')renderPlanRegra();
   if(sub==='metas')renderGoals();
-  if(sub==='cambio')loadCotacoes();
+  if(sub==='cambio'){ if(window.setCambioTab) setCambioTab('fiat'); else loadCotacoes(); }
 }
 
 function changeMonth(d){
