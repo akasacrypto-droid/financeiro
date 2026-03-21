@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#0E1117"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="Finanças"/>
-<title>Finanças</title>
+<meta name="apple-mobile-web-app-title" content="Controle+"/>
+<title>Controle+</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
@@ -306,7 +306,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 <div class="topbar">
   <div class="topbar-logo">
     <div class="logo-ico">💰</div>
-    <span class="logo-txt">Finanças</span>
+    <span class="logo-txt">Controle+</span>
   </div>
   <div class="topbar-right">
     <div id="online-badge" title="Online agora" style="display:flex;align-items:center;gap:5px;font-family:'DM Mono',monospace;font-size:10px;color:var(--green);background:var(--green-bg);border:1px solid rgba(0,200,150,.25);border-radius:6px;padding:4px 8px;user-select:none;flex-shrink:0">
@@ -350,7 +350,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   <div id="pdf-header" style="border-bottom:2px solid #eee;padding-bottom:12px;margin-bottom:16px">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
       <div style="width:32px;height:32px;background:linear-gradient(135deg,#00C896,#009E76);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">💰</div>
-      <div style="font-size:20px;font-weight:700;color:#111">Finanças — Relatório</div>
+      <div style="font-size:20px;font-weight:700;color:#111">Controle+ — Relatório</div>
     </div>
     <div id="pdf-header-sub" style="font-size:12px;color:#666"></div>
   </div>
@@ -1154,7 +1154,7 @@ function sendNotif(){
       const now=new Date();
       return d.toDateString()===now.toDateString();
     }).length;
-    new Notification('💰 Finanças',{
+    new Notification('💰 Controle+',{
       body:txToday===0?'Você não registrou nenhum gasto hoje. Que tal atualizar?':`Você tem ${txToday} lançamento${txToday>1?'s':''} hoje. Bom controle!`,
       icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%2300C896"/><text y=".9em" font-size="80">💰</text></svg>'
     });
@@ -2277,192 +2277,109 @@ window.save=function(){
 <!-- ── PDF EXPORT ── -->
 <script>
 window.exportPDF = function(){
-  // Coleta dados do relatório atual
-  const titleEl  = document.getElementById('rep-title');
-  const expEl    = document.getElementById('rep-total-exp');
-  const incEl    = document.getElementById('rep-total-inc');
-  const balEl    = document.getElementById('rep-total-bal');
-  const rankEl   = document.getElementById('rep-ranking');
-  const topEl    = document.getElementById('rep-top-tx');
-  const trendEl  = document.getElementById('rep-trend');
+  const MN=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const titleEl = document.getElementById('rep-title');
+  const expEl   = document.getElementById('rep-total-exp');
+  const incEl   = document.getElementById('rep-total-inc');
+  const balEl   = document.getElementById('rep-total-bal');
+  const titulo  = titleEl?.textContent||'Relatório';
+  const gastos  = expEl?.textContent||'R$0';
+  const receita = incEl?.textContent||'R$0';
+  const saldo   = balEl?.textContent||'R$0';
+  const saldoCol= (balEl?.style?.color||'').includes('red')?'#FF5C5C':'#5B9EFF';
+  const dataGer = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
 
-  const titulo = titleEl?.textContent||'Relatório';
-  const gastos = expEl?.textContent||'R$0';
-  const receita= incEl?.textContent||'R$0';
-  const saldo  = balEl?.textContent||'R$0';
-  const saldoCol = (balEl?.style?.color||'').includes('red') ? '#FF5C5C' : '#5B9EFF';
-  const dataGer= new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  const txs = window.getRepTxs ? window.getRepTxs() : (window.txData||[]);
+  const expenses = txs.filter(t=>t.type==='expense');
+  const totalExp = expenses.reduce((s,t)=>s+t.val,0);
+  const PALETTE=['#5B9EFF','#00C896','#C084FC','#FFB84D','#FF5C5C','#38BDF8','#FB7185','#34D399'];
+  const CI = window.CAT_ICONS||{};
 
-  // Ranking HTML limpo (extrai texto dos nós)
-  function cleanHTML(el){
-    if(!el) return '';
-    // clona e remove elementos desnecessários para impressão
-    const clone = el.cloneNode(true);
-    clone.querySelectorAll('canvas').forEach(c=>c.remove());
-    return clone.innerHTML;
-  }
+  const cats={};
+  expenses.forEach(t=>{ const k=t.cat||'Outros'; cats[k]=(cats[k]||0)+t.val; });
+  const rankItems = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,9);
+  const maxVal = rankItems[0]?rankItems[0][1]:1;
 
-  // Pega os itens de ranking como texto estruturado
-  const rankItems = [];
-  rankEl?.querySelectorAll('[style*="display:flex"]').forEach(row=>{
-    const spans = row.querySelectorAll('span');
-    const vals  = row.querySelectorAll('[style*="mono"]');
-    if(spans.length && vals.length){
-      const cat = spans[0]?.textContent?.trim()||'';
-      const val = vals[0]?.textContent?.trim()||'';
-      const pct = row.querySelector('[style*="color:var(--muted)"]')?.textContent?.trim()||'';
-      const barFill = row.querySelector('[style*="transition:width"]');
-      const w = barFill ? (barFill.style.width||'0%') : '0%';
-      const color = barFill ? (barFill.style.background||'#5B9EFF') : '#5B9EFF';
-      if(cat) rankItems.push({cat,val,pct,w,color});
-    }
-  });
-
-  const topItems = [];
-  topEl?.querySelectorAll('[style*="display:flex"]').forEach(row=>{
-    const desc = row.querySelector('[style*="font-weight:600"]')?.textContent?.trim()||'';
-    const meta = row.querySelector('[style*="color:var(--muted)"]')?.textContent?.trim()||'';
-    const amt  = row.querySelector('[style*="color:var(--red)"]')?.textContent?.trim()||'';
-    const ico  = row.querySelector('[style*="font-size:14px"]')?.textContent?.trim()||'💸';
-    if(desc && amt) topItems.push({desc,meta,amt,ico});
-  });
-
-  const trendItems = [];
-  trendEl?.querySelectorAll('[style*="display:flex"]').forEach(row=>{
-    const spans = row.querySelectorAll('span,div');
-    const texts = [...spans].map(s=>s.textContent.trim()).filter(Boolean);
-    if(texts.length >= 2) trendItems.push(texts);
-  });
-
-  const rankHTML = rankItems.slice(0,8).map((r,i)=>`
-    <tr>
-      <td style="padding:5px 8px;font-size:10px;color:#888;font-weight:700;width:28px">#${i+1}</td>
-      <td style="padding:5px 8px;font-size:11px;font-weight:600">${r.cat}</td>
-      <td style="padding:5px 8px">
-        <div style="height:5px;background:#eee;border-radius:3px;overflow:hidden;width:100%">
-          <div style="height:5px;background:${r.color};width:${r.w};border-radius:3px"></div>
-        </div>
-        <div style="font-size:9px;color:#aaa;margin-top:2px">${r.pct}</div>
+  const rankHTML = rankItems.map(([cat,val],i)=>{
+    const pct = totalExp>0?((val/totalExp)*100).toFixed(1):'0';
+    const barW = ((val/maxVal)*100).toFixed(0);
+    const color = PALETTE[i%PALETTE.length];
+    const ico = CI[cat]||'💸';
+    const fmtd = val.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    return `<tr>
+      <td style="padding:5px 8px;font-size:10px;color:#999;font-weight:700;width:22px">#${i+1}</td>
+      <td style="padding:5px 8px;font-size:10.5px">${ico} ${cat}</td>
+      <td style="padding:5px 10px;width:80px">
+        <div style="height:4px;background:#eee;border-radius:3px"><div style="height:4px;background:${color};width:${barW}%;border-radius:3px"></div></div>
+        <div style="font-size:8.5px;color:#aaa;margin-top:1px">${pct}%</div>
       </td>
-      <td style="padding:5px 8px;font-family:monospace;font-size:11px;font-weight:700;color:${r.color};text-align:right;white-space:nowrap">${r.val}</td>
-    </tr>`).join('');
+      <td style="padding:5px 8px;font-family:monospace;font-size:10.5px;font-weight:700;color:${color};text-align:right;white-space:nowrap">R$ ${fmtd}</td>
+    </tr>`;
+  }).join('');
 
-  const topHTML = topItems.slice(0,6).map(t=>`
-    <tr>
-      <td style="padding:5px 8px;font-size:14px;width:28px">${t.ico}</td>
-      <td style="padding:5px 8px">
-        <div style="font-size:11px;font-weight:600">${t.desc}</div>
-        <div style="font-size:9px;color:#aaa">${t.meta}</div>
+  const topItems = [...expenses].sort((a,b)=>b.val-a.val).slice(0,9);
+  const topHTML = topItems.map(t=>{
+    const ico = CI[t.cat||'Outros']||'💸';
+    const [ty,tm] = (t.month||'').split('-').map(Number);
+    const fmtd = t.val.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    return `<tr>
+      <td style="padding:5px 8px;font-size:13px;width:26px">${ico}</td>
+      <td style="padding:5px 6px">
+        <div style="font-size:10.5px;font-weight:600;white-space:nowrap;overflow:hidden;max-width:150px;text-overflow:ellipsis">${t.desc||'—'}</div>
+        <div style="font-size:8.5px;color:#aaa">${t.cat||'Outros'} · ${MN[tm]||''} ${ty||''}</div>
       </td>
-      <td style="padding:5px 8px;font-family:monospace;font-size:11px;font-weight:700;color:#FF5C5C;text-align:right;white-space:nowrap">${t.amt}</td>
-    </tr>`).join('');
+      <td style="padding:5px 8px;font-family:monospace;font-size:10.5px;font-weight:700;color:#FF5C5C;text-align:right;white-space:nowrap">−R$${fmtd}</td>
+    </tr>`;
+  }).join('');
 
-  const win = window.open('','_blank','width=900,height=700');
-  win.document.write(`<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
+  const win = window.open('','_blank','width=860,height=700');
+  win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head>
 <meta charset="UTF-8"/>
-<title>Finanças — ${titulo}</title>
+<title>Controle+ — ${titulo}</title>
 <style>
-  @page { size: A4; margin: 12mm 14mm; }
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:'Segoe UI',Arial,sans-serif; font-size:11px; color:#111; background:#fff; }
-
-  /* HEADER */
-  .pdf-header { display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid #00C896; padding-bottom:8px; margin-bottom:12px; }
-  .pdf-logo { display:flex; align-items:center; gap:8px; }
-  .pdf-logo-ico { width:30px; height:30px; background:linear-gradient(135deg,#00C896,#009E76); border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:16px; }
-  .pdf-logo-txt { font-size:17px; font-weight:700; color:#111; }
-  .pdf-meta { text-align:right; font-size:9px; color:#888; line-height:1.6; }
-
-  /* HERO STATS */
-  .stats-row { display:flex; gap:8px; margin-bottom:12px; }
-  .stat-box { flex:1; border-radius:8px; padding:10px 12px; text-align:center; }
-  .stat-box.gasto  { background:#fff0f0; border:1px solid #ffdddd; }
-  .stat-box.receita{ background:#f0fff8; border:1px solid #c8f5e4; }
-  .stat-box.saldo  { background:#f0f6ff; border:1px solid #d0e4ff; }
-  .stat-val { font-family:monospace; font-size:16px; font-weight:700; }
-  .stat-lbl { font-size:8px; color:#888; text-transform:uppercase; letter-spacing:.5px; margin-top:3px; }
-
-  /* GRID 2 COLUNAS */
-  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
-  .section { border:1px solid #eee; border-radius:8px; overflow:hidden; }
-  .section-title { background:#f8f8f8; padding:7px 10px; font-size:10px; font-weight:700; color:#555; text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid #eee; }
-
-  table { width:100%; border-collapse:collapse; }
-  td { vertical-align:middle; }
-  tr:last-child td { border-bottom:none; }
-  tr + tr td { border-top:1px solid #f0f0f0; }
-
-  /* TENDÊNCIA */
-  .trend-row { display:flex; align-items:center; justify-content:space-between; padding:5px 10px; border-bottom:1px solid #f0f0f0; font-size:10px; }
-  .trend-row:last-child { border-bottom:none; }
-  .trend-pos { color:#00C896; font-weight:700; font-family:monospace; }
-  .trend-neg { color:#FF5C5C; font-weight:700; font-family:monospace; }
-
-  /* RODAPÉ */
-  .pdf-footer { margin-top:10px; padding-top:8px; border-top:1px solid #eee; display:flex; justify-content:space-between; font-size:8px; color:#bbb; }
-</style>
-</head>
-<body>
-
-<!-- HEADER -->
-<div class="pdf-header">
-  <div class="pdf-logo">
-    <div class="pdf-logo-ico">💰</div>
-    <div>
-      <div class="pdf-logo-txt">Finanças</div>
-      <div style="font-size:10px;color:#888">${titulo}</div>
-    </div>
+@page{size:A4 portrait;margin:10mm 12mm}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#111;background:#fff}
+.hdr{display:flex;align-items:center;justify-content:space-between;border-bottom:2.5px solid #00C896;padding-bottom:8px;margin-bottom:10px}
+.logo{display:flex;align-items:center;gap:8px}
+.logo-ico{width:28px;height:28px;background:linear-gradient(135deg,#00C896,#009E76);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.logo-name{font-size:16px;font-weight:800;color:#111;letter-spacing:-.3px}
+.logo-sub{font-size:10px;color:#888;margin-top:1px}
+.meta{text-align:right;font-size:8.5px;color:#888;line-height:1.7}
+.stats{display:flex;gap:7px;margin-bottom:10px}
+.stat{flex:1;border-radius:8px;padding:8px 10px;text-align:center}
+.stat.g{background:#fff0f0;border:1px solid #ffd0d0}
+.stat.r{background:#f0fff8;border:1px solid #b8f5dc}
+.stat.b{background:#f0f5ff;border:1px solid #c8d8ff}
+.sv{font-family:monospace;font-size:14px;font-weight:800}
+.sl{font-size:7.5px;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px}
+.box{border:1px solid #e5e5e5;border-radius:8px;overflow:hidden}
+.box-title{background:#f5f5f5;padding:5px 9px;font-size:9px;font-weight:800;color:#444;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #eee}
+table{width:100%;border-collapse:collapse}
+td{vertical-align:middle}
+tr+tr td{border-top:1px solid #f3f3f3}
+.ftr{padding-top:7px;border-top:1px solid #eee;display:flex;justify-content:space-between;font-size:7.5px;color:#bbb}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style></head><body>
+<div class="hdr">
+  <div class="logo">
+    <div class="logo-ico">💰</div>
+    <div><div class="logo-name">Controle+</div><div class="logo-sub">${titulo}</div></div>
   </div>
-  <div class="pdf-meta">
-    Gerado em ${dataGer}<br>
-    akasacrypto-droid.github.io/financeiro
-  </div>
+  <div class="meta">Gerado em ${dataGer}<br>akasacrypto-droid.github.io/financeiro</div>
 </div>
-
-<!-- STATS -->
-<div class="stats-row">
-  <div class="stat-box gasto">
-    <div class="stat-val" style="color:#FF5C5C">${gastos}</div>
-    <div class="stat-lbl">💸 Gasto total</div>
-  </div>
-  <div class="stat-box receita">
-    <div class="stat-val" style="color:#00C896">${receita}</div>
-    <div class="stat-lbl">💰 Receita</div>
-  </div>
-  <div class="stat-box saldo">
-    <div class="stat-val" style="color:${saldoCol}">${saldo}</div>
-    <div class="stat-lbl">⚖️ Saldo</div>
-  </div>
+<div class="stats">
+  <div class="stat g"><div class="sv" style="color:#FF5C5C">${gastos}</div><div class="sl">💸 Gasto total</div></div>
+  <div class="stat r"><div class="sv" style="color:#00C896">${receita}</div><div class="sl">💰 Receita</div></div>
+  <div class="stat b"><div class="sv" style="color:${saldoCol}">${saldo}</div><div class="sl">⚖️ Saldo</div></div>
 </div>
-
-<!-- GRID 2 COLUNAS -->
-<div class="grid2">
-
-  <!-- Ranking categorias -->
-  <div class="section">
-    <div class="section-title">🏆 Ranking de gastos</div>
-    <table>${rankHTML || '<tr><td style="padding:12px;color:#aaa;text-align:center">Sem dados</td></tr>'}</table>
-  </div>
-
-  <!-- Top lançamentos -->
-  <div class="section">
-    <div class="section-title">💸 Maiores gastos</div>
-    <table>${topHTML || '<tr><td style="padding:12px;color:#aaa;text-align:center">Sem dados</td></tr>'}</table>
-  </div>
-
+<div class="grid">
+  <div class="box"><div class="box-title">🏆 Ranking de gastos</div><table>${rankHTML||'<tr><td style="padding:14px;color:#aaa;text-align:center">Sem dados</td></tr>'}</table></div>
+  <div class="box"><div class="box-title">💸 Maiores gastos individuais</div><table>${topHTML||'<tr><td style="padding:14px;color:#aaa;text-align:center">Sem dados</td></tr>'}</table></div>
 </div>
-
-<!-- RODAPÉ -->
-<div class="pdf-footer">
-  <span>Finanças App · Dados pessoais</span>
-  <span>Gerado automaticamente · ${new Date().toLocaleString('pt-BR')}</span>
-</div>
-
-<script>
-  window.onload = function(){ window.print(); };
-<\/script>
+<div class="ftr"><span>Controle+ · Dados pessoais</span><span>${new Date().toLocaleString('pt-BR')}</span></div>
+<script>window.onload=function(){window.print()}<\/script>
 </body></html>`);
   win.document.close();
 };
