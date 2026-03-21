@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Controle+"/>
+<link rel="manifest" href="manifest.json"/>
 <title>Controle+</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -529,7 +530,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     <!-- Grid cotações -->
     <div id="cambio-grid" style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"></div>
 
-    <div style="text-align:center;font-size:10px;color:var(--muted);padding:2px 0 4px;opacity:.6">frankfurter.app · atualiza a cada 60s</div>
+    <div style="text-align:center;font-size:10px;color:var(--muted);padding:2px 0 4px;opacity:.6">AwesomeAPI · cotação real · atualiza a cada 60s</div>
 
     <!-- ── ALERTAS DE COTAÇÃO ── -->
     <div style="margin-top:14px">
@@ -2497,14 +2498,12 @@ tr+tr td{border-top:1px solid #f3f3f3}
         }
       }
     });
-    if(anyTriggered){ saveAlerts(); renderAlerts(); syncAlertsToSW(); }
+    if(anyTriggered){ saveAlerts(); renderAlerts(); if(window._syncAlertsToSW) window._syncAlertsToSW(); }
   };
 
   // ── Sincroniza alertas com o Service Worker ──
   function syncAlertsToSW(){
-    if(navigator.serviceWorker?.controller){
-      navigator.serviceWorker.controller.postMessage({type:'UPDATE_ALERTS', alerts});
-    }
+    if(window._syncAlertsToSW) window._syncAlertsToSW();
   }
 
   // ── Recebe disparos vindos do SW (app estava em background) ──
@@ -2532,7 +2531,13 @@ tr+tr td{border-top:1px solid #f3f3f3}
 
   renderAlerts();
   // Sincroniza alertas existentes com SW ao carregar
-  setTimeout(syncAlertsToSW, 1500);
+  setTimeout(()=>{ if(window._syncAlertsToSW) window._syncAlertsToSW(); }, 1500);
+
+  // Permite que o SW recarregue alertas após disparo em background
+  window._reloadAlertsFromStorage = function(){
+    alerts = JSON.parse(localStorage.getItem('_fin_alerts')||'[]');
+    renderAlerts();
+  };
 })();
 </script>
 
@@ -2580,22 +2585,41 @@ tr+tr td{border-top:1px solid #f3f3f3}
     if(!force && Object.keys(ratesInBRL).length > 1 && Date.now()-lastFetch < 55000) return;
     try {
       const syms = MOEDAS.map(m=>m.code).join(',');
-      // Hoje
-      const [resToday, resYest] = await Promise.all([
-        fetch(`https://api.frankfurter.app/latest?from=BRL&to=${syms}`),
-        fetch(`https://api.frankfurter.app/${daysAgo(2)}?from=BRL&to=${syms}`)
+
+      // ── AwesomeAPI: cotação real do mercado brasileiro ──
+      // Retorna pares como USD-BRL, EUR-BRL etc — tempo real
+      const pairs = MOEDAS.map(m=>`${m.code}-BRL`).join(',');
+      const [resAwe, resYest] = await Promise.all([
+        fetch(`https://economia.awesomeapi.com.br/json/last/${pairs}`),
+        fetch(`https://api.frankfurter.app/${daysAgo(2)}?from=BRL&to=${syms}`) // ontem p/ variação
       ]);
-      const today = await resToday.json();
-      const yest  = await resYest.json();
 
+      const awe  = await resAwe.json();
+      const yest = await resYest.json();
+
+      // AwesomeAPI retorna ex: { "USDBRL": { bid: "5.3141", ... } }
       ratesInBRL = { BRL: 1 };
-      Object.entries(today.rates).forEach(([k,v]) => { ratesInBRL[k] = 1/v; });
+      MOEDAS.forEach(m => {
+        const key = `${m.code}BRL`;
+        if(awe[key]) ratesInBRL[m.code] = parseFloat(awe[key].bid);
+      });
 
+      // Ontem via frankfurter (p/ variação %)
       ratesYestInBRL = { BRL: 1 };
-      Object.entries(yest.rates).forEach(([k,v]) => { ratesYestInBRL[k] = 1/v; });
+      if(yest.rates) Object.entries(yest.rates).forEach(([k,v]) => { ratesYestInBRL[k] = 1/v; });
 
       lastFetch = Date.now();
-    } catch(e){}
+    } catch(e){
+      // Fallback: frankfurter se AwesomeAPI falhar
+      try {
+        const syms = MOEDAS.map(m=>m.code).join(',');
+        const res = await fetch(`https://api.frankfurter.app/latest?from=BRL&to=${syms}`);
+        const data = await res.json();
+        ratesInBRL = { BRL: 1 };
+        Object.entries(data.rates).forEach(([k,v]) => { ratesInBRL[k] = 1/v; });
+        lastFetch = Date.now();
+      } catch(e2){}
+    }
   }
 
   // Variação % entre hoje e ontem
@@ -2944,44 +2968,70 @@ tr+tr td{border-top:1px solid #f3f3f3}
 (function(){
   if(!('serviceWorker' in navigator)) return;
 
+  let _swReg = null;
+
   async function registerSW(){
     try {
-      const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+      _swReg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
 
-      // Solicita permissão de notificação se ainda não tem
+      // Pede permissão de notificação
       if(Notification.permission === 'default'){
-        await Notification.requestPermission();
+        const p = await Notification.requestPermission();
+        if(p === 'granted') showToast('🔔 Notificações ativadas!');
       }
 
-      // Aguarda SW ficar ativo
       await navigator.serviceWorker.ready;
+      syncAlerts();
 
-      // Envia alertas salvos pro SW
-      const alerts = JSON.parse(localStorage.getItem('_fin_alerts')||'[]');
-      if(navigator.serviceWorker.controller){
-        navigator.serviceWorker.controller.postMessage({type:'UPDATE_ALERTS', alerts});
-        navigator.serviceWorker.controller.postMessage({type:'START_ALERT_CHECK'});
-      } else {
-        // SW recém instalado — espera controle
-        navigator.serviceWorker.addEventListener('controllerchange', ()=>{
-          const alerts2 = JSON.parse(localStorage.getItem('_fin_alerts')||'[]');
-          navigator.serviceWorker.controller?.postMessage({type:'UPDATE_ALERTS', alerts:alerts2});
-          navigator.serviceWorker.controller?.postMessage({type:'START_ALERT_CHECK'});
-        });
-      }
+      // Tenta registrar Periodic Background Sync (PWA instalada no Android)
+      try {
+        const perm = await navigator.permissions.query({name:'periodic-background-sync'});
+        if(perm.state === 'granted'){
+          await _swReg.periodicSync.register('price-alerts', { minInterval: 5 * 60 * 1000 });
+          console.log('Periodic Background Sync registrado ✓');
+        }
+      } catch(e){}
 
-      // Periodic Background Sync (Chrome Android — mantém verificação mesmo com app fechado)
-      if('periodicSync' in reg){
-        try {
-          const status = await navigator.permissions.query({name:'periodic-background-sync'});
-          if(status.state === 'granted'){
-            await reg.periodicSync.register('price-alerts',{ minInterval: 5 * 60 * 1000 });
-          }
-        } catch(e){}
-      }
+      // ── FALLBACK: enquanto o app está ABERTO, envia ping a cada 3min ──
+      // Isso garante que o SW verifique mesmo sem Periodic Sync
+      setInterval(()=>{
+        if(navigator.serviceWorker.controller){
+          syncAlerts(); // atualiza alertas antes de checar
+          navigator.serviceWorker.controller.postMessage({type:'PING'});
+        }
+      }, 3 * 60 * 1000);
 
-    } catch(e){ console.warn('SW não registrado:', e); }
+    } catch(e){ console.warn('SW:', e); }
   }
+
+  // Exporta função pra ser chamada quando alertas mudam
+  window._syncAlertsToSW = function(){
+    syncAlerts();
+  };
+
+  function syncAlerts(){
+    const alerts = JSON.parse(localStorage.getItem('_fin_alerts')||'[]');
+    if(navigator.serviceWorker.controller){
+      navigator.serviceWorker.controller.postMessage({type:'UPDATE_ALERTS', alerts});
+    }
+  }
+
+  // Recebe disparos do SW (app estava minimizado)
+  navigator.serviceWorker.addEventListener('message', e => {
+    if(e.data?.type === 'ALERTS_TRIGGERED'){
+      // Atualiza localStorage com o que o SW disparou
+      localStorage.setItem('_fin_alerts', JSON.stringify(e.data.allAlerts || []));
+      // Recarga os alertas na tela
+      if(window._reloadAlertsFromStorage) window._reloadAlertsFromStorage();
+      e.data.triggered?.forEach(a => {
+        if(window.showToast) showToast(`🔔 ${a.moeda} ${a.cond==='acima'?'▲':'▼'} R$ ${a.valor.toFixed(2)} — cotação atingida`);
+      });
+    }
+    if(e.data?.type === 'CHECK_NOW'){
+      // SW pediu pra página checar (app está aberto)
+      if(window.loadCotacoes) loadCotacoes(true);
+    }
+  });
 
   registerSW();
 })();
