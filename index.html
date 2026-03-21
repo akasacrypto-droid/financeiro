@@ -1079,7 +1079,11 @@ function goPlanTab(sub){
   });
   if(sub==='regra')renderPlanRegra();
   if(sub==='metas')renderGoals();
-  if(sub==='cambio'){ if(window.setCambioTab) setCambioTab('fiat'); else loadCotacoes(); }
+  if(sub==='cambio'){ 
+    const savedTab = sessionStorage.getItem('_cambioTab') || 'fiat';
+    if(window.setCambioTab) setCambioTab(savedTab); 
+    else loadCotacoes(); 
+  }
 }
 
 function changeMonth(d){
@@ -2713,8 +2717,9 @@ tr+tr td{border-top:1px solid #f3f3f3}
         if(!priceInBRL) return '';
 
         // Converte preço para a moeda base selecionada
-        const baseRate = window._ratesInBRL?.[base] || 1; // quanto BRL vale 1 unidade de base
-        const price = base === 'BRL' ? priceInBRL : priceInBRL / baseRate;
+        const rates = window._ratesInBRL || {};
+        const baseRateInBRL = rates[base] || 1; // 1 base = X BRL
+        const price = base === 'BRL' ? priceInBRL : priceInBRL / baseRateInBRL;
 
         const pct   = cryptoChange24h[c.code];
         const isLast = i === CRYPTOS.length-1;
@@ -2758,10 +2763,12 @@ tr+tr td{border-top:1px solid #f3f3f3}
   }
   window.setCryptoConv = setCryptoConv;
 
-  // Tab toggle
-  let activeTab = 'fiat';
+  // Tab toggle — salva estado no sessionStorage
+  let activeTab = sessionStorage.getItem('_cambioTab') || 'fiat';
+
   window.setCambioTab = async function(tab){
     activeTab = tab;
+    sessionStorage.setItem('_cambioTab', tab);
     const fiatBtn   = document.getElementById('tab-fiat');
     const cryptoBtn = document.getElementById('tab-crypto');
     const fiatGrid  = document.getElementById('cambio-grid');
@@ -2775,30 +2782,20 @@ tr+tr td{border-top:1px solid #f3f3f3}
       cryptoBtn.style.cssText = 'flex:1;padding:8px;border-radius:10px;border:1px solid var(--border2);background:none;color:var(--muted);font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer';
       cryptoGrid.style.display = 'none';
       cryptoLoad.style.display = 'none';
-      if(Object.keys(window._ratesInBRL||{}).length > 1){
-        fiatLoad.style.display = 'none';
-        fiatGrid.style.display = 'block';
-      } else {
-        fiatLoad.style.display = 'block';
-        fiatGrid.style.display = 'none';
-        loadCotacoes(false);
-      }
       if(fonte) fonte.textContent = 'AwesomeAPI · cotação real · atualiza a cada 60s';
+      fiatLoad.style.display = 'block';
+      fiatGrid.style.display = 'none';
+      loadCotacoes(false);
     } else {
       cryptoBtn.style.cssText = 'flex:1;padding:8px;border-radius:10px;border:1px solid rgba(255,184,77,.35);background:rgba(255,184,77,.12);color:var(--amber);font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer';
       fiatBtn.style.cssText   = 'flex:1;padding:8px;border-radius:10px;border:1px solid var(--border2);background:none;color:var(--muted);font-size:12px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer';
       fiatGrid.style.display  = 'none';
       fiatLoad.style.display  = 'none';
-      if(cryptoLoaded){
-        cryptoLoad.style.display = 'none';
-        cryptoGrid.style.display = 'block';
-        renderCryptoGrid();
-      } else {
-        cryptoLoad.style.display = 'block';
-        cryptoGrid.style.display = 'none';
-        await fetchCrypto(true);
-        renderCryptoGrid();
-      }
+      if(fonte) fonte.textContent = 'CoinGecko · cotação real · atualiza a cada 60s';
+      cryptoLoad.style.display = 'block';
+      cryptoGrid.style.display = 'none';
+      await fetchCrypto(true);
+      renderCryptoGrid();
     }
   };
 
@@ -2836,12 +2833,13 @@ tr+tr td{border-top:1px solid #f3f3f3}
   ];
 
   let ratesInBRL  = { BRL: 1 };
-  let ratesYestInBRL = {};   // taxas de ontem para variação
+  let ratesYestInBRL = {};
   let lastFetch   = 0;
   let autoInterval = null;
 
-  // Expõe ratesInBRL para o crypto script poder injetar
-  window._ratesInBRL = ratesInBRL;
+  // Expõe via getter — sempre retorna a referência atual mesmo após reassign
+  Object.defineProperty(window, '_ratesInBRL', { get: ()=>ratesInBRL, configurable:true });
+
   window._injectCryptoRates = function(cryptoRates){
     Object.entries(cryptoRates).forEach(([k,v]) => { ratesInBRL[k] = v; });
   };
@@ -2849,7 +2847,6 @@ tr+tr td{border-top:1px solid #f3f3f3}
   // Formata valor
   function fmtVal(n, code){
     if(n === null || n === undefined || isNaN(n)) return '—';
-    // Crypto pode ter valores muito grandes ou muito pequenos
     const isCrypto = ['BTC','ETH','BNB','SOL','XRP','ADA','DOGE','DOT'].includes(code);
     if(isCrypto){
       if(n >= 10000) return n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -2866,7 +2863,6 @@ tr+tr td{border-top:1px solid #f3f3f3}
     return (amount * ratesInBRL[fromCode]) / ratesInBRL[toCode];
   }
 
-  // Busca data N dias atrás no formato YYYY-MM-DD
   function daysAgo(n){
     const d = new Date(); d.setDate(d.getDate()-n);
     return d.toISOString().slice(0,10);
@@ -2875,38 +2871,36 @@ tr+tr td{border-top:1px solid #f3f3f3}
   async function fetchRates(force){
     if(!force && Object.keys(ratesInBRL).length > 1 && Date.now()-lastFetch < 55000) return;
     try {
-      const syms = MOEDAS.map(m=>m.code).join(',');
-
-      // ── AwesomeAPI: cotação real do mercado brasileiro ──
-      // Retorna pares como USD-BRL, EUR-BRL etc — tempo real
+      const syms  = MOEDAS.map(m=>m.code).join(',');
       const pairs = MOEDAS.map(m=>`${m.code}-BRL`).join(',');
       const [resAwe, resYest] = await Promise.all([
         fetch(`https://economia.awesomeapi.com.br/json/last/${pairs}`),
-        fetch(`https://api.frankfurter.app/${daysAgo(2)}?from=BRL&to=${syms}`) // ontem p/ variação
+        fetch(`https://api.frankfurter.app/${daysAgo(2)}?from=BRL&to=${syms}`)
       ]);
-
       const awe  = await resAwe.json();
       const yest = await resYest.json();
 
-      // AwesomeAPI retorna ex: { "USDBRL": { bid: "5.3141", ... } }
-      ratesInBRL = { BRL: 1 };
+      // Atualiza in-place para não quebrar referências
+      Object.keys(ratesInBRL).forEach(k=>{ if(k!=='BRL') delete ratesInBRL[k]; });
       MOEDAS.forEach(m => {
         const key = `${m.code}BRL`;
         if(awe[key]) ratesInBRL[m.code] = parseFloat(awe[key].bid);
       });
+      // Re-injeta crypto se já estava carregado
+      if(window._cryptoRatesInBRL){
+        const cr = window._cryptoRatesInBRL();
+        Object.entries(cr).forEach(([k,v])=>{ ratesInBRL[k]=v; });
+      }
 
-      // Ontem via frankfurter (p/ variação %)
       ratesYestInBRL = { BRL: 1 };
       if(yest.rates) Object.entries(yest.rates).forEach(([k,v]) => { ratesYestInBRL[k] = 1/v; });
-
       lastFetch = Date.now();
     } catch(e){
-      // Fallback: frankfurter se AwesomeAPI falhar
       try {
         const syms = MOEDAS.map(m=>m.code).join(',');
         const res = await fetch(`https://api.frankfurter.app/latest?from=BRL&to=${syms}`);
         const data = await res.json();
-        ratesInBRL = { BRL: 1 };
+        Object.keys(ratesInBRL).forEach(k=>{ if(k!=='BRL') delete ratesInBRL[k]; });
         Object.entries(data.rates).forEach(([k,v]) => { ratesInBRL[k] = 1/v; });
         lastFetch = Date.now();
       } catch(e2){}
@@ -2931,15 +2925,25 @@ tr+tr td{border-top:1px solid #f3f3f3}
   }
 
   // ── CONVERSOR ──
-  window.calcConv = function(){
+  window.calcConv = async function(){
     const de   = document.getElementById('conv-de').value;
     const para = document.getElementById('conv-para').value;
     const amount = parseFloat(document.getElementById('conv-val-de').value) || 0;
+
+    // Se alguma das moedas é crypto e não temos a taxa, busca agora
+    const cryptoCodes = ['BTC','ETH','BNB','SOL','XRP','ADA','DOGE','DOT'];
+    const needsCrypto = cryptoCodes.includes(de) || cryptoCodes.includes(para);
+    if(needsCrypto && !ratesInBRL[de] && !ratesInBRL[para]){
+      if(window._fetchCrypto) await window._fetchCrypto(false);
+    }
+
     const result = convert(amount, de, para);
     const taxa1  = convert(1, de, para);
     document.getElementById('conv-val-para').textContent = fmtVal(result, para);
     if(taxa1 !== null)
       document.getElementById('conv-taxa').textContent = `1 ${de} = ${fmtVal(taxa1, para)} ${para}`;
+    else
+      document.getElementById('conv-taxa').textContent = '—';
 
     // Re-renderiza lista só quando a moeda BASE (De) muda
     const prevBase = window._listBase;
