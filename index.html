@@ -386,10 +386,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 <!-- ── PAGE: PLANEJAR ── -->
 <div class="page" id="page-plan">
 
-  <!-- SUB-TABS: só 2 abas -->
+  <!-- SUB-TABS -->
   <div style="display:flex;gap:7px;margin-bottom:14px">
     <button class="plan-sub-tab on" id="psub-metas" onclick="goPlanTab('metas')" style="flex:1">🎯 Metas</button>
     <button class="plan-sub-tab" id="psub-regra" onclick="goPlanTab('regra')" style="flex:1">⚖️ Orçamento</button>
+    <button class="plan-sub-tab" id="psub-cambio" onclick="goPlanTab('cambio')" style="flex:1">💱 Câmbio</button>
   </div>
 
   <!-- ── SUB: METAS ── -->
@@ -435,6 +436,54 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Não alocado / Livre</div>
       <div style="font-family:var(--mono);font-size:16px;font-weight:700" id="budget-free-val">—</div>
     </div>
+  </div>
+
+  <!-- ── SUB: CÂMBIO ── -->
+  <div id="planpage-cambio" style="display:none">
+
+    <!-- Header atualização -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="slbl" style="margin:0">Base: Real Brasileiro (BRL)</div>
+      <button id="cambio-refresh-btn" onclick="loadCotacoes(true)" style="font-size:11px;padding:5px 12px;border-radius:99px;border:1px solid var(--border2);background:var(--s2);color:var(--muted2);font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:4px">🔄 <span id="cambio-update-lbl">Atualizar</span></button>
+    </div>
+
+    <!-- Conversor rápido -->
+    <div style="background:linear-gradient(135deg,#1a2040,#12192e);border:1px solid rgba(91,158,255,.15);border-radius:16px;padding:14px 16px;margin-bottom:12px">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;font-weight:600">Conversor rápido</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="flex:1;background:var(--s2);border:1px solid var(--border2);border-radius:10px;padding:10px 12px">
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">BRL</div>
+          <input id="conv-brl" type="number" inputmode="decimal" value="100" oninput="convertMoeda()" style="width:100%;background:none;border:none;outline:none;font-family:'DM Mono',monospace;font-size:18px;font-weight:600;color:var(--text)">
+        </div>
+        <div style="color:var(--muted);font-size:18px;flex-shrink:0">⇄</div>
+        <div style="flex:1;background:var(--s2);border:1px solid var(--border2);border-radius:10px;padding:10px 12px">
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">
+            <select id="conv-moeda" onchange="convertMoeda()" style="background:none;border:none;outline:none;font-size:9px;font-family:'DM Sans',sans-serif;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;-webkit-appearance:none;cursor:pointer">
+              <option value="USD">USD 🇺🇸</option>
+              <option value="EUR">EUR 🇪🇺</option>
+              <option value="GBP">GBP 🇬🇧</option>
+              <option value="ARS">ARS 🇦🇷</option>
+              <option value="JPY">JPY 🇯🇵</option>
+              <option value="BTC">BTC ₿</option>
+            </select>
+          </div>
+          <div id="conv-result" style="font-family:'DM Mono',monospace;font-size:18px;font-weight:600;color:var(--blue)">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="cambio-loading" style="text-align:center;padding:30px;color:var(--muted);font-size:13px">
+      <div style="font-size:28px;margin-bottom:8px;opacity:.4">🌐</div>
+      Carregando cotações...
+    </div>
+
+    <!-- Grid moedas -->
+    <div id="cambio-grid" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"></div>
+
+    <!-- Rodapé -->
+    <div style="text-align:center;font-size:10px;color:var(--muted);padding:4px 0 2px;opacity:.7">Fonte: frankfurter.app · Atualização automática a cada 60s</div>
+
   </div>
 
 </div>
@@ -796,7 +845,7 @@ function goTab(tab){
 let activePlanSubTab='metas';
 function goPlanTab(sub){
   activePlanSubTab=sub;
-  ['metas','regra'].forEach(s=>{
+  ['metas','regra','cambio'].forEach(s=>{
     const pg=document.getElementById('planpage-'+s);
     const btn=document.getElementById('psub-'+s);
     if(pg)pg.style.display=s===sub?'block':'none';
@@ -804,6 +853,7 @@ function goPlanTab(sub){
   });
   if(sub==='regra')renderPlanRegra();
   if(sub==='metas')renderGoals();
+  if(sub==='cambio')loadCotacoes();
 }
 
 function changeMonth(d){
@@ -2067,100 +2117,154 @@ window.save=function(){
 })();
 </script>
 
-<!-- ── PRESENÇA ONLINE ── -->
+<!-- ── COTAÇÕES ── -->
 <script>
 (function(){
-  // ID único desta sessão
-  const myId = (localStorage.getItem('_fid') || (()=>{
-    const id = Math.random().toString(36).slice(2)+Date.now().toString(36);
-    localStorage.setItem('_fid', id);
+  const MOEDAS = [
+    {code:'USD', flag:'🇺🇸', name:'Dólar'},
+    {code:'EUR', flag:'🇪🇺', name:'Euro'},
+    {code:'GBP', flag:'🇬🇧', name:'Libra'},
+    {code:'ARS', flag:'🇦🇷', name:'Peso Arg.'},
+    {code:'JPY', flag:'🇯🇵', name:'Iene'},
+    {code:'CAD', flag:'🇨🇦', name:'Dólar CA'},
+    {code:'CHF', flag:'🇨🇭', name:'Franco'},
+    {code:'CNY', flag:'🇨🇳', name:'Yuan'},
+    {code:'AUD', flag:'🇦🇺', name:'Dólar AU'},
+    {code:'MXN', flag:'🇲🇽', name:'Peso MX'},
+  ];
+
+  let ratesCache = null; // BRL por 1 unidade da moeda estrangeira (i.e. quanto BRL vale 1 USD)
+  let lastFetch = 0;
+  let autoInterval = null;
+
+  // frankfurter.app: base=USD retorna rates[BRL] etc
+  // Para BRL base: usamos /latest?from=BRL
+  async function fetchRates(force){
+    if(!force && ratesCache && Date.now()-lastFetch < 55000) return ratesCache;
+    try {
+      // Busca 1 BRL = X moedas => invertemos para saber X moedas = Y BRL
+      const symbols = MOEDAS.map(m=>m.code).join(',');
+      const res = await fetch(`https://api.frankfurter.app/latest?from=BRL&to=${symbols}`);
+      const data = await res.json();
+      // data.rates[USD] = quanto USD vale 1 BRL → invertemos: 1 USD = 1/data.rates[USD] BRL
+      const inverted = {};
+      Object.entries(data.rates).forEach(([k,v])=>{ inverted[k] = 1/v; });
+      ratesCache = inverted;
+      lastFetch = Date.now();
+      return ratesCache;
+    } catch(e){ return ratesCache; }
+  }
+
+  function fmt(n, code){
+    if(code==='JPY') return n.toFixed(2);
+    if(code==='ARS') return n.toFixed(2);
+    return n.toFixed(4);
+  }
+
+  function renderGrid(rates){
+    const grid = document.getElementById('cambio-grid');
+    const loading = document.getElementById('cambio-loading');
+    if(!rates || !grid) return;
+    loading.style.display = 'none';
+    grid.style.display = 'grid';
+
+    const now = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('cambio-update-lbl').textContent = now;
+
+    grid.innerHTML = MOEDAS.map(m => {
+      const rate = rates[m.code];
+      if(!rate) return '';
+      const brl = rate.toFixed(m.code==='JPY'||m.code==='ARS'?4:4);
+      return `<div style="background:var(--s1);border:1px solid var(--border);border-radius:13px;padding:12px 13px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--blue);border-radius:13px 13px 0 0;opacity:.5"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:18px">${m.flag}</span>
+          <span style="font-size:9.5px;font-weight:700;color:var(--muted);background:var(--s3);border-radius:4px;padding:2px 6px">${m.code}</span>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:3px">${m.name}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:15px;font-weight:600;color:var(--text)">R$ ${Number(brl).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:4})}</div>
+        <div style="font-size:9.5px;color:var(--muted);margin-top:2px">por 1 ${m.code}</div>
+      </div>`;
+    }).join('');
+
+    convertMoeda();
+  }
+
+  window.loadCotacoes = async function(force){
+    const lbl = document.getElementById('cambio-update-lbl');
+    if(lbl && force) lbl.textContent = '...';
+    const rates = await fetchRates(force);
+    renderGrid(rates);
+    // auto-refresh a cada 60s enquanto aba está aberta
+    if(!autoInterval){
+      autoInterval = setInterval(()=>{
+        if(document.getElementById('planpage-cambio').style.display!=='none'){
+          loadCotacoes(true);
+        }
+      }, 60000);
+    }
+  };
+
+  window.convertMoeda = function(){
+    const brlInput = parseFloat(document.getElementById('conv-brl').value) || 0;
+    const moeda = document.getElementById('conv-moeda').value;
+    const result = document.getElementById('conv-result');
+    if(!ratesCache || !ratesCache[moeda]){ result.textContent='—'; return; }
+    const converted = brlInput / ratesCache[moeda];
+    result.textContent = converted.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:moeda==='JPY'?0:4});
+  };
+})();
+</script>
+
+<!-- ── PRESENÇA ONLINE (PubNub) ── -->
+<script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.4.5.min.js"></script>
+<script>
+(function(){
+  const myUUID = (localStorage.getItem('_fin_uuid') || (()=>{
+    const id = 'u-'+Math.random().toString(36).slice(2)+Date.now().toString(36);
+    localStorage.setItem('_fin_uuid', id);
     return id;
   })());
 
-  const CHANNEL = 'financas_presence_v2';
-  const TIMEOUT = 12000; // 12s sem heartbeat = saiu
-  const peers = {}; // id -> timestamp
-
   function setCount(n){
     const el = document.getElementById('online-count');
-    if(el) el.textContent = n;
+    if(el) el.textContent = Math.max(1, n);
   }
 
-  function countOnline(){
-    const now = Date.now();
-    // limpa peers expirados
-    Object.keys(peers).forEach(id => {
-      if(now - peers[id] > TIMEOUT) delete peers[id];
-    });
-    return Object.keys(peers).length + 1; // +1 = eu
-  }
-
-  // ── BroadcastChannel (mesma aba/origem no mesmo dispositivo) ──
-  let bc;
-  try {
-    bc = new BroadcastChannel(CHANNEL);
-    bc.onmessage = (e) => {
-      const {type, id} = e.data || {};
-      if(!id || id === myId) return;
-      if(type === 'ping' || type === 'join'){
-        peers[id] = Date.now();
-        if(type === 'join') bc.postMessage({type:'ping', id:myId}); // responde
-        setCount(countOnline());
-      } else if(type === 'leave'){
-        delete peers[id];
-        setCount(countOnline());
-      }
-    };
-  } catch(e){}
-
-  // ── WebSocket público sem auth (demo.piesocket.com) ──
-  let ws, wsReady = false;
-  function wsConnect(){
-    try {
-      // Usando canal público do piesocket — chave demo pública oficial
-      ws = new WebSocket('wss://demo.piesocket.com/v3/'+CHANNEL+'?api_key=oCdCMcMPQplfbe6LVMtI&notify_self=0');
-      ws.onopen = () => {
-        wsReady = true;
-        wsSend({type:'join', id:myId});
-      };
-      ws.onmessage = (e) => {
-        try {
-          const msg = JSON.parse(e.data);
-          const {type, id} = msg;
-          if(!id || id === myId) return;
-          if(type === 'ping' || type === 'join'){
-            peers[id] = Date.now();
-            if(type === 'join') wsSend({type:'ping', id:myId});
-            setCount(countOnline());
-          } else if(type === 'leave'){
-            delete peers[id];
-            setCount(countOnline());
-          }
-        } catch(e){}
-      };
-      ws.onclose = () => { wsReady = false; setTimeout(wsConnect, 4000); };
-      ws.onerror = () => { wsReady = false; };
-    } catch(e){}
-  }
-  function wsSend(obj){
-    if(ws && wsReady) try{ ws.send(JSON.stringify(obj)); }catch(e){}
-  }
-  wsConnect();
-
-  // Heartbeat a cada 5s
-  setInterval(() => {
-    if(bc) bc.postMessage({type:'ping', id:myId});
-    wsSend({type:'ping', id:myId});
-    setCount(countOnline());
-  }, 5000);
-
-  // Avisar ao sair
-  window.addEventListener('beforeunload', () => {
-    if(bc) bc.postMessage({type:'leave', id:myId});
-    wsSend({type:'leave', id:myId});
+  const pubnub = new PubNub({
+    publishKey:   'demo',
+    subscribeKey: 'demo',
+    uuid: myUUID,
+    heartbeatInterval: 10,
   });
 
-  setCount(1);
+  const CHANNEL = 'financas-presenca-v3';
+
+  // Ouve eventos de presença
+  pubnub.addListener({
+    presence: (event) => {
+      // hereNow retorna occupancy direto
+      pubnub.hereNow({ channels: [CHANNEL] }, (status, resp) => {
+        if(!status.error && resp.totalOccupancy !== undefined){
+          setCount(resp.totalOccupancy);
+        }
+      });
+    }
+  });
+
+  pubnub.subscribe({ channels: [CHANNEL], withPresence: true });
+
+  // Busca inicial
+  setTimeout(()=>{
+    pubnub.hereNow({ channels: [CHANNEL] }, (status, resp) => {
+      if(!status.error) setCount(resp.totalOccupancy);
+    });
+  }, 1500);
+
+  // Ao sair, desinscreve
+  window.addEventListener('beforeunload', ()=>{
+    pubnub.unsubscribeAll();
+  });
 })();
 </script>
 
