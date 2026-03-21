@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- Fundo gradiente azul/verde/laranja -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2196F3"/>
+      <stop offset="50%" stop-color="#4CAF50"/>
+      <stop offset="100%" stop-color="#FF9800"/>
+    </linearGradient>
+    <!-- Gradiente prancheta -->
+    <linearGradient id="clip" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1565C0"/>
+      <stop offset="100%" stop-color="#0D47A1"/>
+    </linearGradient>
+    <!-- Gradiente moeda -->
+    <linearGradient id="coin" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFD740"/>
+      <stop offset="100%" stop-color="#FF8F00"/>
+    </linearGradient>
+    <!-- Gradiente check grande -->
+    <linearGradient id="chk" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#66BB6A"/>
+      <stop offset="100%" stop-color="#2E7D32"/>
+    </linearGradient>
+    <!-- Arco verde -->
+    <linearGradient id="arc" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4CAF50"/>
+      <stop offset="100%" stop-color="#1B5E20"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="3" dy="6" stdDeviation="8" flood-color="rgba(0,0,0,0.35)"/>
+    </filter>
+    <filter id="shadow2" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="4" stdDeviation="5" flood-color="rgba(0,0,0,0.3)"/>
+    </filter>
+  </defs>
+
+  <!-- Fundo arredondado -->
+  <rect width="512" height="512" rx="110" ry="110" fill="url(#bg)"/>
+
+  <!-- Brilhos brancos -->
+  <polygon points="90,80 96,96 112,90 96,104 90,120 84,104 68,90 84,96" fill="white" opacity="0.7"/>
+  <polygon points="400,60 404,72 416,68 404,80 400,92 396,80 384,68 396,72" fill="white" opacity="0.6"/>
+  <polygon points="430,300 434,312 446,308 434,320 430,332 426,320 414,308 426,312" fill="white" opacity="0.5"/>
+  <polygon points="70,340 73,349 82,346 73,355 70,364 67,355 58,346 67,349" fill="white" opacity="0.5"/>
+
+  <!-- Sombra da prancheta -->
+  <rect x="148" y="118" width="210" height="265" rx="14" fill="rgba(0,0,0,0.2)" transform="translate(8,10)"/>
+
+  <!-- Prancheta fundo (camada atrás) -->
+  <rect x="140" y="115" width="210" height="265" rx="14" fill="url(#clip)" filter="url(#shadow)"/>
+
+  <!-- Clipe da prancheta -->
+  <rect x="225" y="98" width="62" height="38" rx="10" fill="#90A4AE"/>
+  <rect x="233" y="104" width="46" height="26" rx="8" fill="#B0BEC5"/>
+  <circle cx="256" cy="117" r="9" fill="#78909C"/>
+  <circle cx="256" cy="117" r="5" fill="#546E7A"/>
+
+  <!-- Papel branco na prancheta -->
+  <rect x="158" y="140" width="176" height="218" rx="8" fill="white" opacity="0.95"/>
+
+  <!-- Gráfico de barras no papel -->
+  <!-- Eixo X -->
+  <line x1="178" y1="300" x2="314" y2="300" stroke="#4CAF50" stroke-width="3" stroke-linecap="round"/>
+  <!-- Eixo Y -->
+  <line x1="178" y1="300" x2="178" y2="190" stroke="#4CAF50" stroke-width="3" stroke-linecap="round"/>
+  <!-- Seta eixo X -->
+  <polygon points="314,296 322,300 314,304" fill="#4CAF50"/>
+
+  <!-- Barras crescentes -->
+  <rect x="190" y="268" width="24" height="32" rx="4" fill="#66BB6A"/>
+  <rect x="222" y="248" width="24" height="52" rx="4" fill="#4CAF50"/>
+  <rect x="254" y="222" width="24" height="78" rx="4" fill="#43A047"/>
+  <rect x="286" y="200" width="24" height="100" rx="4" fill="#2E7D32"/>
+
+  <!-- Brilho nas barras -->
+  <rect x="192" y="270" width="8" height="20" rx="2" fill="white" opacity="0.3"/>
+  <rect x="224" y="250" width="8" height="32" rx="2" fill="white" opacity="0.3"/>
+  <rect x="256" y="224" width="8" height="48" rx="2" fill="white" opacity="0.3"/>
+  <rect x="288" y="202" width="8" height="60" rx="2" fill="white" opacity="0.3"/>
+
+  <!-- Check pequeno no papel -->
+  <polyline points="185,338 196,350 222,322" fill="none" stroke="#4CAF50" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Arco verde em volta -->
+  <path d="M 155 370 Q 80 280 160 180" fill="none" stroke="url(#arc)" stroke-width="18" stroke-linecap="round" opacity="0.9"/>
+  <path d="M 155 370 Q 80 280 160 180" fill="none" stroke="#A5D6A7" stroke-width="6" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- Moeda -->
+  <circle cx="315" cy="368" r="68" fill="#FF8F00" filter="url(#shadow2)"/>
+  <circle cx="315" cy="368" r="60" fill="url(#coin)"/>
+  <circle cx="315" cy="368" r="50" fill="#FFD740" opacity="0.4"/>
+  <!-- Símbolo $ -->
+  <text x="315" y="390" text-anchor="middle" font-family="Arial Black, sans-serif" font-weight="900" font-size="72" fill="#E65100" opacity="0.9">$</text>
+  <text x="313" y="388" text-anchor="middle" font-family="Arial Black, sans-serif" font-weight="900" font-size="72" fill="#FF6F00">$</text>
+  <!-- Brilho moeda -->
+  <ellipse cx="298" cy="348" rx="12" ry="8" fill="white" opacity="0.35" transform="rotate(-30,298,348)"/>
+
+  <!-- Pilha de notas verdes atrás da moeda -->
+  <rect x="340" y="355" width="50" height="12" rx="4" fill="#388E3C" transform="rotate(-10,340,355)"/>
+  <rect x="342" y="367" width="50" height="12" rx="4" fill="#43A047" transform="rotate(-5,342,367)"/>
+  <rect x="344" y="379" width="50" height="12" rx="4" fill="#4CAF50" transform="rotate(0,344,379)"/>
+
+  <!-- CHECK MARK GRANDE (canto superior direito) -->
+  <circle cx="370" cy="178" r="72" fill="#2E7D32" opacity="0.3"/>
+  <circle cx="370" cy="175" r="65" fill="url(#chk)" filter="url(#shadow2)"/>
+  <polyline points="337,175 358,198 403,150" fill="none" stroke="white" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Brilho no check -->
+  <ellipse cx="353" cy="160" rx="14" ry="8" fill="white" opacity="0.3" transform="rotate(-40,353,160)"/>
+</svg>
