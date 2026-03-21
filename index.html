@@ -2477,7 +2477,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
       }).join('') + `</div>`;
   }
 
-  // Verifica alertas sempre que as cotações atualizam
+  // ── Verifica alertas (chamado quando cotações atualizam na aba aberta) ──
   window._checkPriceAlerts = function(ratesInBRL){
     let anyTriggered = false;
     alerts.forEach(a=>{
@@ -2490,12 +2490,37 @@ tr+tr td{border-top:1px solid #f3f3f3}
         anyTriggered = true;
         showToast(`🔔 ${a.moeda} ${a.cond==='acima'?'▲':'▼'} R$ ${a.valor.toFixed(2)} — R$ ${rate.toFixed(4)}`);
         if('Notification' in window && Notification.permission==='granted'){
-          new Notification(`Alerta Câmbio: ${a.moeda}`,{body:`Cotação ${a.cond==='acima'?'acima de':'abaixo de'} R$ ${a.valor.toFixed(2)}`,icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">💰</text></svg>'});
+          new Notification(`💰 Controle+ — Alerta ${a.moeda}`,{
+            body:`Cotação ${a.cond==='acima'?'acima de':'abaixo de'} R$ ${a.valor.toFixed(2)}\nAtual: R$ ${rate.toFixed(4)}`,
+            tag:`alert-${a.id}`, requireInteraction:true
+          });
         }
       }
     });
-    if(anyTriggered){ saveAlerts(); renderAlerts(); }
+    if(anyTriggered){ saveAlerts(); renderAlerts(); syncAlertsToSW(); }
   };
+
+  // ── Sincroniza alertas com o Service Worker ──
+  function syncAlertsToSW(){
+    if(navigator.serviceWorker?.controller){
+      navigator.serviceWorker.controller.postMessage({type:'UPDATE_ALERTS', alerts});
+    }
+  }
+
+  // ── Recebe disparos vindos do SW (app estava em background) ──
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.addEventListener('message', e=>{
+      if(e.data?.type === 'ALERTS_TRIGGERED'){
+        // Atualiza estado local com o que o SW disparou
+        alerts = e.data.allAlerts || alerts;
+        saveAlerts();
+        renderAlerts();
+        e.data.triggered?.forEach(a=>{
+          showToast(`🔔 ${a.moeda} ${a.cond==='acima'?'▲':'▼'} R$ ${a.valor.toFixed(2)} — R$ ${a.rateNow?.toFixed(4)||''}`);
+        });
+      }
+    });
+  }
 
   // Swipe to close
   let _sy2=0;
@@ -2506,6 +2531,8 @@ tr+tr td{border-top:1px solid #f3f3f3}
   }
 
   renderAlerts();
+  // Sincroniza alertas existentes com SW ao carregar
+  setTimeout(syncAlertsToSW, 1500);
 })();
 </script>
 
@@ -2909,6 +2936,54 @@ tr+tr td{border-top:1px solid #f3f3f3}
   });
 
   setCount(1);
+})();
+</script>
+
+<!-- ── SERVICE WORKER — ALERTAS EM BACKGROUND ── -->
+<script>
+(function(){
+  if(!('serviceWorker' in navigator)) return;
+
+  async function registerSW(){
+    try {
+      const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+
+      // Solicita permissão de notificação se ainda não tem
+      if(Notification.permission === 'default'){
+        await Notification.requestPermission();
+      }
+
+      // Aguarda SW ficar ativo
+      await navigator.serviceWorker.ready;
+
+      // Envia alertas salvos pro SW
+      const alerts = JSON.parse(localStorage.getItem('_fin_alerts')||'[]');
+      if(navigator.serviceWorker.controller){
+        navigator.serviceWorker.controller.postMessage({type:'UPDATE_ALERTS', alerts});
+        navigator.serviceWorker.controller.postMessage({type:'START_ALERT_CHECK'});
+      } else {
+        // SW recém instalado — espera controle
+        navigator.serviceWorker.addEventListener('controllerchange', ()=>{
+          const alerts2 = JSON.parse(localStorage.getItem('_fin_alerts')||'[]');
+          navigator.serviceWorker.controller?.postMessage({type:'UPDATE_ALERTS', alerts:alerts2});
+          navigator.serviceWorker.controller?.postMessage({type:'START_ALERT_CHECK'});
+        });
+      }
+
+      // Periodic Background Sync (Chrome Android — mantém verificação mesmo com app fechado)
+      if('periodicSync' in reg){
+        try {
+          const status = await navigator.permissions.query({name:'periodic-background-sync'});
+          if(status.state === 'granted'){
+            await reg.periodicSync.register('price-alerts',{ minInterval: 5 * 60 * 1000 });
+          }
+        } catch(e){}
+      }
+
+    } catch(e){ console.warn('SW não registrado:', e); }
+  }
+
+  registerSW();
 })();
 </script>
 
