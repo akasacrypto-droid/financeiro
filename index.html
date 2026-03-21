@@ -510,6 +510,53 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 
   </div>
 
+  <!-- ── SHEET: GRÁFICO MOEDA ── -->
+  <div id="moeda-sheet-overlay" class="sheet-overlay" onclick="closeMoedaSheet()"></div>
+  <div id="moeda-sheet" class="sheet">
+    <div class="sheet-handle"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <div id="msheet-flag" style="width:42px;height:42px;border-radius:11px;background:var(--s2);border:1px solid var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;flex-shrink:0">
+        <span id="msheet-flagico" style="font-size:18px;line-height:1"></span>
+        <span id="msheet-code" style="font-size:8px;font-weight:700;color:var(--muted)"></span>
+      </div>
+      <div style="flex:1">
+        <div id="msheet-name" style="font-size:15px;font-weight:700"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:3px">
+          <span id="msheet-rate" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--blue)"></span>
+          <span id="msheet-var" style="font-size:11px;font-weight:700;border-radius:5px;padding:2px 7px"></span>
+        </div>
+      </div>
+      <button onclick="closeMoedaSheet()" style="background:var(--s2);border:1px solid var(--border2);border-radius:8px;color:var(--muted2);width:32px;height:32px;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">✕</button>
+    </div>
+    <!-- Seletor período -->
+    <div style="display:flex;gap:6px;margin-bottom:14px">
+      <button class="rpt-period on" id="mper-7" onclick="setMoedaPeriod(7,this)">7D</button>
+      <button class="rpt-period" id="mper-30" onclick="setMoedaPeriod(30,this)">30D</button>
+      <button class="rpt-period" id="mper-90" onclick="setMoedaPeriod(90,this)">3M</button>
+    </div>
+    <!-- Canvas gráfico -->
+    <div style="position:relative;height:160px;margin-bottom:12px">
+      <canvas id="moeda-chart-canvas"></canvas>
+      <div id="moeda-chart-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Carregando...</div>
+    </div>
+    <!-- Stats linha -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+      <div style="background:var(--s2);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Mín</div>
+        <div id="msheet-min" style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--red)">—</div>
+      </div>
+      <div style="background:var(--s2);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Média</div>
+        <div id="msheet-avg" style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--text)">—</div>
+      </div>
+      <div style="background:var(--s2);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Máx</div>
+        <div id="msheet-max" style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--green)">—</div>
+      </div>
+    </div>
+    <button onclick="document.getElementById('conv-de').value='BRL';document.getElementById('conv-para').value=_moedaSheetCode;calcConv('de');closeMoedaSheet()" style="width:100%;padding:13px;background:var(--blue-bg);border:1px solid rgba(91,158,255,.25);border-radius:12px;color:var(--blue);font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">Converter esta moeda</button>
+  </div>
+
 </div>
 
 <!-- ── PAGE: CONFIG ── -->
@@ -2146,7 +2193,6 @@ window.save=function(){
 <script>
 (function(){
   const MOEDAS = [
-    {code:'BRL', flag:'🇧🇷', name:'Real'},
     {code:'USD', flag:'🇺🇸', name:'Dólar EUA'},
     {code:'EUR', flag:'🇪🇺', name:'Euro'},
     {code:'GBP', flag:'🇬🇧', name:'Libra'},
@@ -2159,79 +2205,97 @@ window.save=function(){
     {code:'MXN', flag:'🇲🇽', name:'Peso MX'},
   ];
 
-  // ratesInBRL[code] = quanto BRL vale 1 unidade de `code`
-  // ratesInBRL['BRL'] = 1
-  let ratesInBRL = { BRL: 1 };
-  let lastFetch = 0;
+  let ratesInBRL  = { BRL: 1 };
+  let ratesYestInBRL = {};   // taxas de ontem para variação
+  let lastFetch   = 0;
   let autoInterval = null;
+
+  // Formata valor
+  function fmtVal(n, code){
+    if(n === null || n === undefined || isNaN(n)) return '—';
+    const dec = ['JPY','ARS','MXN'].includes(code) ? 2 : 4;
+    return n.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:dec});
+  }
+
+  // Converte amount de fromCode para toCode passando por BRL
+  function convert(amount, fromCode, toCode){
+    if(!ratesInBRL[fromCode] || !ratesInBRL[toCode]) return null;
+    return (amount * ratesInBRL[fromCode]) / ratesInBRL[toCode];
+  }
+
+  // Busca data N dias atrás no formato YYYY-MM-DD
+  function daysAgo(n){
+    const d = new Date(); d.setDate(d.getDate()-n);
+    return d.toISOString().slice(0,10);
+  }
 
   async function fetchRates(force){
     if(!force && Object.keys(ratesInBRL).length > 1 && Date.now()-lastFetch < 55000) return;
     try {
-      const symbols = MOEDAS.filter(m=>m.code!=='BRL').map(m=>m.code).join(',');
-      const res = await fetch(`https://api.frankfurter.app/latest?from=BRL&to=${symbols}`);
-      const data = await res.json();
-      // data.rates[USD] = quanto USD vale 1 BRL → inverte: 1 USD = 1/rate BRL
+      const syms = MOEDAS.map(m=>m.code).join(',');
+      // Hoje
+      const [resToday, resYest] = await Promise.all([
+        fetch(`https://api.frankfurter.app/latest?from=BRL&to=${syms}`),
+        fetch(`https://api.frankfurter.app/${daysAgo(2)}?from=BRL&to=${syms}`)
+      ]);
+      const today = await resToday.json();
+      const yest  = await resYest.json();
+
       ratesInBRL = { BRL: 1 };
-      Object.entries(data.rates).forEach(([k,v]) => { ratesInBRL[k] = 1/v; });
+      Object.entries(today.rates).forEach(([k,v]) => { ratesInBRL[k] = 1/v; });
+
+      ratesYestInBRL = { BRL: 1 };
+      Object.entries(yest.rates).forEach(([k,v]) => { ratesYestInBRL[k] = 1/v; });
+
       lastFetch = Date.now();
     } catch(e){}
   }
 
-  function fmtVal(n, code){
-    if(n === null || isNaN(n)) return '—';
-    const decimals = ['JPY','ARS','MXN'].includes(code) ? 2 : 4;
-    return n.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:decimals});
+  // Variação % entre hoje e ontem
+  function getVar(code){
+    const hoje = ratesInBRL[code];
+    const ant  = ratesYestInBRL[code];
+    if(!hoje || !ant) return null;
+    return ((hoje - ant) / ant) * 100;
   }
 
-  // Converte `amount` de `fromCode` para `toCode`
-  function convert(amount, fromCode, toCode){
-    if(!ratesInBRL[fromCode] || !ratesInBRL[toCode]) return null;
-    const inBRL = amount * ratesInBRL[fromCode];
-    return inBRL / ratesInBRL[toCode];
+  function varTag(pct){
+    if(pct === null) return '';
+    const up   = pct >= 0;
+    const col  = up ? 'var(--green)' : 'var(--red)';
+    const bg   = up ? 'rgba(0,200,150,.12)' : 'rgba(255,92,92,.12)';
+    const ico  = up ? '▲' : '▼';
+    return `<span style="font-size:10px;font-weight:700;color:${col};background:${bg};border-radius:5px;padding:2px 6px">${ico} ${Math.abs(pct).toFixed(2)}%</span>`;
   }
 
-  window.calcConv = function(changed){
+  // ── CONVERSOR ──
+  window.calcConv = function(){
     const de   = document.getElementById('conv-de').value;
     const para = document.getElementById('conv-para').value;
-    const valDeEl   = document.getElementById('conv-val-de');
-    const valParaEl = document.getElementById('conv-val-para');
-    const taxaEl    = document.getElementById('conv-taxa');
-
-    const amount = parseFloat(valDeEl.value) || 0;
+    const amount = parseFloat(document.getElementById('conv-val-de').value) || 0;
     const result = convert(amount, de, para);
-    valParaEl.textContent = fmtVal(result, para);
-
-    // Taxa de câmbio unitária
-    const taxa1 = convert(1, de, para);
-    if(taxa1 !== null){
-      taxaEl.textContent = `1 ${de} = ${fmtVal(taxa1, para)} ${para}`;
-    }
+    const taxa1  = convert(1, de, para);
+    document.getElementById('conv-val-para').textContent = fmtVal(result, para);
+    if(taxa1 !== null)
+      document.getElementById('conv-taxa').textContent = `1 ${de} = ${fmtVal(taxa1, para)} ${para}`;
   };
 
   window.swapConv = function(){
     const deEl   = document.getElementById('conv-de');
     const paraEl = document.getElementById('conv-para');
-    const valDeEl = document.getElementById('conv-val-de');
-    const valParaEl = document.getElementById('conv-val-para');
-
-    const tmpCode = deEl.value;
-    deEl.value = paraEl.value;
-    paraEl.value = tmpCode;
-
-    // Pega o valor resultado atual e joga no campo de
-    const resultTxt = valParaEl.textContent.replace(/\./g,'').replace(',','.');
-    const num = parseFloat(resultTxt);
-    if(!isNaN(num)) valDeEl.value = num;
-
-    calcConv('de');
+    const valEl  = document.getElementById('conv-val-de');
+    const resEl  = document.getElementById('conv-val-para');
+    const tmp = deEl.value; deEl.value = paraEl.value; paraEl.value = tmp;
+    const num = parseFloat(resEl.textContent.replace(/\./g,'').replace(',','.'));
+    if(!isNaN(num)) valEl.value = num;
+    calcConv();
   };
 
+  // ── GRID ──
   function renderGrid(){
     const grid    = document.getElementById('cambio-grid');
     const loading = document.getElementById('cambio-loading');
     if(!grid) return;
-
     loading.style.display = 'none';
     grid.style.cssText = 'display:block;margin-bottom:8px';
 
@@ -2239,40 +2303,178 @@ window.save=function(){
     const lbl = document.getElementById('cambio-update-lbl');
     if(lbl) lbl.textContent = now;
 
-    const lista = MOEDAS.filter(m => m.code !== 'BRL');
     grid.innerHTML = `<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;overflow:hidden">` +
-    lista.map((m, i) => {
-      const rate = ratesInBRL[m.code];
-      if(!rate) return '';
-      const brl = fmtVal(rate, 'BRL');
-      const inv = fmtVal(1/rate, m.code);
-      const isLast = i === lista.length - 1;
-      return `
-      <div onclick="document.getElementById('conv-de').value='BRL';document.getElementById('conv-para').value='${m.code}';calcConv('de');document.getElementById('conv-val-de').scrollIntoView({behavior:'smooth',block:'center'})"
-           style="display:flex;align-items:center;gap:12px;padding:12px 14px;${isLast?'':'border-bottom:1px solid var(--border)'};cursor:pointer;transition:background .1s"
-           onmousedown="this.style.background='var(--s2)'" onmouseup="this.style.background=''" ontouchstart="this.style.background='var(--s2)'" ontouchend="this.style.background=''">
-        <!-- Flag + código -->
-        <div style="width:38px;height:38px;border-radius:10px;background:var(--s2);border:1px solid var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;gap:1px">
-          <span style="font-size:16px;line-height:1">${m.flag}</span>
-          <span style="font-size:8px;font-weight:700;color:var(--muted);letter-spacing:.3px">${m.code}</span>
-        </div>
-        <!-- Nome -->
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:600;color:var(--text)">${m.name}</div>
-          <div style="font-size:10.5px;color:var(--muted);margin-top:1px">1 BRL = ${inv} ${m.code}</div>
-        </div>
-        <!-- Valor em BRL -->
-        <div style="text-align:right;flex-shrink:0">
-          <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--text)">R$ ${brl}</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:1px">por 1 ${m.code}</div>
-        </div>
-        <div style="color:var(--muted);font-size:12px;flex-shrink:0;opacity:.5">›</div>
-      </div>`;
-    }).join('') + `</div>`;
+      MOEDAS.map((m, i) => {
+        const rate = ratesInBRL[m.code];
+        if(!rate) return '';
+        const brl  = fmtVal(rate, 'BRL');
+        const inv  = fmtVal(1/rate, m.code);
+        const pct  = getVar(m.code);
+        const up   = pct !== null && pct >= 0;
+        const col  = pct === null ? 'var(--muted)' : up ? 'var(--green)' : 'var(--red)';
+        const bg   = pct === null ? 'var(--s3)' : up ? 'rgba(0,200,150,.12)' : 'rgba(255,92,92,.12)';
+        const ico  = pct === null ? '' : up ? '▲ ' : '▼ ';
+        const pctTxt = pct === null ? '—' : `${ico}${Math.abs(pct).toFixed(2)}%`;
+        const isLast = i === MOEDAS.length - 1;
+        return `
+        <div onclick="openMoedaSheet('${m.code}')"
+             style="display:flex;align-items:center;gap:12px;padding:12px 14px;${isLast?'':'border-bottom:1px solid var(--border)'};cursor:pointer;transition:background .12s"
+             ontouchstart="this.style.background='var(--s2)'" ontouchend="this.style.background=''">
+          <div style="width:40px;height:40px;border-radius:11px;background:var(--s2);border:1px solid var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;gap:1px">
+            <span style="font-size:17px;line-height:1">${m.flag}</span>
+            <span style="font-size:8px;font-weight:700;color:var(--muted);letter-spacing:.3px">${m.code}</span>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;color:var(--text)">${m.name}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px">1 BRL = ${inv} ${m.code}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--text)">R$ ${brl}</div>
+            <div style="font-size:10px;font-weight:700;color:${col};background:${bg};border-radius:5px;padding:1px 6px;margin-top:3px;display:inline-block">${pctTxt}</div>
+          </div>
+          <div style="color:var(--muted);font-size:11px;opacity:.4;flex-shrink:0">›</div>
+        </div>`;
+      }).join('') + `</div>`;
 
-    calcConv('de');
+    calcConv();
   }
 
+  // ── SHEET GRÁFICO ──
+  window._moedaSheetCode = 'USD';
+  window._moedaChartInst = null;
+  window._moedaPeriod    = 7;
+
+  window.openMoedaSheet = async function(code){
+    const m = MOEDAS.find(x=>x.code===code);
+    if(!m) return;
+    _moedaSheetCode = code;
+    _moedaPeriod = 7;
+    document.querySelectorAll('[id^=mper-]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('mper-7')?.classList.add('on');
+
+    document.getElementById('msheet-flagico').textContent = m.flag;
+    document.getElementById('msheet-code').textContent    = m.code;
+    document.getElementById('msheet-name').textContent    = m.name;
+
+    const rate = ratesInBRL[code];
+    document.getElementById('msheet-rate').textContent = rate ? `R$ ${fmtVal(rate,'BRL')} por 1 ${code}` : '—';
+
+    const pct = getVar(code);
+    const varEl = document.getElementById('msheet-var');
+    if(pct !== null){
+      const up = pct >= 0;
+      varEl.textContent = `${up?'▲':'▼'} ${Math.abs(pct).toFixed(2)}%`;
+      varEl.style.color = up ? 'var(--green)' : 'var(--red)';
+      varEl.style.background = up ? 'rgba(0,200,150,.12)' : 'rgba(255,92,92,.12)';
+    } else { varEl.textContent=''; }
+
+    document.getElementById('moeda-sheet-overlay').classList.add('open');
+    document.getElementById('moeda-sheet').classList.add('open');
+    await loadMoedaChart(code, 7);
+  };
+
+  window.closeMoedaSheet = function(){
+    document.getElementById('moeda-sheet-overlay').classList.remove('open');
+    document.getElementById('moeda-sheet').classList.remove('open');
+  };
+
+  window.setMoedaPeriod = async function(days, btn){
+    document.querySelectorAll('[id^=mper-]').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
+    _moedaPeriod = days;
+    await loadMoedaChart(_moedaSheetCode, days);
+  };
+
+  async function loadMoedaChart(code, days){
+    const loadEl  = document.getElementById('moeda-chart-loading');
+    const canvas  = document.getElementById('moeda-chart-canvas');
+    loadEl.style.display = 'flex';
+    canvas.style.opacity = '0';
+
+    try {
+      const from = daysAgo(days);
+      const res  = await fetch(`https://api.frankfurter.app/${from}..?from=BRL&to=${code}`);
+      const data = await res.json();
+      const dates  = Object.keys(data.rates).sort();
+      // converte: BRL/moeda → moeda/BRL (quanto BRL vale 1 unidade da moeda)
+      const values = dates.map(d => 1 / data.rates[d][code]);
+
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const avg = values.reduce((a,b)=>a+b,0)/values.length;
+
+      document.getElementById('msheet-min').textContent = `R$ ${fmtVal(min,'BRL')}`;
+      document.getElementById('msheet-avg').textContent = `R$ ${fmtVal(avg,'BRL')}`;
+      document.getElementById('msheet-max').textContent = `R$ ${fmtVal(max,'BRL')}`;
+
+      // Labels resumidos
+      const labels = dates.map(d => {
+        const [,m,day] = d.split('-');
+        return `${day}/${m}`;
+      });
+
+      const isUp = values[values.length-1] >= values[0];
+      const lineColor = isUp ? '#00C896' : '#FF5C5C';
+      const fillColor = isUp ? 'rgba(0,200,150,.1)' : 'rgba(255,92,92,.1)';
+
+      if(_moedaChartInst) _moedaChartInst.destroy();
+
+      const ctx = canvas.getContext('2d');
+      _moedaChartInst = new Chart(ctx, {
+        type:'line',
+        data:{
+          labels,
+          datasets:[{
+            data: values,
+            borderColor: lineColor,
+            borderWidth: 2,
+            backgroundColor: fillColor,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            pointHoverBackgroundColor: lineColor,
+          }]
+        },
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          animation:{duration:400},
+          plugins:{legend:{display:false}, tooltip:{
+            mode:'index', intersect:false,
+            callbacks:{
+              label: ctx => `R$ ${fmtVal(ctx.parsed.y,'BRL')}`
+            },
+            backgroundColor:'rgba(22,27,39,.95)',
+            borderColor:'rgba(255,255,255,.1)', borderWidth:1,
+            titleColor:'#9AA0BA', bodyColor:'#EEF0FF',
+            padding:10, cornerRadius:8,
+          }},
+          scales:{
+            x:{
+              grid:{display:false},
+              border:{display:false},
+              ticks:{color:'#6B738F', font:{size:9}, maxTicksLimit:6, maxRotation:0}
+            },
+            y:{
+              position:'right',
+              grid:{color:'rgba(255,255,255,.04)'},
+              border:{display:false},
+              ticks:{color:'#6B738F', font:{size:9}, maxTicksLimit:4,
+                callback: v => `R$ ${v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`
+              }
+            }
+          }
+        }
+      });
+
+      loadEl.style.display = 'none';
+      canvas.style.opacity = '1';
+    } catch(e){
+      loadEl.textContent = 'Erro ao carregar gráfico';
+    }
+  }
+
+  // ── LOAD PRINCIPAL ──
   window.loadCotacoes = async function(force){
     const lbl = document.getElementById('cambio-update-lbl');
     if(lbl && force) lbl.textContent = '...';
@@ -2280,12 +2482,19 @@ window.save=function(){
     renderGrid();
     if(!autoInterval){
       autoInterval = setInterval(()=>{
-        if(document.getElementById('planpage-cambio')?.style.display !== 'none'){
+        if(document.getElementById('planpage-cambio')?.style.display !== 'none')
           loadCotacoes(true);
-        }
       }, 60000);
     }
   };
+
+  // Swipe down no sheet
+  let _sy=0;
+  const ms = document.getElementById('moeda-sheet');
+  if(ms){
+    ms.addEventListener('touchstart',e=>{_sy=e.touches[0].clientY},{passive:true});
+    ms.addEventListener('touchmove',e=>{if(e.touches[0].clientY-_sy>70)closeMoedaSheet()},{passive:true});
+  }
 })();
 </script>
 
