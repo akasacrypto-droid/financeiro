@@ -310,14 +310,27 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   .nav-tab .tab-ico{font-size:18px}
 }
 @media(min-width:900px){
-  body{max-width:960px;margin:0 auto}
-  .fab{right:calc((100vw - 960px)/2 + 16px)}
-  /* Outras páginas continuam centralizadas em 480px */
-  #page-report,#page-txs,#page-plan,#page-cfg,#page-notif{max-width:480px;margin:0 auto}
-  /* News layout: só aplica quando a página estiver ativa */
+  body{max-width:1100px;margin:0 auto}
+  .fab{right:calc((100vw - 1100px)/2 + 16px)}
+
+  /* Todas as páginas comuns: centraliza o conteúdo com largura confortável */
+  #page-report,#page-txs,#page-plan,#page-cfg,#page-notif{
+    max-width:720px;margin-left:auto;margin-right:auto;
+  }
+
+  /* Relatório: métricas em 4 colunas */
+  .metrics{grid-template-columns:repeat(4,1fr)}
+
+  /* Extratos: lista de txs mais larga */
+  .tx-item{padding:14px 18px}
+
+  /* Planejar sub-tabs maiores */
+  .plan-sub-tab{font-size:13px;padding:9px 20px}
+
+  /* News layout: sidebar esquerda + grid de notícias */
   #page-news.on{
     display:grid;
-    grid-template-columns:200px 1fr;
+    grid-template-columns:190px 1fr;
     grid-template-rows:auto 1fr;
     gap:0 20px;
     align-items:start;
@@ -4204,7 +4217,7 @@ Formato exato:
 
     renderNewsList();
     checkPuterSession();
-    updateLastUpdated();
+    loadCountdown();
   };
 
   window.filterNewsSource = function(src) {
@@ -4215,19 +4228,46 @@ Formato exato:
     renderNewsList();
   };
 
-  // ── Auto-refresh a cada 5 minutos ─────────────────────
-  function updateLastUpdated() {
-    const el = document.getElementById('news-last-updated');
-    if(el) el.textContent = 'Atualizado agora';
+  // ── Auto-refresh a cada 5 minutos com countdown ───────
+  const REFRESH_INTERVAL = 5 * 60; // segundos
+  const COUNTDOWN_KEY = '_news_next_refresh';
+  let _nextRefreshAt = null;
+
+  function startCountdown() {
+    _nextRefreshAt = Date.now() + REFRESH_INTERVAL * 1000;
+    localStorage.setItem(COUNTDOWN_KEY, _nextRefreshAt);
   }
 
+  function loadCountdown() {
+    const saved = parseInt(localStorage.getItem(COUNTDOWN_KEY) || '0');
+    if(saved > Date.now()) {
+      _nextRefreshAt = saved; // ainda válido
+    } else {
+      startCountdown(); // expirou — reinicia
+    }
+  }
+
+  // Atualiza o texto do countdown a cada segundo
+  setInterval(() => {
+    const el = document.getElementById('news-last-updated');
+    if(!el || !_nextRefreshAt) return;
+    const secs = Math.max(0, Math.round((_nextRefreshAt - Date.now()) / 1000));
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    el.textContent = secs === 0 ? '🔄 Atualizando...' : `🔄 ${m}:${String(s).padStart(2,'0')}`;
+  }, 1000);
+
   setInterval(async () => {
-    // Só atualiza se a aba estiver visível
-    if(!document.getElementById('page-news')?.classList.contains('on')) return;
-    _loaded   = false;
+    if(!_nextRefreshAt || Date.now() < _nextRefreshAt) return;
+    if(!document.getElementById('page-news')?.classList.contains('on')) {
+      startCountdown();
+      return;
+    }
+    _loaded    = false;
     _analyzing = false;
     await window.loadNews(true);
-  }, 5 * 60 * 1000);
+    startCountdown();
+  }, 1000);
 
 })();
 </script>
