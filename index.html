@@ -3029,6 +3029,8 @@ tr+tr td{border-top:1px solid #f3f3f3}
     const flagIco = document.getElementById('msheet-flagico');
     const codeEl  = document.getElementById('msheet-code');
 
+    if(!flagEl || !flagIco) return; // sheet não montado ainda
+
     if(isCrypto){
       if(window._fetchCrypto) await window._fetchCrypto(false);
 
@@ -3129,7 +3131,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
     const loadEl = document.getElementById('moeda-chart-loading');
     const canvas = document.getElementById('moeda-chart-canvas');
     loadEl.style.display = 'flex';
-    loadEl.textContent = t('chart.loading');
+    loadEl.textContent = window.t ? window.t('chart.loading') : 'Carregando...';
     canvas.style.opacity = '0';
 
     // Moeda base selecionada no conversor
@@ -3633,8 +3635,8 @@ tr+tr td{border-top:1px solid #f3f3f3}
       'cur.real':'Real','cur.dollar':'Dólar EUA','cur.euro':'Euro','cur.pound':'Libra',
       'cur.peso.arg':'Peso Arg','cur.yen':'Iene','cur.cad':'Dólar CA','cur.chf':'Franco CH',
       'cur.cny':'Yuan','cur.aud':'Dólar AU','cur.peso.mx':'Peso MX',
-    
-  };;
+    }
+  };
 
   const currentLang = 'pt';
   function t(key){ return LANGS.pt[key] || key; }
