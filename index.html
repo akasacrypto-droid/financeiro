@@ -4379,14 +4379,18 @@ Formato exato (sem nada fora do JSON):
   // Checa silenciosamente se já está logado (sem popup)
   async function checkPuterSession() {
     try {
-      // Tenta uma chamada leve pra ver se já está autenticado
-      const user = await puter.auth.getUser().catch(() => null);
-      if(user) {
-        _puterReady = true;
-        renderNewsList();
-        analyzeAll();
+      // Usa isSignedIn de forma síncrona se disponível, sem abrir WebSocket
+      if(puter.auth && typeof puter.auth.isSignedIn === 'function') {
+        const signed = puter.auth.isSignedIn();
+        // isSignedIn pode retornar bool direto (síncrono) ou Promise
+        const logged = (signed instanceof Promise) ? false : !!signed;
+        if(logged) {
+          _puterReady = true;
+          renderNewsList();
+          analyzeAll();
+        }
       }
-    } catch(e) {}
+    } catch(e) {} // falha silenciosa — usuário ativa manualmente
   }
 
   window.loadNews = async function(force) {
