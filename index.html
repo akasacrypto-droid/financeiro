@@ -393,8 +393,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   </div>
 
   <!-- CARROSSEL DE COTAÇÕES -->
-  <div style="overflow:hidden;margin-bottom:12px;border-radius:12px;background:var(--s1);border:1px solid var(--border)">
-    <div id="ticker-track" style="display:flex;gap:0;white-space:nowrap;will-change:transform"></div>
+  <div style="overflow:hidden;margin-bottom:12px;border-radius:12px;background:var(--s1);border:1px solid var(--border);height:42px;display:flex;align-items:center">
+    <div id="ticker-track" style="display:flex;align-items:center;white-space:nowrap"></div>
   </div>
 
   <!-- SUB-TABS DO RELATÓRIO -->
@@ -4208,28 +4208,21 @@ tr+tr td{border-top:1px solid #f3f3f3}
 <script>
 (function(){
   const TICKER_ITEMS = [
-    {code:'USD',flag:'🇺🇸',name:'Dólar'},
-    {code:'EUR',flag:'🇪🇺',name:'Euro'},
-    {code:'GBP',flag:'🇬🇧',name:'Libra'},
-    {code:'BTC',flag:'₿',  name:'Bitcoin'},
-    {code:'ETH',flag:'Ξ',  name:'Ether'},
-    {code:'ARS',flag:'🇦🇷',name:'Peso Arg'},
-    {code:'JPY',flag:'🇯🇵',name:'Iene'},
-    {code:'CAD',flag:'🇨🇦',name:'Dólar CA'},
-    {code:'SOL',flag:'◎', name:'Solana'},
-    {code:'BNB',flag:'🟡',name:'BNB'},
+    {code:'USD',flag:'🇺🇸'},{code:'EUR',flag:'🇪🇺'},{code:'GBP',flag:'🇬🇧'},
+    {code:'JPY',flag:'🇯🇵'},{code:'CAD',flag:'🇨🇦'},{code:'CHF',flag:'🇨🇭'},
+    {code:'ARS',flag:'🇦🇷'},{code:'CNY',flag:'🇨🇳'},{code:'AUD',flag:'🇦🇺'},
+    {code:'BTC',flag:'₿'  },{code:'ETH',flag:'Ξ'  },{code:'SOL',flag:'◎' },
+    {code:'BNB',flag:'🟡' },{code:'XRP',flag:'✕'  },{code:'DOGE',flag:'🐕'},
   ];
-
-  let _animId = null, _pos = 0, _paused = false;
 
   function buildTicker() {
     const track = document.getElementById('ticker-track');
     if(!track) return;
-    const rates  = window._getRatesInBRL?.()       || {};
-    const yest   = window._getRatesYestInBRL?.()   || {};
-    const crypto = window._cryptoRatesInBRL?.()    || {};
+    const rates  = window._getRatesInBRL?.()     || {};
+    const yest   = window._getRatesYestInBRL?.() || {};
+    const crypto = window._cryptoRatesInBRL?.()  || {};
     const all    = {...rates, ...crypto};
-    if(Object.keys(all).length <= 1) return; // sem dados ainda
+    if(Object.keys(all).length <= 1) return;
 
     const items = TICKER_ITEMS.map(item => {
       const price = all[item.code]; if(!price) return null;
@@ -4237,7 +4230,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
       const pct   = prev ? ((price - prev) / prev) * 100 : null;
       const up    = pct !== null && pct >= 0;
       const pStr  = price >= 10000
-        ? price.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})
+        ? price.toLocaleString('pt-BR',{maximumFractionDigits:0})
         : price >= 1
           ? price.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:4})
           : price.toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:6});
@@ -4251,30 +4244,43 @@ tr+tr td{border-top:1px solid #f3f3f3}
       onclick="goTab('plan');setTimeout(()=>{goPlanTab('cambio');setTimeout(()=>openMoedaSheet('${item.code}'),350)},200)">
       <span class="ticker-flag">${item.flag}</span>
       <div><div class="ticker-code">${item.code}</div><div class="ticker-price">R$ ${item.pStr}</div></div>
-      ${item.vStr ? `<span class="ticker-var" style="color:${item.up?'var(--green)':'var(--red)'};background:${item.up?'rgba(0,200,150,.12)':'rgba(255,92,92,.12)'}">${item.vStr}</span>` : ''}
+      ${item.vStr?`<span class="ticker-var" style="color:${item.up?'var(--green)':'var(--red)'};background:${item.up?'rgba(0,200,150,.12)':'rgba(255,92,92,.12)'}">${item.vStr}</span>`:''}
     </div>`;
 
-    // Duplica para loop infinito
-    track.innerHTML = [...items,...items].map(make).join('');
+    // Duplica 3x para garantir loop suave
+    const html = [...items,...items,...items].map(make).join('');
+    track.innerHTML = html;
 
-    if(_animId) cancelAnimationFrame(_animId);
-    _pos = 0;
-    let last = null;
-    const half = track.scrollWidth / 2;
-    function step(ts) {
-      if(!last) last = ts;
-      const dt = ts - last; last = ts;
-      if(!_paused) { _pos += dt * 0.045; if(_pos >= half) _pos = 0; }
-      track.style.transform = `translateX(-${_pos}px)`;
-      _animId = requestAnimationFrame(step);
-    }
-    _animId = requestAnimationFrame(step);
+    // Calcula duração baseada na quantidade de itens
+    const itemW = 120; // largura estimada por item em px
+    const totalW = items.length * itemW;
+    const duration = totalW / 40; // 40px/s
 
-    track.addEventListener('mouseenter', ()=>_paused=true,  {once:false});
-    track.addEventListener('mouseleave', ()=>_paused=false, {once:false});
+    // Injeta keyframe dinâmico
+    const styleId = 'ticker-keyframe';
+    let sEl = document.getElementById(styleId);
+    if(!sEl){ sEl = document.createElement('style'); sEl.id = styleId; document.head.appendChild(sEl); }
+    sEl.textContent = `@keyframes ticker-run{0%{transform:translateX(0)}100%{transform:translateX(-${totalW}px)}}`;
+
+    track.style.animation = `ticker-run ${duration}s linear infinite`;
+    track.style.willChange = 'transform';
   }
 
   window._updateTicker = buildTicker;
+
+  // Pausa ao hover
+  document.addEventListener('mouseover', e => {
+    if(e.target.closest('#ticker-track')) {
+      const t = document.getElementById('ticker-track');
+      if(t) t.style.animationPlayState = 'paused';
+    }
+  });
+  document.addEventListener('mouseout', e => {
+    if(e.target.closest('#ticker-track')) {
+      const t = document.getElementById('ticker-track');
+      if(t) t.style.animationPlayState = 'running';
+    }
+  });
 
   // Tenta até ter dados
   let tries = 0;
@@ -4283,7 +4289,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
     if(r && Object.keys(r).length > 2) buildTicker();
     else if(tries++ < 30) setTimeout(tryBuild, 600);
   }
-  setTimeout(tryBuild, 1000);
+  setTimeout(tryBuild, 800);
 })();
 </script>
 
