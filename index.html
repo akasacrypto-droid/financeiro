@@ -318,7 +318,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse-green 2s infinite;flex-shrink:0"></span>
       <span id="online-count">1</span>
     </div>
-    <div id="version-badge" onclick="showVersionInfo()" title="Versão deployada" style="display:none"><span id="vbadge-hash"></span><span id="vbadge-time"></span></div>
+    <div id="version-badge" onclick="showVersionInfo()" title="" style="display:none"><span id="vbadge-hash"></span><span id="vbadge-time"></span></div>
     <div class="notif-btn" onclick="goTab('notif')" title="Notificações">
       🔔<div class="notif-badge" id="notif-badge"></div>
     </div>
@@ -344,7 +344,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   <div class="cat-scroll" id="cat-chips"></div>
   <div class="card">
     <div class="tx-list" id="tx-list"></div>
-    <div class="empty" id="tx-empty"><div class="empty-ico">📭</div>window.t?window.t('txs.empty'):'Nenhum lançamento neste mês.'</div>
+    <div class="empty" id="tx-empty"><div class="empty-ico">📭</div>t('txs.empty')</div>
   </div>
 </div>
 
@@ -363,12 +363,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   <!-- HEADER HERO -->
   <div style="background:linear-gradient(135deg,#1a1030,#120820);border:1px solid rgba(192,132,252,.18);border-radius:20px;padding:18px;margin-bottom:12px;position:relative;overflow:hidden">
     <div style="position:absolute;top:-40px;right:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(192,132,252,.1),transparent 65%)"></div>
-    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Relatório de gastos</div>
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px" data-i18n="report.header">Relatório de gastos</div>
     <div id="rep-title" style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:12px">—</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center">
-      <div><div style="font-family:var(--mono);font-size:15px;font-weight:600;color:var(--red)" id="rep-total-exp">R$0</div><div style="font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.4px">Gasto total</div></div>
-      <div><div style="font-family:var(--mono);font-size:15px;font-weight:600;color:var(--green)" id="rep-total-inc">R$0</div><div style="font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.4px">Receita</div></div>
-      <div><div style="font-family:var(--mono);font-size:15px;font-weight:600" id="rep-total-bal">R$0</div><div style="font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.4px">Saldo</div></div>
+      <div><div style="font-family:var(--mono);font-size:15px;font-weight:600;color:var(--red)" id="rep-total-exp">R$0</div><div style="font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.4px" data-i18n="report.spent">Gasto total</div></div>
+      <div><div style="font-family:var(--mono);font-size:15px;font-weight:600;color:var(--green)" id="rep-total-inc">R$0</div><div style="font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.4px" data-i18n="report.income">Receita</div></div>
+      <div><div style="font-family:var(--mono);font-size:15px;font-weight:600" id="rep-total-bal">R$0</div><div style="font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.4px" data-i18n="report.balance">Saldo</div></div>
     </div>
   </div>
 
@@ -473,7 +473,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     <div style="background:linear-gradient(135deg,#151e38,#0f1628);border:1px solid rgba(91,158,255,.18);border-radius:18px;padding:16px;margin-bottom:12px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
         <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:700">💱 Conversor</span>
-        <button onclick="window.loadCotacoes(true)" style="font-size:10px;padding:4px 10px;border-radius:99px;border:1px solid var(--border2);background:var(--s2);color:var(--muted2);font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:4px">🔄 <span id="cambio-update-lbl">${window.t?window.t('cambio.update'):'atualizar'}</span></button>
+        <button onclick="window.loadCotacoes(true)" style="font-size:10px;padding:4px 10px;border-radius:99px;border:1px solid var(--border2);background:var(--s2);color:var(--muted2);font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:4px">🔄 <span id="cambio-update-lbl">${t('cambio.update')}</span></button>
       </div>
 
       <!-- Campo DE -->
@@ -558,7 +558,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     <!-- Loading -->
     <div id="cambio-loading" style="text-align:center;padding:30px;color:var(--muted);font-size:13px">
       <div style="font-size:28px;margin-bottom:8px;opacity:.4">🌐</div>
-      ${window.t?window.t('cambio.loading'):'Carregando cotações...'}
+      ${t('cambio.loading')}
     </div>
 
     <!-- Grid fiduciário -->
@@ -567,7 +567,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     <!-- Grid crypto -->
     <div id="crypto-loading" style="display:none;text-align:center;padding:30px;color:var(--muted);font-size:13px">
       <div style="font-size:28px;margin-bottom:8px;opacity:.4">₿</div>
-      ${window.t?window.t('crypto.loading'):'Carregando criptos...'}
+      ${t('crypto.loading')}
     </div>
     <div id="crypto-grid" style="display:none;margin-bottom:8px"></div>
 
@@ -581,7 +581,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       </div>
       <div id="alert-list">
         <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;color:var(--muted);font-size:12px;line-height:1.7">
-          ${window.t?window.t('alert.empty').replace('\n','<br><span style="font-size:11px">')+'</span>':'Nenhum alerta criado.'}
+          ${t('alert.empty').replace('\n','<br><span style="font-size:11px">')+'</span>'}
         </div>
       </div>
     </div>
@@ -656,7 +656,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     </div>
     <!-- Seletor período -->
     <div style="display:flex;gap:6px;margin-bottom:14px;align-items:center">
-      <button class="rpt-period on" id="mper-7"  onclick="setMoedaPeriod(7,this)">7D</button>
+      <button class="rpt-period on" id="mper-7"  onclick="setMoedaPeriod(7,this)" data-i18n="chart.7d">7D</button>
       <button class="rpt-period"    id="mper-30" onclick="setMoedaPeriod(30,this)">30D</button>
       <button class="rpt-period"    id="mper-90" onclick="setMoedaPeriod(90,this)">3M</button>
       <!-- Badge variação do período -->
@@ -670,19 +670,19 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     <!-- Stats linha -->
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:16px">
       <div style="background:var(--s2);border-radius:10px;padding:10px;text-align:center">
-        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Mín</div>
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px" data-i18n="chart.min">Mín</div>
         <div id="msheet-min" style="font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--red)">—</div>
       </div>
       <div style="background:var(--s2);border-radius:10px;padding:10px;text-align:center">
-        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Média</div>
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px" data-i18n="chart.avg">Média</div>
         <div id="msheet-avg" style="font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--text)">—</div>
       </div>
       <div style="background:var(--s2);border-radius:10px;padding:10px;text-align:center">
-        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Máx</div>
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px" data-i18n="chart.max">Máx</div>
         <div id="msheet-max" style="font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--green)">—</div>
       </div>
       <div style="background:var(--s2);border-radius:10px;padding:10px;text-align:center">
-        <div id="msheet-var-lbl" style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">7D</div>
+        <div id="msheet-var-lbl" style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px" data-i18n="chart.7d">7D</div>
         <div id="msheet-period-pct" style="font-family:'DM Mono',monospace;font-size:11px;font-weight:700">—</div>
       </div>
     </div>
@@ -855,7 +855,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   <div class="sheet-title" id="budget-sheet-title">Nova categoria</div>
   <div class="field">
     <label>Nome</label>
-    <input type="text" id="bf-name" placeholder="Ex: Alimentação, Gasolina, Roupa…" autocomplete="off"/>
+    <input type="text" id="bf-name" placeholder="Ex: Food, Gas, Clothing…" autocomplete="off"/>
   </div>
   <div class="field">
     <label data-i18n="budget.emoji">Emoji / ícone</label>
@@ -1142,11 +1142,11 @@ function addTx(){
   const desc=document.getElementById('f-desc').value.trim();
   const val=parseFloat(document.getElementById('f-val').value);
   const cat=document.getElementById('f-cat').value;
-  if(!desc||isNaN(val)||val<=0){showToast(window.t?t('toast.fill'):'Preencha descrição e valor!');return}
+  if(!desc||isNaN(val)||val<=0){showToast(t('toast.fill'));return}
   txData.push({id:Date.now(),month:curKey(),desc,val,type:sheetType,cat});
   save();closeSheet();render();
   if(sheetType==='income')soundIncome();else soundExpense();
-  showToast(window.t?t('toast.added'):'Lançamento adicionado ✓');
+  showToast(t('toast.added'));
 }
 
 /* ── EDIT ── */
@@ -1177,7 +1177,7 @@ function saveEdit(){
   const cat=document.getElementById('e-cat').value;
   if(!desc||isNaN(val)||val<=0)return;
   const t=txData.find(x=>x.id===editingId);
-  if(t){t.desc=desc;t.val=val;t.type=editType;t.cat=cat;save();render();if(canSound())soundSave();showToast(window.t?t('toast.saved'):'Alteração salva ✓')}
+  if(t){t.desc=desc;t.val=val;t.type=editType;t.cat=cat;save();render();if(canSound())soundSave();showToast(t('toast.saved'))}
   closeModal();
 }
 let pendingDelId=null;
@@ -1192,7 +1192,7 @@ function confirmDel(){
   txData=txData.filter(x=>x.id!==pendingDelId);
   pendingDelId=null;
   closeConfirm();
-  save();render();showToast(window.t?t('toast.removed'):'Lançamento removido');
+  save();render();showToast(t('toast.removed'));
 }
 function closeConfirm(){
   pendingDelId=null;
@@ -1217,25 +1217,25 @@ function toggleNotif(){
       if(perm==='granted'){
         localStorage.setItem('fin_notif','1');
         document.getElementById('notif-badge').classList.add('on');
-        document.getElementById('notif-status').textContent=window.t?t('toast.notif.on'):'✅ Notificações ativadas';
+        document.getElementById('notif-status').textContent=t('toast.notif.on');
         scheduleNotif();showToast('Notificações ativadas! 🔔');
       }else{
         document.getElementById('notif-toggle').checked=false;
         document.getElementById('notif-status').textContent='❌ Permissão negada';
-        showToast(window.t?t('toast.notif.denied'):'Permissão negada pelo navegador');
+        showToast(t('toast.notif.denied'));
       }
     });
   }else{
     localStorage.setItem('fin_notif','0');
     document.getElementById('notif-badge').classList.remove('on');
-    document.getElementById('notif-status').textContent=window.t?t('toast.notif.off'):'Notificações desativadas';
+    document.getElementById('notif-status').textContent=t('toast.notif.off');
     if(notifInterval){clearInterval(notifInterval);notifInterval=null}
-    showToast(window.t?t('toast.notif.off'):'Notificações desativadas');
+    showToast(t('toast.notif.off'));
   }
 }
 function saveNotifTime(){
   localStorage.setItem('fin_notif_time',document.getElementById('notif-time').value);
-  showToast('Horário salvo: '+document.getElementById('notif-time').value);
+  showToast(t('notif.time.saved')+' '+document.getElementById('notif-time').value);
   scheduleNotif();
   // restore sound toggle
   const soundOff=localStorage.getItem('fin_sound')==='0';
@@ -1261,20 +1261,20 @@ function sendNotif(){
       return d.toDateString()===now.toDateString();
     }).length;
     new Notification('💰 Controle+',{
-      body:txToday===0?window.t?window.t('notif.push.no.expense'):'Você não registrou nenhum gasto hoje. Que tal atualizar?':`${window.t?window.t('notif.push.has.expense').replace('{n}',txToday):'Você tem '+txToday+' lançamento'+(txToday>1?'s':'')+' hoje. Bom controle!'}`,
+      body:txToday===0?t('notif.push.no.expense'):t('notif.push.has.expense').replace('{n}',String(txToday)),
       icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%2300C896"/><text y=".9em" font-size="80">💰</text></svg>'
     });
   }
 }
 function testNotif(){
-  if(!('Notification' in window)){showToast(window.t?t('toast.notif.notsup'):'Não suportado neste navegador');return}
-  if(Notification.permission!=='granted'){showToast(window.t?t('toast.notif.noperm'):'Ative as notificações primeiro');return}
-  sendNotif();showToast(window.t?t('toast.notif.test'):'Notificação de teste enviada!');
+  if(!('Notification' in window)){showToast(t('toast.notif.notsup'));return}
+  if(Notification.permission!=='granted'){showToast(t('toast.notif.noperm'));return}
+  sendNotif();showToast(t('toast.notif.test'));
 }
 /* ── EXPORT / IMPORT ── */
 function exportData(){
   const total=txData.length;
-  if(total===0&&goalData.length===0&&budgetItems.length===0){showToast(window.t?t('toast.no.data'):'Nenhum dado para exportar');return}
+  if(total===0&&goalData.length===0&&budgetItems.length===0){showToast(t('toast.no.data'));return}
   const payload={
     version:2,
     exportedAt:new Date().toISOString(),
@@ -1304,7 +1304,7 @@ function exportData(){
   if(infoEl){ infoEl.style.display='flex'; infoEl.innerHTML=parts.map(p=>`<span>${p}</span>`).join('<span style="opacity:.3">·</span>'); }
   const subEl=document.getElementById('export-sub');
   if(subEl)subEl.textContent=`Último backup: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
-  showToast(window.t?t('toast.backup.ok'):'✅ Backup exportado!');
+  showToast(t('toast.backup.ok'));
 }
 
 function importData(event){
@@ -1320,7 +1320,7 @@ function importData(event){
         imported=parsed.data;
         if(Array.isArray(parsed.goals))importedGoals=parsed.goals;
         if(Array.isArray(parsed.budget))importedBudget=parsed.budget;
-      }else{showToast(window.t?t('toast.file.invalid'):'❌ Arquivo inválido');return}
+      }else{showToast(t('toast.file.invalid'));return}
 
       pendingImport={txs:imported,goals:importedGoals,budget:importedBudget};
       const el=document.getElementById('import-count');
@@ -1351,12 +1351,12 @@ function confirmImport(mode){
     txData=[...txData,...newOnes];
     if(goals){const eG=new Set(goalData.map(g=>g.id));goalData=[...goalData,...goals.filter(g=>!eG.has(g.id))]}
     if(budget){const eB=new Set(budgetItems.map(b=>b.id));budgetItems=[...budgetItems,...budget.filter(b=>!eB.has(b.id))]}
-    showToast(`✅ ${newOnes.length} ${window.t?t('import.txs.added'):'lançamentos adicionados'}`);
+    showToast(`✅ ${newOnes.length} ${t('import.txs.added')}`);
   }
   pendingImport=null;
   saveGoals();saveBudgetData();
   closeImport();save();render();
-  if(mode==='replace')showToast(window.t?t('toast.backup.restored'):'✅ Backup restaurado com sucesso!');
+  if(mode==='replace')showToast(t('toast.backup.restored'));
 }
 function closeImport(){
   pendingImport=null;
@@ -1396,7 +1396,7 @@ function initNotif(){
   if(saved&&Notification.permission==='granted'){
     document.getElementById('notif-toggle').checked=true;
     document.getElementById('notif-badge').classList.add('on');
-    document.getElementById('notif-status').textContent='✅ Notificações ativadas';
+    document.getElementById('notif-status').textContent=t('toast.notif.on');
     scheduleNotif();
   }
 }
@@ -1649,7 +1649,7 @@ function renderPlanRegra(){
 
   document.getElementById('budget-base-val').textContent=fmt(baseSaldo);
   document.getElementById('budget-base-lbl').textContent=
-    `${getMonths()[curM]} ${curY}  ·  ${window.t?window.t('report.income'):'Receita'} ${fmt(curInc)}  −  ${window.t?window.t('report.spent'):'Despesas'} ${fmt(curExp)}`;
+    `${getMonths()[curM]} ${curY}  ·  ${t('report.income')} ${fmt(curInc)}  −  ${t('report.spent')} ${fmt(curExp)}`;
 
   const totalPct=budgetItems.reduce((s,b)=>s+b.pct,0);
   const totalAlloc=baseSaldo*(totalPct/100);
@@ -1662,13 +1662,13 @@ function renderPlanRegra(){
   const freeVal=baseSaldo-totalAlloc;
   const freeEl=document.getElementById('budget-free-val');
   if(freeEl){
-    freeEl.textContent=freePct>0?`${freePct}% ${window.t?window.t('budget.free.pct'):'livre'} — ${fmt(freeVal)}`:(freePct===0?`✅ 100% ${window.t?window.t('budget.alloc.100'):'alocado'}`:`⚠️ ${Math.abs(freePct)}% ${window.t?window.t('budget.over100'):'acima de 100%'}`);
+    freeEl.textContent=freePct>0?`${freePct}% ${t('budget.free.pct')} — ${fmt(freeVal)}`:(freePct===0?`✅ 100% ${t('budget.alloc.100')}`:`⚠️ ${Math.abs(freePct)}% ${t('budget.over100')}`);
     freeEl.style.color=freePct>0?'var(--muted2)':freePct===0?'var(--green)':'var(--red)';
   }
 
   const list=document.getElementById('budget-list');
   if(!budgetItems.length){
-    list.innerHTML=`<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;color:var(--muted);font-size:13px">${window.t?window.t('budget.empty.main'):'Nenhuma categoria configurada.'}<br><span style="font-size:12px">${window.t?window.t('budget.start.hint'):'Toque em "+ Adicionar" para começar.'}</span></div>`;
+    list.innerHTML=`<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;color:var(--muted);font-size:13px">${t('budget.empty.main')}<br><span style="font-size:12px">${t('budget.start.hint')}</span></div>`;
     return;
   }
 
@@ -1691,7 +1691,7 @@ function renderPlanRegra(){
             </div>
             <span style="font-family:var(--mono);font-size:10px;font-weight:600;color:${color};min-width:28px;text-align:right">${b.pct}%</span>
           </div>
-          <div style="font-size:10px;color:var(--muted)">${b.pct}% ${window.t?window.t('budget.of'):'de'} ${fmt(baseSaldo)}</div>
+          <div style="font-size:10px;color:var(--muted)">${b.pct}% ${t('budget.of')} ${fmt(baseSaldo)}</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;margin-left:8px;flex-shrink:0">
           <button onclick="openBudgetAddSheet(${b.id})" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--muted);padding:3px 5px;border-radius:6px;line-height:1">✏️</button>
@@ -1735,7 +1735,7 @@ function saveGoals(){localStorage.setItem('fin_goals',JSON.stringify(goalData))}
 
 function openGoalSheet(id){
   const g=id?goalData.find(x=>x.id===id):null;
-  document.getElementById('goal-sheet-title').textContent=g?(window.t?t('goal.sheet.edit'):'Editar meta'):(window.t?t('goal.sheet.new'):'Nova meta');
+  document.getElementById('goal-sheet-title').textContent=g?t('goal.sheet.edit'):t('goal.sheet.new');
   document.getElementById('gf-name').value=g?g.name:'';
   document.getElementById('gf-target').value=g?g.target:'';
   document.getElementById('gf-saved').value=g?g.saved:0;
@@ -1762,7 +1762,7 @@ function saveGoal(){
   }else{
     goalData.push({id:Date.now(),name,target,saved,ico});
   }
-  saveGoals();closeGoalSheet();renderGoals();showToast(window.t?t('toast.goal.saved'):'Meta salva ✓');
+  saveGoals();closeGoalSheet();renderGoals();showToast(t('toast.goal.saved'));
 }
 function addToGoal(id){
   const val=parseFloat(prompt('Quanto guardar agora? (R$)'));
@@ -1771,14 +1771,14 @@ function addToGoal(id){
   if(g){g.saved=Math.min(g.target,g.saved+val);saveGoals();renderGoals();showToast(`+${fmt(val)} guardado!`)}
 }
 function delGoal(id){
-  goalData=goalData.filter(x=>x.id!==id);saveGoals();renderGoals();showToast(window.t?t('toast.goal.removed'):'Meta removida');
+  goalData=goalData.filter(x=>x.id!==id);saveGoals();renderGoals();showToast(t('toast.goal.removed'));
 }
 function renderGoals(){
   const el=document.getElementById('goals-list');
   if(!el)return;
   if(!goalData.length){
-    const empty = window.t?window.t('goal.empty.main'):'Nenhuma meta criada ainda.';
-    const hint  = window.t?window.t('goal.start.hint'):'Toque em "+ Nova meta" para começar.';
+    const empty = t('goal.empty.main');
+    const hint  = t('goal.start.hint');
     el.innerHTML=`<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:22px;text-align:center;color:var(--muted);font-size:13px;line-height:1.7">${empty}<br><span style="font-size:12px">${hint}</span></div>`;
     return;
   }
@@ -1824,7 +1824,7 @@ function saveBudgetData(){localStorage.setItem('fin_budget',JSON.stringify(budge
 function openBudgetAddSheet(id){
   editingBudgetId=id||null;
   const existing=id?budgetItems.find(b=>b.id===id):null;
-  document.getElementById('budget-sheet-title').textContent=existing?(window.t?t('budget.sheet.edit'):'Editar categoria'):(window.t?t('budget.sheet.new'):'Nova categoria');
+  document.getElementById('budget-sheet-title').textContent=existing?t('budget.sheet.edit'):t('budget.sheet.new');
   document.getElementById('bf-name').value=existing?existing.name:'';
   document.getElementById('bf-ico').value=existing?existing.ico:'';
   document.getElementById('bf-pct').value=existing?existing.pct:10;
@@ -1854,11 +1854,11 @@ function saveBudgetItem(){
   }else{
     budgetItems.push({id:Date.now(),name,ico,pct,cats:[]});
   }
-  saveBudgetData();closeBudgetAddSheet();renderPlanRegra();showToast(window.t?t('toast.saved'):'Salvo ✓');
+  saveBudgetData();closeBudgetAddSheet();renderPlanRegra();showToast(t('toast.saved'));
 }
 function delBudgetItem(id){
   budgetItems=budgetItems.filter(b=>b.id!==id);
-  saveBudgetData();renderPlanRegra();showToast(window.t?t('toast.removed'):'Removido');
+  saveBudgetData();renderPlanRegra();showToast(t('toast.removed'));
 }
 
 /* ── RELATÓRIO ── */
@@ -1930,7 +1930,7 @@ function renderReport(){
 
   const ranking=document.getElementById('rep-ranking');
   if(!sorted.length){
-    ranking.innerHTML=`<div style="padding:18px;text-align:center;color:var(--muted);font-size:13px">${window.t?window.t('report.no.expenses'):'Sem despesas no período'}</div>`;
+    ranking.innerHTML=`<div style="padding:18px;text-align:center;color:var(--muted);font-size:13px">${t('report.no.expenses')}</div>`;
   }else{
     ranking.innerHTML=sorted.map(([cat,val],i)=>{
       const pct=exp>0?((val/exp)*100).toFixed(1):0;
@@ -1948,7 +1948,7 @@ function renderReport(){
           <div style="height:5px;background:var(--border);border-radius:99px;overflow:hidden">
             <div style="height:5px;border-radius:99px;background:${color};width:${barW}%;transition:width .7s ease"></div>
           </div>
-          <div style="font-size:10px;color:var(--muted);margin-top:3px">${pct}${window.t?window.t('report.pct.total'):'% do total gasto'}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">${pct}${t('report.pct.total')}</div>
         </div>
       </div>`;
     }).join('');
@@ -1958,12 +1958,12 @@ function renderReport(){
   const topTx=[...expenses].sort((a,b)=>b.val-a.val).slice(0,8);
   const topEl=document.getElementById('rep-top-tx');
   if(!topTx.length){
-    topEl.innerHTML=`<div style="padding:18px;text-align:center;color:var(--muted);font-size:13px">${window.t?window.t('report.no.txs'):'Sem lançamentos no período'}</div>`;
+    topEl.innerHTML=`<div style="padding:18px;text-align:center;color:var(--muted);font-size:13px">${t('report.no.txs')}</div>`;
   }else{
     topEl.innerHTML=topTx.map((t,i)=>{
       const color=PALETTE[i%PALETTE.length];
       const ico=CAT_ICONS[t.cat||'Outros']||'💸';
-      const MN=window.t?window.t('months.short'):['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      const MN=t('months.short');
       const[ty,tm]=t.month.split('-').map(Number);
       return`<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border)${i===topTx.length-1?';border-bottom:none':''}">
         <div style="width:32px;height:32px;border-radius:9px;background:${color}22;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">${ico}</div>
@@ -2039,7 +2039,7 @@ function importNubankCSV(event){
       // Validate header: Data,Valor,Identificador,Descrição
       const header=lines[0].toLowerCase();
       if(!header.includes('data')&&!header.includes('valor')){
-        showToast(window.t?t('toast.file.noformat'):'❌ Formato não reconhecido');event.target.value='';return;
+        showToast(t('toast.file.noformat'));event.target.value='';return;
       }
 
       // Parse columns from header
@@ -2048,7 +2048,7 @@ function importNubankCSV(event){
       const iVal=cols.findIndex(c=>c.includes('valor'));
       const iDesc=cols.findIndex(c=>c.includes('descri')||c.includes('title')||c.includes('título'));
 
-      if(iDate<0||iVal<0){showToast(window.t?t('toast.file.nocols'):'❌ Colunas não encontradas');return}
+      if(iDate<0||iVal<0){showToast(t('toast.file.nocols'));return}
 
       let imported=0,skipped=0;
 
@@ -2101,7 +2101,7 @@ function importNubankCSV(event){
         imported++;
       });
 
-      if(!imported&&!skipped){showToast(window.t?t('toast.file.none'):'❌ Nenhum lançamento encontrado');event.target.value='';return}
+      if(!imported&&!skipped){showToast(t('toast.file.none'));event.target.value='';return}
       save();
 
       // Navigate to most recent imported month
@@ -2112,7 +2112,7 @@ function importNubankCSV(event){
       }
       render();
       document.getElementById('nubank-sub').textContent=`${imported} importados · ${skipped} duplicatas ignoradas`;
-      showToast(`✅ ${imported} ${window.t?t('import.txs.done'):'lançamentos importados!'}`);
+      showToast(`✅ ${imported} ${t('import.txs.done')}`);
     }catch(err){
       console.error(err);
       showToast('❌ Erro ao ler CSV');
@@ -2234,7 +2234,7 @@ document.addEventListener('input',function(e){
   const prev=document.getElementById('text-preview');
   if(items.length===0){prev.style.display='none';return;}
   prev.style.display='block';
-  const MND=window.t?window.t('months'):['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const MND=t('months');
   prev.innerHTML='<b style="color:var(--text)">Preview ('+items.length+' itens):</b><br>'+
     items.map(i=>{
       const[y,m]=i.month.split('-').map(Number);
@@ -2313,7 +2313,7 @@ window.save=function(){
 <!-- ── PDF EXPORT ── -->
 <script>
 window.exportPDF = function(){
-  const MN=window.t?window.t('months.short'):['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const MN=t('months.short');
   const titleEl = document.getElementById('rep-title');
   const expEl   = document.getElementById('rep-total-exp');
   const incEl   = document.getElementById('rep-total-inc');
@@ -2468,7 +2468,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
       const rateStr = rate >= 1000
         ? rate.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})
         : rate.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:4});
-      cur.textContent = `Cotação atual: R$ ${rateStr}`;
+      cur.textContent = `${t('notif.cotacao')} ${rateStr}`;
     } else if(cur){ cur.textContent=''; }
   };
 
@@ -2480,12 +2480,12 @@ tr+tr td{border-top:1px solid #f3f3f3}
   window.saveAlert = function(){
     const moeda = document.getElementById('al-moeda').value;
     const valor = parseFloat(document.getElementById('al-valor').value);
-    if(!valor || valor<=0){ showToast(window.t?t('toast.fill.value'):'Informe um valor válido'); return; }
+    if(!valor || valor<=0){ showToast(t('toast.fill.value')); return; }
     alerts.push({ id: Date.now(), moeda, cond: alertCond, valor, active: true, triggered: false });
     saveAlerts();
     renderAlerts();
     closeAlertSheet();
-    showToast(window.t?t('toast.alert.created'):'✅ Alerta criado!');
+    showToast(t('toast.alert.created'));
   };
 
   window.deleteAlert = function(id){
@@ -2513,7 +2513,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
         const col = a.cond==='acima'?'var(--green)':'var(--red)';
         const isLast = i===alerts.length-1;
         const statusBg = a.triggered ? 'rgba(255,184,77,.12)' : a.active ? 'rgba(0,200,150,.08)' : 'transparent';
-        const statusTxt = a.triggered ? (window.t?window.t('alert.triggered'):'🔔 Disparado') : a.active ? (window.t?window.t('alert.active'):'Ativo') : (window.t?window.t('alert.paused'):'Pausado');
+        const statusTxt = a.triggered ? t('alert.triggered') : a.active ? t('alert.active') : t('alert.paused');
         const statusCol = a.triggered ? 'var(--amber)' : a.active ? 'var(--green)' : 'var(--muted)';
         return `<div style="display:flex;align-items:center;gap:11px;padding:12px 14px;${isLast?'':'border-bottom:1px solid var(--border)'};background:${statusBg}">
           <div style="width:38px;height:38px;border-radius:10px;background:var(--s2);border:1px solid var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;gap:1px">
@@ -2548,7 +2548,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
         const ico = a.cond==='acima'?'▲':'▼';
         const brl = rate.toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4});
         const title = `Alerta ${a.moeda} ${ico} R$ ${a.valor.toFixed(2)}`;
-        const body  = `Cotação atual: R$ ${brl}`;
+        const body  = `${t('notif.cotacao')} ${brl}`;
         // Adiciona no histórico + toca som
         if(window.addNotifHistory) window.addNotifHistory({
           title, body, moeda:a.moeda, cond:a.cond,
@@ -3100,7 +3100,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
     const loadEl = document.getElementById('moeda-chart-loading');
     const canvas = document.getElementById('moeda-chart-canvas');
     loadEl.style.display = 'flex';
-    loadEl.textContent = window.t?window.t('chart.loading'):'Carregando...';
+    loadEl.textContent = t('chart.loading');
     canvas.style.opacity = '0';
 
     // Moeda base selecionada no conversor
@@ -3225,7 +3225,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
       loadEl.style.display = 'none';
       canvas.style.opacity = '1';
     } catch(e){
-      loadEl.textContent = window.t?t('chart.error'):'Erro ao carregar gráfico';
+      loadEl.textContent = t('chart.error');
       loadEl.style.display = 'flex';
     }
   }
@@ -3497,7 +3497,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
       'budget.emoji':'Emoji / ícone','budget.pct':'% do saldo mensal',
       'budget.free.pct':'livre','budget.alloc.100':'alocado','budget.over100':'acima de 100%',
       'budget.of':'de','budget.new':'Nova categoria',
-      'report.title':window.t?t('report.header'):'Relatório de gastos','report.spent':'Gasto total','report.income':'Receita','report.balance':'Saldo',
+      'report.title':t('report.header'),'report.spent':'Gasto total','report.income':'Receita','report.balance':'Saldo',
       'report.ranking':'🏆 Ranking de gastos','report.top':'💸 Maiores gastos individuais',
       'report.dist':'Distribuição por categoria','report.trend':'📅 Tendência mês a mês',
       'report.period.month':'Este mês','report.period.3m':'3 meses','report.period.6m':'6 meses',
@@ -3567,7 +3567,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
       'budget.sheet.edit':'Editar categoria',
       'budget.save':'Salvar',
       'sheet.edit.small':'editar',
-      'report.pdf.title':window.t?t('report.pdf.title'):'Controle+ — Relatório',
+      'report.pdf.title':t('report.pdf.title'),
       'report.header':'Relatório de gastos',
             'toast.goal.saved':'Meta salva ✓',
       'toast.goal.removed':'Meta removida',
@@ -3579,6 +3579,25 @@ tr+tr td{border-top:1px solid #f3f3f3}
       'import.txs.added':'lançamentos adicionados',
       'notif.disabled':'Notificações desativadas',
       'cfg.notif.time':'Horário do lembrete',
+            'desc.placeholder':'Ex: Alimentação, Gasolina, Roupa…',
+      'desc.placeholder2':'Ex: Aluguel, Salário…',
+      'notif.time.saved':'Horário salvo:',
+      'txs.count':'📋 ${n} lançamentos',
+      'sheet.text.lançar':'📝 Lançar por texto',
+      'sheet.text.varios':'📝 Lançar vários por texto',
+      'report.trend.label':'📅 Tendência mês a mês',
+      'sheet.edit.tx':'✏️ Editar lançamento',
+      'import.merge.found':'lançamentos encontrados. O que deseja fazer?',
+      'notif.cotacao':'Cotação atual: R$',
+      'cat.food':'Alimentação',
+      'cat.edu':'Educação',
+      'cat.health':'Saúde',
+      'cat.salary':'Salário',
+      'cat.transfer.out':'Transferência enviada pelo Pix -',
+      'cat.transfer.in':'Transferência recebida pelo Pix -',
+            'chart.7d':'7D',
+      'btn.export.icon':'⬇️ Exportar',
+      'import.found':'lançamentos encontrados. O que deseja fazer?',
       'toast.lang':'🌐 Idioma alterado!',
       'months':['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
       'months.short':['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],
@@ -3693,6 +3712,25 @@ tr+tr td{border-top:1px solid #f3f3f3}
       'import.txs.added':'transactions added',
       'notif.disabled':'Notifications disabled',
       'cfg.notif.time':'Reminder time',
+            'desc.placeholder':'E.g. Food, Gas, Clothing…',
+      'desc.placeholder2':'E.g. Rent, Salary…',
+      'notif.time.saved':'Time saved:',
+      'txs.count':'📋 ${n} transactions',
+      'sheet.text.lançar':'📝 Log by text',
+      'sheet.text.varios':'📝 Bulk log by text',
+      'report.trend.label':'📅 Month-to-month trend',
+      'sheet.edit.tx':'✏️ Edit transaction',
+      'import.merge.found':'transactions found. What do you want to do?',
+      'notif.cotacao':'Current rate: R$',
+      'cat.food':'Food',
+      'cat.edu':'Education',
+      'cat.health':'Health',
+      'cat.salary':'Salary',
+      'cat.transfer.out':'Pix transfer sent -',
+      'cat.transfer.in':'Pix transfer received -',
+            'chart.7d':'7D',
+      'btn.export.icon':'⬇️ Export',
+      'import.found':'transactions found. What do you want to do?',
       'toast.lang':'🌐 Language changed!',
       'months':['January','February','March','April','May','June','July','August','September','October','November','December'],
       'months.short':['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
@@ -3807,6 +3845,25 @@ tr+tr td{border-top:1px solid #f3f3f3}
       'import.txs.added':'transacciones agregadas',
       'notif.disabled':'Notificaciones desactivadas',
       'cfg.notif.time':'Hora del recordatorio',
+            'desc.placeholder':'Ej. Comida, Gasolina, Ropa…',
+      'desc.placeholder2':'Ej. Alquiler, Salario…',
+      'notif.time.saved':'Hora guardada:',
+      'txs.count':'📋 ${n} transacciones',
+      'sheet.text.lançar':'📝 Registrar por texto',
+      'sheet.text.varios':'📝 Registro masivo',
+      'report.trend.label':'📅 Tendencia mes a mes',
+      'sheet.edit.tx':'✏️ Editar transacción',
+      'import.merge.found':'transacciones encontradas. ¿Qué deseas hacer?',
+      'notif.cotacao':'Cotización actual: R$',
+      'cat.food':'Comida',
+      'cat.edu':'Educación',
+      'cat.health':'Salud',
+      'cat.salary':'Salario',
+      'cat.transfer.out':'Transferencia Pix enviada -',
+      'cat.transfer.in':'Transferencia Pix recibida -',
+            'chart.7d':'7D',
+      'btn.export.icon':'⬇️ Exportar',
+      'import.found':'transacciones encontradas. ¿Qué deseas hacer?',
       'toast.lang':'🌐 ¡Idioma cambiado!',
       'months':['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
       'months.short':['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
@@ -4041,7 +4098,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
       // Pede permissão de notificação
       if(Notification.permission === 'default'){
         const p = await Notification.requestPermission();
-        if(p === 'granted') showToast(window.t?t('toast.notif.on'):'🔔 Notificações ativadas!');
+        if(p === 'granted') showToast(t('toast.notif.on'));
       }
 
       await navigator.serviceWorker.ready;
