@@ -277,6 +277,13 @@ input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:99
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--green);cursor:pointer;box-shadow:0 0 6px rgba(0,200,150,.4)}
 
 @keyframes pulse-green{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(1.35)}}
+@keyframes ticker-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ticker-item{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-right:1px solid var(--border);flex-shrink:0;cursor:pointer;transition:background .15s}
+.ticker-item:hover{background:var(--s2)}
+.ticker-flag{font-size:14px;line-height:1}
+.ticker-code{font-size:10px;font-weight:700;color:var(--muted2)}
+.ticker-price{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--text)}
+.ticker-var{font-size:10px;font-weight:700;border-radius:4px;padding:1px 5px}
 
 /* ── PRINT / PDF ── */
 @media print {
@@ -383,6 +390,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <div><div style="font-family:var(--mono);font-size:15px;font-weight:600;color:var(--green)" id="rep-total-inc">R$0</div><div style="font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.4px" data-i18n="report.income">Receita</div></div>
       <div><div style="font-family:var(--mono);font-size:15px;font-weight:600" id="rep-total-bal">R$0</div><div style="font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.4px" data-i18n="report.balance">Saldo</div></div>
     </div>
+  </div>
+
+  <!-- CARROSSEL DE COTAÇÕES -->
+  <div style="overflow:hidden;margin-bottom:12px;border-radius:12px;background:var(--s1);border:1px solid var(--border)">
+    <div id="ticker-track" style="display:flex;gap:0;white-space:nowrap;will-change:transform"></div>
   </div>
 
   <!-- SUB-TABS DO RELATÓRIO -->
@@ -2831,6 +2843,8 @@ tr+tr td{border-top:1px solid #f3f3f3}
 
   // Expõe via getter — sempre retorna a referência atual mesmo após reassign
   Object.defineProperty(window, '_ratesInBRL', { get: ()=>ratesInBRL, configurable:true });
+  window._getRatesInBRL     = () => ratesInBRL;
+  window._getRatesYestInBRL = () => ratesYestInBRL;
 
   window._injectCryptoRates = function(cryptoRates){
     Object.entries(cryptoRates).forEach(([k,v]) => { ratesInBRL[k] = v; });
@@ -3183,29 +3197,63 @@ tr+tr td{border-top:1px solid #f3f3f3}
 
         if(_candleMode) {
           // CoinGecko /ohlc endpoint — retorna [timestamp, open, high, low, close]
-          const res = await fetch(`https://api.coingecko.com/api/v3/coins/${cgId}/ohlc?vs_currency=brl&days=${cgDays}`);
-          const data = await res.json();
-          if(!Array.isArray(data) || !data.length) throw new Error('sem dados');
-          // Limita a 60 candles
-          const step = Math.max(1, Math.floor(data.length / 60));
-          const pts = data.filter((_,i) => i % step === 0);
-          rawData = pts.map(p => ({
-            timestamp: p[0]/1000,
-            bid:   p[4], // close
-            open:  p[1],
-            high:  p[2],
-            low:   p[3],
-            close: p[4],
-          }));
-          valuesBRL = rawData.map(d => d.bid);
-          highsBRL  = rawData.map(d => d.high);
-          lowsBRL   = rawData.map(d => d.low);
-          labels = rawData.map(d => {
-            const dt = new Date(d.timestamp * 1000);
-            return days <= 7
-              ? `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}h`
-              : `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}`;
-          });
+          try {
+            const res = await fetch(`https://api.coingecko.com/api/v3/coins/${cgId}/ohlc?vs_currency=brl&days=${cgDays}`);
+            const data = await res.json();
+            if(!Array.isArray(data) || !data.length) throw new Error('sem dados ohlc');
+            const step = Math.max(1, Math.floor(data.length / 60));
+            const pts = data.filter((_,i) => i % step === 0);
+            rawData = pts.map(p => ({
+              timestamp: p[0]/1000,
+              bid:   p[4],
+              open:  p[1],
+              high:  p[2],
+              low:   p[3],
+              close: p[4],
+            }));
+            valuesBRL = rawData.map(d => d.bid);
+            highsBRL  = rawData.map(d => d.high);
+            lowsBRL   = rawData.map(d => d.low);
+            labels = rawData.map(d => {
+              const dt = new Date(d.timestamp * 1000);
+              return cgDays <= 7
+                ? `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}h`
+                : `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}`;
+            });
+          } catch(ohlcErr) {
+            // Fallback: market_chart com candles aproximados
+            console.warn('ohlc fallback:', ohlcErr);
+            const interval = cgDays <= 7 ? 'hourly' : 'daily';
+            const res2 = await fetch(`https://api.coingecko.com/api/v3/coins/${cgId}/market_chart?vs_currency=brl&days=${cgDays}&interval=${interval}`);
+            const data2 = await res2.json();
+            if(!data2.prices?.length) throw new Error('sem dados');
+            const step2 = Math.max(1, Math.floor(data2.prices.length / 60));
+            const pts2 = data2.prices.filter((_,i) => i % step2 === 0);
+            // Cria OHLC aproximado agrupando pontos
+            const grpSize = Math.max(1, Math.floor(pts2.length / 40));
+            rawData = [];
+            for(let i = 0; i < pts2.length; i += grpSize) {
+              const grp = pts2.slice(i, i + grpSize);
+              const prices = grp.map(p => p[1]);
+              rawData.push({
+                timestamp: grp[0][0] / 1000,
+                bid:   prices[prices.length-1],
+                open:  prices[0],
+                high:  Math.max(...prices),
+                low:   Math.min(...prices),
+                close: prices[prices.length-1],
+              });
+            }
+            valuesBRL = rawData.map(d => d.bid);
+            highsBRL  = rawData.map(d => d.high);
+            lowsBRL   = rawData.map(d => d.low);
+            labels = rawData.map(d => {
+              const dt = new Date(d.timestamp * 1000);
+              return cgDays <= 7
+                ? `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}h`
+                : `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}`;
+            });
+          }
         } else {
           // Linha — endpoint market_chart
           const interval = days <= 1 ? 'hourly' : days <= 7 ? 'hourly' : 'daily';
@@ -3321,7 +3369,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
               const yL = y.getPixelForValue(d.l);
               const bullish = d.c >= d.o;
               const color = bullish ? '#00C896' : '#FF5C5C';
-              const w = Math.max(3, (x.width / candles.length) * 0.6);
+              const w = Math.min(12, Math.max(2, (x.width / candles.length) * 0.5));
 
               ctx.save();
               // Sombra (wick)
@@ -3424,6 +3472,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
     renderGrid();
     // Verifica alertas de cotação
     if(window._checkPriceAlerts) window._checkPriceAlerts(ratesInBRL);
+    if(window._updateTicker) window._updateTicker();
     if(!autoInterval){
       autoInterval = setInterval(()=>{
         if(document.getElementById('planpage-cambio')?.style.display !== 'none')
@@ -4152,6 +4201,89 @@ tr+tr td{border-top:1px solid #f3f3f3}
     document.getElementById('ai-analysis-result').style.display = 'none';
     document.getElementById('ai-analysis-idle').style.display = 'block';
   };
+})();
+</script>
+
+<!-- ── TICKER DE COTAÇÕES ── -->
+<script>
+(function(){
+  const TICKER_ITEMS = [
+    {code:'USD',flag:'🇺🇸',name:'Dólar'},
+    {code:'EUR',flag:'🇪🇺',name:'Euro'},
+    {code:'GBP',flag:'🇬🇧',name:'Libra'},
+    {code:'BTC',flag:'₿',  name:'Bitcoin'},
+    {code:'ETH',flag:'Ξ',  name:'Ether'},
+    {code:'ARS',flag:'🇦🇷',name:'Peso Arg'},
+    {code:'JPY',flag:'🇯🇵',name:'Iene'},
+    {code:'CAD',flag:'🇨🇦',name:'Dólar CA'},
+    {code:'SOL',flag:'◎', name:'Solana'},
+    {code:'BNB',flag:'🟡',name:'BNB'},
+  ];
+
+  let _animId = null, _pos = 0, _paused = false;
+
+  function buildTicker() {
+    const track = document.getElementById('ticker-track');
+    if(!track) return;
+    const rates  = window._getRatesInBRL?.()       || {};
+    const yest   = window._getRatesYestInBRL?.()   || {};
+    const crypto = window._cryptoRatesInBRL?.()    || {};
+    const all    = {...rates, ...crypto};
+    if(Object.keys(all).length <= 1) return; // sem dados ainda
+
+    const items = TICKER_ITEMS.map(item => {
+      const price = all[item.code]; if(!price) return null;
+      const prev  = yest[item.code];
+      const pct   = prev ? ((price - prev) / prev) * 100 : null;
+      const up    = pct !== null && pct >= 0;
+      const pStr  = price >= 10000
+        ? price.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})
+        : price >= 1
+          ? price.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:4})
+          : price.toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:6});
+      const vStr = pct !== null ? `${up?'▲':'▼'} ${Math.abs(pct).toFixed(2)}%` : '';
+      return {...item, pStr, vStr, up};
+    }).filter(Boolean);
+
+    if(!items.length) return;
+
+    const make = item => `<div class="ticker-item"
+      onclick="goTab('plan');setTimeout(()=>{goPlanTab('cambio');setTimeout(()=>openMoedaSheet('${item.code}'),350)},200)">
+      <span class="ticker-flag">${item.flag}</span>
+      <div><div class="ticker-code">${item.code}</div><div class="ticker-price">R$ ${item.pStr}</div></div>
+      ${item.vStr ? `<span class="ticker-var" style="color:${item.up?'var(--green)':'var(--red)'};background:${item.up?'rgba(0,200,150,.12)':'rgba(255,92,92,.12)'}">${item.vStr}</span>` : ''}
+    </div>`;
+
+    // Duplica para loop infinito
+    track.innerHTML = [...items,...items].map(make).join('');
+
+    if(_animId) cancelAnimationFrame(_animId);
+    _pos = 0;
+    let last = null;
+    const half = track.scrollWidth / 2;
+    function step(ts) {
+      if(!last) last = ts;
+      const dt = ts - last; last = ts;
+      if(!_paused) { _pos += dt * 0.045; if(_pos >= half) _pos = 0; }
+      track.style.transform = `translateX(-${_pos}px)`;
+      _animId = requestAnimationFrame(step);
+    }
+    _animId = requestAnimationFrame(step);
+
+    track.addEventListener('mouseenter', ()=>_paused=true,  {once:false});
+    track.addEventListener('mouseleave', ()=>_paused=false, {once:false});
+  }
+
+  window._updateTicker = buildTicker;
+
+  // Tenta até ter dados
+  let tries = 0;
+  function tryBuild() {
+    const r = window._getRatesInBRL?.();
+    if(r && Object.keys(r).length > 2) buildTicker();
+    else if(tries++ < 30) setTimeout(tryBuild, 600);
+  }
+  setTimeout(tryBuild, 1000);
 })();
 </script>
 
