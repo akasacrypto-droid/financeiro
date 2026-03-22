@@ -879,15 +879,16 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 
   <!-- Filtros: horizontal scroll no mobile, sidebar no desktop -->
   <div id="news-filters-sidebar" style="display:flex;gap:6px;overflow-x:auto;padding:0 0 10px;margin-bottom:4px" class="cat-scroll">
-    <button class="news-src-btn on" data-src="all"       onclick="filterNewsSource('all')">🌐 Todas</button>
-    <button class="news-src-btn" data-src="agbrasil"     onclick="filterNewsSource('agbrasil')">🏛️ Ag. Brasil</button>
-    <button class="news-src-btn" data-src="agbrasil2"    onclick="filterNewsSource('agbrasil2')">📰 Geral</button>
-    <button class="news-src-btn" data-src="poder360"     onclick="filterNewsSource('poder360')">📊 Poder360</button>
-    <button class="news-src-btn" data-src="reuters"      onclick="filterNewsSource('reuters')">🌎 Reuters</button>
+    <button class="news-src-btn on" data-src="all"      onclick="filterNewsSource('all')">🌐 Todas</button>
+    <button class="news-src-btn" data-src="economia"    onclick="filterNewsSource('economia')">📈 Economia</button>
+    <button class="news-src-btn" data-src="juros"       onclick="filterNewsSource('juros')">🏦 Juros</button>
+    <button class="news-src-btn" data-src="bolsa"       onclick="filterNewsSource('bolsa')">📊 Bolsa</button>
+    <button class="news-src-btn" data-src="investir"    onclick="filterNewsSource('investir')">💰 Investir</button>
+    <button class="news-src-btn" data-src="negocios"    onclick="filterNewsSource('negocios')">💼 Negócios</button>
     <hr style="border:none;border-top:1px solid var(--border);margin:4px 0;display:none" class="news-sidebar-divider">
-    <button class="news-src-btn" data-src="positivo"     onclick="filterNewsSource('positivo')">✅ Positivo</button>
-    <button class="news-src-btn" data-src="negativo"     onclick="filterNewsSource('negativo')">⚠️ Negativo</button>
-    <button class="news-src-btn" data-src="neutro"       onclick="filterNewsSource('neutro')">➖ Neutro</button>
+    <button class="news-src-btn" data-src="positivo"    onclick="filterNewsSource('positivo')">✅ Positivo</button>
+    <button class="news-src-btn" data-src="negativo"    onclick="filterNewsSource('negativo')">⚠️ Negativo</button>
+    <button class="news-src-btn" data-src="neutro"      onclick="filterNewsSource('neutro')">➖ Neutro</button>
   </div>
 
   <!-- Conteúdo -->
@@ -4060,15 +4061,13 @@ tr+tr td{border-top:1px solid #f3f3f3}
 <script>
 (function(){
 
-  // rss2json converte RSS em JSON — sem problemas de CORS
-  const RSS2JSON = 'https://api.rss2json.com/v1/api.json?rss_url=';
-
-  // Fontes que não bloqueiam rss2json (públicas/governamentais/internacionais)
+  // Google News RSS — funciona direto no browser sem proxy
   const SOURCES = {
-    agbrasil:  { label: 'Agência Brasil',   color: 'var(--blue)',   flag: '🏛️', url: 'https://agenciabrasil.ebc.com.br/economia/feed' },
-    agbrasil2: { label: 'Ag. Brasil · Geral', color: 'var(--blue)', flag: '📰', url: 'https://agenciabrasil.ebc.com.br/feed' },
-    poder360:  { label: 'Poder360',          color: 'var(--purple)',flag: '📊', url: 'https://www.poder360.com.br/poder-economia/feed/' },
-    reuters:   { label: 'Reuters Brasil',    color: 'var(--amber)', flag: '🌎', url: 'https://feeds.reuters.com/reuters/BReconomicsNews' },
+    economia: { label: 'Economia',        color: 'var(--green)',  flag: '📈', url: 'https://news.google.com/rss/search?q=economia+brasil+mercado+financeiro&hl=pt-BR&gl=BR&ceid=BR:pt-419' },
+    juros:    { label: 'Juros & Inflação', color: 'var(--red)',   flag: '🏦', url: 'https://news.google.com/rss/search?q=selic+juros+inflacao+ipca+banco+central&hl=pt-BR&gl=BR&ceid=BR:pt-419' },
+    bolsa:    { label: 'Bolsa & Câmbio',  color: 'var(--blue)',   flag: '📊', url: 'https://news.google.com/rss/search?q=bolsa+b3+dolar+cambio+acoes&hl=pt-BR&gl=BR&ceid=BR:pt-419' },
+    investir: { label: 'Investimentos',   color: 'var(--purple)', flag: '💰', url: 'https://news.google.com/rss/search?q=investimento+renda+fixa+tesouro+fii+fundos&hl=pt-BR&gl=BR&ceid=BR:pt-419' },
+    negocios: { label: 'Negócios',        color: 'var(--amber)',  flag: '💼', url: 'https://news.google.com/rss/search?q=negocios+empresas+lucro+resultado+brasil&hl=pt-BR&gl=BR&ceid=BR:pt-419' },
   };
 
   const IMPACT_STYLE = {
@@ -4095,23 +4094,28 @@ tr+tr td{border-top:1px solid #f3f3f3}
   async function fetchSource(key) {
     const src = SOURCES[key];
     try {
-      const res = await fetch(`${RSS2JSON}${encodeURIComponent(src.url)}&count=15`, {
-        signal: AbortSignal.timeout(10000)
-      });
+      const res = await fetch(src.url, { signal: AbortSignal.timeout(10000) });
       if(!res.ok) throw new Error(res.status);
-      const data = await res.json();
-      if(data.status !== 'ok' || !data.items) return [];
-      return data.items
-        .filter(item => isFinanceNews(item.title, item.description || ''))
+      const xml = await res.text();
+      const doc = new DOMParser().parseFromString(xml, 'text/xml');
+      return Array.from(doc.querySelectorAll('item'))
+        .filter(item => {
+          const title = item.querySelector('title')?.textContent || '';
+          const desc  = item.querySelector('description')?.textContent || '';
+          return isFinanceNews(title, desc);
+        })
         .slice(0, 12)
-        .map(item => ({
-          src: key,
-          title: item.title || '',
-          link: item.link || '#',
-          description: (item.description || item.content || '').replace(/<[^>]+>/g,'').slice(0,200).trim(),
-          pubDate: item.pubDate || '',
-          impact: getCachedImpact(item.title)
-        }));
+        .map(item => {
+          const rawTitle = item.querySelector('title')?.textContent?.trim() || '';
+          const link     = item.querySelector('link')?.textContent?.trim() || '#';
+          const desc     = (item.querySelector('description')?.textContent || '').replace(/<[^>]+>/g,'').slice(0,200).trim();
+          const pubDate  = item.querySelector('pubDate')?.textContent?.trim() || '';
+          // Google News: "Título - Fonte"
+          const parts    = rawTitle.split(' - ');
+          const srcName  = parts.length > 1 ? parts.pop().trim() : '';
+          const title    = parts.join(' - ');
+          return { src: key, title, srcName, link, description: desc, pubDate, impact: getCachedImpact(title) };
+        });
     } catch(e) {
       console.warn('fetchSource error:', key, e);
       return [];
@@ -4259,7 +4263,7 @@ Formato exato (sem nada fora do JSON):
 
       return `<div class="news-card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
-          <div class="news-card-source" style="color:${src.color}">${src.flag} ${src.label}</div>
+          <div class="news-card-source" style="color:${src.color}">${src.flag} ${src.label}${n.srcName ? ` <span style="color:var(--muted);font-weight:400">· ${n.srcName}</span>` : ''}</div>
           <span style="font-size:10px;color:var(--muted)">${timeAgo(n.pubDate)}</span>
         </div>
         <div class="news-card-title" onclick="window.open('${linkEsc}','_blank')" style="cursor:pointer">${n.title}</div>
