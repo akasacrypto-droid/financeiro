@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+l<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"/>
@@ -4172,8 +4172,17 @@ tr+tr td{border-top:1px solid #f3f3f3}
       setStep('Conectando com a IA...');
       const noData = !ctx;
       const prompt = noData
-        ? `Você é um consultor financeiro brasileiro. O usuário não tem lançamentos ainda. Dê 5 dicas práticas com valores reais. Responda em HTML simples (h3, p, ul, li, b). Sem markdown.`
-        : `Você é um consultor financeiro pessoal brasileiro. Analise os dados e responda APENAS em HTML simples (h3, p, ul, li, b, style="color:#FF5C5C" para alertas, style="color:#00C896" para positivos). Sem markdown.\n\n${ctx}\n\nInclua: 1)📊 Perfil financeiro 2)🔴 Alertas com valores reais 3)✅ Pontos positivos 4)💡 Top 5 ações para economizar com R$ estimado 5)🎯 Meta para o próximo mês`;
+        ? `Você é um consultor financeiro brasileiro. O usuário ainda não tem lançamentos. Dê 5 dicas práticas de controle financeiro. Responda em HTML simples (h3, p, ul, li, b). Sem markdown. NÃO invente valores de renda.`
+        : `Você é um consultor financeiro pessoal brasileiro. Analise os dados REAIS abaixo e responda APENAS em HTML simples (h3, p, ul, li, b, style="color:#FF5C5C" para alertas, style="color:#00C896" para positivos). Sem markdown.
+
+REGRAS IMPORTANTES:
+- Use SOMENTE os valores reais dos dados abaixo. NÃO invente rendas, NÃO use R$4.000 como exemplo.
+- Se a renda real do usuário for R$2.980, use R$2.980 em todos os exemplos.
+- Todos os cálculos devem ser baseados nos números reais fornecidos.
+
+${ctx}
+
+Inclua: 1)📊 Perfil financeiro com os valores reais 2)🔴 Alertas usando os valores reais 3)✅ Pontos positivos 4)💡 Top 5 ações concretas com R$ baseados na renda real 5)🎯 Meta para o próximo mês baseada nos dados reais`;
       setStep('Analisando seus gastos...');
       const response = await puter.ai.chat(prompt);
       const html = response?.message?.content?.[0]?.text || response?.text || String(response);
@@ -4223,12 +4232,11 @@ tr+tr td{border-top:1px solid #f3f3f3}
     const crypto = window._cryptoRatesInBRL?.()  || {};
     const all    = {...rates, ...crypto};
 
-    // Fallback estático enquanto cotações carregam
-    const STATIC = {USD:5.31,EUR:6.03,GBP:7.08,JPY:0.0334,BTC:480000,ETH:9200,BNB:1450,SOL:620};
-    const src = Object.keys(all).length > 2 ? all : STATIC;
+    // Só renderiza com dados reais
+    if(Object.keys(all).length <= 2) return;
 
     const items = TICKER_ITEMS.map(item => {
-      const price = src[item.code]; if(!price) return null;
+      const price = all[item.code]; if(!price) return null;
       const prev  = yest[item.code];
       const pct   = prev ? ((price - prev) / prev) * 100 : null;
       const up    = pct !== null && pct >= 0;
@@ -4267,7 +4275,9 @@ tr+tr td{border-top:1px solid #f3f3f3}
     });
   }
 
-  // Chama imediatamente com dados estáticos
+  // Chama imediatamente com dados estáticos (fallback realista Mar/2026)
+  const STATIC_FALLBACK = {USD:5.31,EUR:6.03,GBP:7.08,JPY:0.0334,CAD:3.87,CHF:6.72,ARS:0.0038,CNY:0.77,AUD:3.73,BTC:365000,ETH:11000,SOL:465,BNB:3300,XRP:7.4,DOGE:0.8};
+  window._tickerRatesOverride = STATIC_FALLBACK;
   buildTicker();
 
   window._updateTicker = buildTicker;
@@ -4286,7 +4296,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
     }
   });
 
-  // Busca cotações se ainda não foram carregadas
+  // Busca cotações reais logo em seguida
   async function fetchTickerRates() {
     try {
       const MOEDAS = ['USD','EUR','GBP','JPY','CAD','CHF','ARS','CNY','AUD','MXN'];
@@ -4298,33 +4308,19 @@ tr+tr td{border-top:1px solid #f3f3f3}
         const key = `${code}BRL`;
         if(data[key]) rates[code] = parseFloat(data[key].bid);
       });
-      // Injeta nas rates globais se disponível
-      if(window._injectCryptoRates) {
-        // não é crypto mas aproveita o mecanismo
-      }
       return rates;
     } catch(e) { return null; }
   }
 
-  // Tenta até ter dados
-  let tries = 0;
-  async function tryBuild() {
-    let r = window._getRatesInBRL?.();
-    if(!r || Object.keys(r).length <= 2) {
-      // Busca cotações independentemente
-      const fetched = await fetchTickerRates();
-      if(fetched) {
-        // Usa diretamente no ticker
-        window._tickerRatesOverride = fetched;
-        r = fetched;
-      }
+  // Atualiza com dados reais após carregar
+  (async () => {
+    const fetched = await fetchTickerRates();
+    if(fetched && Object.keys(fetched).length > 2) {
+      window._tickerRatesOverride = fetched;
+      buildTicker();
     }
-    if(r && Object.keys(r).length > 2) buildTicker();
-    else if(tries++ < 10) setTimeout(tryBuild, 1000);
-  }
-  setTimeout(tryBuild, 1200);
+  })();
 })();
-</script>
 
 </body>
 </html>
