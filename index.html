@@ -278,12 +278,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 
 @keyframes pulse-green{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(1.35)}}
 @keyframes ticker-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-.ticker-item{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-right:1px solid var(--border);flex-shrink:0;cursor:pointer;transition:background .15s}
+.ticker-item{display:inline-flex;align-items:center;gap:6px;padding:0 14px;border-right:1px solid var(--border);flex-shrink:0;cursor:pointer;transition:background .15s;height:36px}
 .ticker-item:hover{background:var(--s2)}
-.ticker-flag{font-size:14px;line-height:1}
-.ticker-code{font-size:10px;font-weight:700;color:var(--muted2)}
-.ticker-price{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--text)}
-.ticker-var{font-size:10px;font-weight:700;border-radius:4px;padding:1px 5px}
+.ticker-flag{font-size:13px;line-height:1}
+.ticker-code{font-size:9.5px;font-weight:700;color:var(--muted2)}
+.ticker-price{font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--text)}
+.ticker-var{font-size:9.5px;font-weight:700;border-radius:4px;padding:1px 5px}
 
 /* ── PRINT / PDF ── */
 @media print {
@@ -350,6 +350,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   </div>
 </div>
 
+<!-- TICKER DE COTAÇÕES -->
+<div style="overflow:hidden;background:var(--s1);border-bottom:1px solid var(--border);height:36px;display:flex;align-items:center;flex-shrink:0">
+  <div id="ticker-track" style="display:flex;align-items:center;white-space:nowrap;height:100%"></div>
+</div>
+
 <!-- NAV TABS -->
 <div class="nav-tabs">
   <button class="nav-tab on" onclick="goTab('report')" id="tab-report"><span class="tab-ico">📈</span><span data-i18n="nav.report">Relatório</span></button>
@@ -390,11 +395,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <div><div style="font-family:var(--mono);font-size:15px;font-weight:600;color:var(--green)" id="rep-total-inc">R$0</div><div style="font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.4px" data-i18n="report.income">Receita</div></div>
       <div><div style="font-family:var(--mono);font-size:15px;font-weight:600" id="rep-total-bal">R$0</div><div style="font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.4px" data-i18n="report.balance">Saldo</div></div>
     </div>
-  </div>
-
-  <!-- CARROSSEL DE COTAÇÕES -->
-  <div style="overflow:hidden;margin-bottom:12px;border-radius:12px;background:var(--s1);border:1px solid var(--border);height:42px;display:flex;align-items:center">
-    <div id="ticker-track" style="display:flex;align-items:center;white-space:nowrap"></div>
   </div>
 
   <!-- SUB-TABS DO RELATÓRIO -->
