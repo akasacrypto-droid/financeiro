@@ -1,108 +1,100 @@
-// Controle+ Service Worker v2
 const CACHE = 'controle-v1';
+const ASSETS = ['./', './index.html', './icon.svg'];
 
-self.addEventListener('install', e => self.skipWaiting());
-self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+// Instala e cacheia assets principais
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())
+  );
+});
 
-// ── Alertas salvos no SW (recebidos da página) ──
+// Ativa e limpa caches antigos
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+
+// Fetch — network first, cache fallback
+self.addEventListener('fetch', e => {
+  // Ignora requests não-GET e externos
+  if(e.request.method !== 'GET') return;
+  const url = new URL(e.request.url);
+  if(url.origin !== location.origin) return;
+
+  e.respondWith(
+    fetch(e.request)
+      .then(res => {
+        if(res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+        }
+        return res;
+      })
+      .catch(() => caches.match(e.request))
+  );
+});
+
+// ── ALERTAS DE COTAÇÃO EM BACKGROUND ──
 let _alerts = [];
 
 self.addEventListener('message', e => {
-  if (e.data?.type === 'UPDATE_ALERTS') {
+  if(e.data?.type === 'UPDATE_ALERTS') {
     _alerts = e.data.alerts || [];
   }
-  if (e.data?.type === 'PING') {
-    // Página ainda aberta — verifica agora
+  if(e.data?.type === 'PING') {
     checkAlerts();
   }
 });
 
-// ── Periodic Background Sync (Chrome Android com PWA instalada) ──
 self.addEventListener('periodicsync', e => {
-  if (e.tag === 'price-alerts') {
-    e.waitUntil(checkAlertsFromStorage());
-  }
+  if(e.tag === 'price-alerts') e.waitUntil(checkAlerts());
 });
-
-// ── Push (fallback futuro) ──
-self.addEventListener('push', e => {
-  if (e.data) notify(e.data.json());
-});
-
-// Lê alertas direto do IndexedDB/storage via clients
-async function checkAlertsFromStorage() {
-  // Tenta pegar alertas da página aberta primeiro
-  const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-  if (clients.length > 0) {
-    // Página aberta — pede pra ela checar
-    clients[0].postMessage({ type: 'CHECK_NOW' });
-    return;
-  }
-  // App fechado — usa alertas que foram enviados via UPDATE_ALERTS
-  await checkAlerts();
-}
 
 async function checkAlerts() {
-  const active = _alerts.filter(a => a.active && !a.triggered);
-  if (!active.length) return;
+  if(!_alerts.length) return;
+  const active = _alerts.filter(a => a.active !== false);
+  if(!active.length) return;
 
   try {
-    const pairs = [...new Set(active.map(a => a.moeda))].map(m=>`${m}-BRL`).join(',');
+    const moedas = [...new Set(active.map(a => a.moeda).filter(m => !['BTC','ETH','BNB','SOL','XRP','ADA','DOGE','DOT'].includes(m)))];
+    if(!moedas.length) return;
 
-    // AwesomeAPI — cotação real do mercado brasileiro
-    const res = await fetch(`https://economia.awesomeapi.com.br/json/last/${pairs}`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('awesomeapi falhou');
+    const pairs = moedas.map(m => `${m}-BRL`).join(',');
+    const res = await fetch(`https://economia.awesomeapi.com.br/json/last/${pairs}`);
     const data = await res.json();
 
-    const rates = { BRL: 1 };
-    Object.entries(data).forEach(([key, val]) => {
-      // key = "USDBRL" → code = "USD"
-      const code = key.replace('BRL','');
-      rates[code] = parseFloat(val.bid);
-    });
-
     const triggered = [];
-    _alerts = _alerts.map(a => {
-      if (!a.active || a.triggered) return a;
-      const rate = rates[a.moeda];
-      if (!rate) return a;
+    const updated = _alerts.map(a => {
+      const key = `${a.moeda}BRL`;
+      const rate = data[key] ? parseFloat(data[key].bid) : null;
+      if(!rate) return a;
       const hit = a.cond === 'acima' ? rate >= a.valor : rate <= a.valor;
-      if (hit) { triggered.push({ ...a, rateNow: rate }); return { ...a, triggered: true }; }
+      if(hit && a.active !== false) {
+        triggered.push({ ...a, rateNow: rate });
+        return { ...a, active: false };
+      }
       return a;
     });
 
-    if (!triggered.length) return;
-
-    // Notifica a página se aberta
-    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    clients.forEach(c => c.postMessage({ type: 'ALERTS_TRIGGERED', triggered, allAlerts: _alerts }));
-
-    // Dispara notificações
-    for (const a of triggered) {
-      const ico = a.cond === 'acima' ? '▲' : '▼';
-      const brl = a.rateNow.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
-      await self.registration.showNotification(`💰 Alerta ${a.moeda} ${ico} R$ ${a.valor.toFixed(2)}`, {
-        body: `Cotação atual: R$ ${brl}\nToque para abrir o Controle+`,
-        icon: '/financeiro/icon-192.png',
-        badge: '/financeiro/icon-192.png',
-        tag: `fin-alert-${a.id}`,
-        requireInteraction: true,
-        renotify: true,
-        vibrate: [200, 100, 200],
-        data: { url: self.registration.scope }
+    if(triggered.length) {
+      _alerts = updated;
+      // Notifica clientes abertos
+      const clients = await self.clients.matchAll();
+      clients.forEach(c => c.postMessage({ type: 'ALERTS_TRIGGERED', triggered, allAlerts: updated }));
+      // Push notification se app fechado
+      triggered.forEach(a => {
+        const ico = a.cond === 'acima' ? '▲' : '▼';
+        self.registration.showNotification(`🔔 Alerta ${a.moeda} ${ico} R$ ${a.valor.toFixed(2)}`, {
+          body: `Cotação atual: R$ ${Number(a.rateNow).toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4})}`,
+          icon: './icon.svg',
+          badge: './icon.svg',
+          tag: `alert-${a.moeda}`,
+          renotify: true,
+        });
       });
     }
   } catch(e) {}
 }
-
-// Clique na notificação → abre o app
-self.addEventListener('notificationclick', e => {
-  e.notification.close();
-  const url = e.notification.data?.url || '/financeiro/';
-  e.waitUntil(
-    self.clients.matchAll({ type: 'window' }).then(clients => {
-      const open = clients.find(c => c.url.includes('financeiro'));
-      return open ? open.focus() : self.clients.openWindow(url);
-    })
-  );
-});
