@@ -313,35 +313,67 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   body{max-width:1100px;margin:0 auto}
   .fab{right:calc((100vw - 1100px)/2 + 16px)}
 
-  /* Todas as páginas comuns: centraliza o conteúdo com largura confortável */
-  #page-report,#page-txs,#page-plan,#page-cfg,#page-notif{
-    max-width:720px;margin-left:auto;margin-right:auto;
+  /* Nav tabs maiores */
+  .nav-tab{font-size:12px;padding:12px 10px 10px;gap:4px}
+  .nav-tab .tab-ico{font-size:20px}
+
+  /* Topbar */
+  .topbar{padding:calc(var(--st)+14px) 28px 14px}
+  #month-label{font-size:12px;min-width:90px}
+
+  /* Todas as páginas ocupam a largura total */
+  .page{padding:20px 28px calc(var(--sb) + 80px)}
+
+  /* ── RELATÓRIO: 2 colunas ── */
+  #page-report{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:0 20px;
+    align-items:start;
   }
+  #page-report #pdf-header,
+  #page-report > div:first-of-type, /* hero */
+  #page-report > div:nth-of-type(2) /* filtro período */{
+    grid-column:1/-1;
+  }
+  /* hero span full width */
+  #page-report > [style*="linear-gradient(135deg,#1a1030"]{grid-column:1/-1}
+  /* filtro período span full */
+  #page-report > [style*="overflow-x:auto"]{grid-column:1/-1}
+  /* métricas 4 colunas */
+  .metrics{grid-template-columns:repeat(4,1fr);grid-column:1/-1}
+  /* banner comparação full */
+  .comp-banner{grid-column:1/-1}
+  /* cards side by side já são grid */
 
-  /* Relatório: métricas em 4 colunas */
-  .metrics{grid-template-columns:repeat(4,1fr)}
+  /* ── EXTRATOS: lista centralizada e mais larga ── */
+  #page-txs{max-width:800px;margin-left:auto;margin-right:auto}
+  .tx-item{padding:14px 18px;gap:14px}
+  .tx-desc{font-size:14px}
+  .tx-amt{font-size:14px}
+  .cat-chip{font-size:12px;padding:7px 14px}
 
-  /* Extratos: lista de txs mais larga */
-  .tx-item{padding:14px 18px}
+  /* ── PLANEJAR: centralizado ── */
+  #page-plan{max-width:800px;margin-left:auto;margin-right:auto}
+  .plan-sub-tab{font-size:13px;padding:9px 24px}
 
-  /* Planejar sub-tabs maiores */
-  .plan-sub-tab{font-size:13px;padding:9px 20px}
+  /* ── CONFIG: centralizado ── */
+  #page-cfg,#page-notif{max-width:680px;margin-left:auto;margin-right:auto}
 
-  /* News layout: sidebar esquerda + grid de notícias */
+  /* ── NOVIDADES: sidebar + grid ── */
   #page-news.on{
     display:grid;
     grid-template-columns:190px 1fr;
     grid-template-rows:auto 1fr;
     gap:0 20px;
     align-items:start;
-    max-width:100%;
   }
   #page-news.on #news-header-row{grid-column:1/-1}
   #page-news.on #news-filters-sidebar{
     grid-column:1;grid-row:2;
     display:flex;flex-direction:column;
     gap:4px;overflow-x:visible;padding:0;
-    position:sticky;top:12px;
+    position:sticky;top:20px;
   }
   #page-news.on #news-filters-sidebar .news-src-btn{
     text-align:left;border-radius:10px;padding:8px 12px;
@@ -352,8 +384,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   .news-sidebar-divider{display:block!important}
 }
 @media(min-width:1200px){
-  body{max-width:1200px}
-  .fab{right:calc((100vw - 1200px)/2 + 16px)}
+  body{max-width:1300px}
+  .fab{right:calc((100vw - 1300px)/2 + 20px)}
+  #page-txs,#page-plan{max-width:900px}
   #page-news.on #news-list{column-count:3}
 }
 </style>
@@ -4023,10 +4056,13 @@ tr+tr td{border-top:1px solid #f3f3f3}
   async function fetchSource(key) {
     const xml = await fetchProxy(SOURCES[key].url);
     if(!xml) return [];
-    return parseRSS(xml).slice(0, 10).map(item => ({
-      src: key, ...item,
-      impact: getCachedImpact(item.title) // carrega do cache imediatamente
-    }));
+    return parseRSS(xml)
+      .filter(item => isFinanceNews(item.title, item.description)) // só financeiro
+      .slice(0, 12)
+      .map(item => ({
+        src: key, ...item,
+        impact: getCachedImpact(item.title)
+      }));
   }
 
   // ── Cache de análises no localStorage ────────────────
@@ -4059,14 +4095,71 @@ tr+tr td{border-top:1px solid #f3f3f3}
   }
 
   // ── Puter.js — sem CORS, sem API key, gratuito ────────
+  // ── Filtro de relevância — só notícias financeiras ────
+  const FINANCE_KEYWORDS = [
+    'inflação','juros','selic','câmbio','dólar','real','pib','economia','recessão',
+    'desemprego','emprego','salário','renda','imposto','tributo','icms','ir ',
+    'petróleo','gasolina','combustível','diesel','energia','luz','tarifa',
+    'bolsa','ação','ações','b3','mercado financeiro','investimento','fundo',
+    'tesouro','cdi','ipca','igp','inpc','poupança','crédito','juro',
+    'banco central','copom','bacen','reforma','orçamento','déficit','superávit',
+    'exportação','importação','balança','comércio','pib','produto interno',
+    'alta','queda','crise','recuperação','crescimento','recessão','risco',
+    'privatização','concessão','leilão','petrobras','vale','embraer',
+    'nubank','itaú','bradesco','santander','caixa','bndes',
+    'dívida','fiscal','previdência','aposentadoria','benefício','bolsa família'
+  ];
+
+  function isFinanceNews(title, desc) {
+    const text = (title + ' ' + desc).toLowerCase();
+    return FINANCE_KEYWORDS.some(k => text.includes(k));
+  }
+
+  // ── Pega dados reais de gastos do usuário ─────────────
+  function getUserSpendingContext() {
+    try {
+      const txData = JSON.parse(localStorage.getItem('fin_txs') || '[]');
+      const now = new Date();
+      const curKey = `${now.getFullYear()}-${now.getMonth()}`;
+      const curTxs = txData.filter(t => t.month === curKey && t.type === 'expense');
+
+      if(!curTxs.length) return null;
+
+      // Agrupa por categoria
+      const cats = {};
+      curTxs.forEach(t => {
+        const c = t.cat || 'Outros';
+        cats[c] = (cats[c] || 0) + t.val;
+      });
+
+      const totalExp = Object.values(cats).reduce((s,v) => s+v, 0);
+      const top = Object.entries(cats)
+        .sort((a,b) => b[1]-a[1])
+        .slice(0,4)
+        .map(([cat,val]) => `${cat}: R$${val.toFixed(0)}`)
+        .join(', ');
+
+      return `Gastos reais do usuário neste mês (total R$${totalExp.toFixed(0)}): ${top}.`;
+    } catch(e) { return null; }
+  }
+
   async function analyzeNews(news) {
-    const prompt = `Você é um especialista financeiro brasileiro. Analise esta notícia e responda SOMENTE em JSON válido, sem markdown nem texto extra.
+    const userCtx = getUserSpendingContext();
+
+    const prompt = `Você é um analista financeiro pessoal brasileiro. Analise esta notícia e responda SOMENTE em JSON válido, sem markdown.
 
 Notícia: "${news.title}"
 ${news.description ? `Contexto: "${news.description}"` : ''}
+${userCtx ? `\nDados reais do usuário: ${userCtx}` : ''}
 
-Formato exato:
-{"impacto":"positivo"|"negativo"|"neutro","area":"ex: Inflação, Juros, Câmbio, Emprego, Investimentos","resumo":"1 frase do que aconteceu","para_voce":"1 frase do impacto na vida do brasileiro"}`;
+Regras para "para_voce":
+- Se tiver dados do usuário, seja ESPECÍFICO: mencione os valores reais dele e a tendência concreta
+- Exemplo bom: "Você gastou R$320 com combustível este mês → essa alta pode custar mais R$40 no próximo"
+- Exemplo ruim: "pode afetar os combustíveis no Brasil"
+- Sem dados do usuário: seja direto e concreto para o brasileiro médio, com valores estimados
+
+Formato exato (sem nada fora do JSON):
+{"impacto":"positivo"|"negativo"|"neutro","area":"Inflação|Juros|Câmbio|Emprego|Combustível|Investimentos|Energia|Alimentação|Crédito","resumo":"1 frase clara do que aconteceu","para_voce":"1 frase específica e direta do impacto real no bolso"}`;
 
     try {
       const response = await puter.ai.chat(prompt, { model: 'claude-haiku-4-5' });
@@ -4076,7 +4169,7 @@ Formato exato:
       const end   = clean.lastIndexOf('}');
       if(start === -1 || end === -1) return null;
       const impact = JSON.parse(clean.slice(start, end+1));
-      setCachedImpact(news.title, impact); // salva no cache
+      setCachedImpact(news.title, impact);
       return impact;
     } catch(e) { return null; }
   }
