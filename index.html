@@ -165,14 +165,14 @@ body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;o
 .fab:active{transform:scale(.90)}
 
 /* ── SHEET ── */
-.sheet-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:100}
+.sheet-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:1000}
 .sheet-overlay.open{display:block}
 .sheet{
   position:fixed;bottom:0;left:0;right:0;
   background:var(--s1);border-radius:20px 20px 0 0;
   border-top:1px solid var(--border2);
   padding:0 max(14px,var(--sl)) calc(var(--sb) + 20px) max(14px,var(--sr));
-  z-index:101;transform:translateY(100%);
+  z-index:1001;transform:translateY(100%);
   transition:transform .3s cubic-bezier(.32,.72,0,1);
   max-height:92vh;overflow-y:auto;
 }
@@ -4350,9 +4350,24 @@ Formato exato (sem nada fora do JSON):
   let _puterLowBalance = localStorage.getItem('_puter_low_balance') === '1';
 
   window.abrirOnboardingPuter = function() {
-    document.getElementById('puter-onboarding-overlay').classList.add('open');
-    document.getElementById('puter-onboarding-sheet').classList.add('open');
+    const overlay = document.getElementById('puter-onboarding-overlay');
+    const sheet   = document.getElementById('puter-onboarding-sheet');
+    if(!overlay || !sheet) return;
+    overlay.classList.add('open');
+    sheet.classList.add('open');
   };
+
+  // Impede que renderNewsList destrua o botão durante o clique
+  let _renderPending = false;
+  const _origRender = renderNewsList;
+  function renderNewsList() {
+    if(_renderPending) return;
+    _renderPending = true;
+    requestAnimationFrame(() => {
+      _origRender();
+      _renderPending = false;
+    });
+  }
 
   window.fecharOnboardingPuter = function() {
     document.getElementById('puter-onboarding-overlay').classList.remove('open');
