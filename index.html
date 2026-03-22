@@ -3179,22 +3179,51 @@ tr+tr td{border-top:1px solid #f3f3f3}
 
       if(isCrypto){
         const cgId = CRYPTO_IDS[code];
-        const interval = days <= 1 ? 'hourly' : days <= 7 ? 'hourly' : 'daily';
         const cgDays = days <= 1 ? 1 : days;
-        const res = await fetch(`https://api.coingecko.com/api/v3/coins/${cgId}/market_chart?vs_currency=brl&days=${cgDays}&interval=${interval}`);
-        const data = await res.json();
-        if(!data.prices?.length) throw new Error('sem dados');
-        const step = Math.max(1, Math.floor(data.prices.length / 60));
-        const pts = data.prices.filter((_,i) => i % step === 0);
-        valuesBRL = pts.map(p => p[1]);
-        highsBRL  = valuesBRL;
-        lowsBRL   = valuesBRL;
-        labels = pts.map(p => {
-          const d = new Date(p[0]);
-          return days <= 7
-            ? `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}h`
-            : `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
-        });
+
+        if(_candleMode) {
+          // CoinGecko /ohlc endpoint — retorna [timestamp, open, high, low, close]
+          const res = await fetch(`https://api.coingecko.com/api/v3/coins/${cgId}/ohlc?vs_currency=brl&days=${cgDays}`);
+          const data = await res.json();
+          if(!Array.isArray(data) || !data.length) throw new Error('sem dados');
+          // Limita a 60 candles
+          const step = Math.max(1, Math.floor(data.length / 60));
+          const pts = data.filter((_,i) => i % step === 0);
+          rawData = pts.map(p => ({
+            timestamp: p[0]/1000,
+            bid:   p[4], // close
+            open:  p[1],
+            high:  p[2],
+            low:   p[3],
+            close: p[4],
+          }));
+          valuesBRL = rawData.map(d => d.bid);
+          highsBRL  = rawData.map(d => d.high);
+          lowsBRL   = rawData.map(d => d.low);
+          labels = rawData.map(d => {
+            const dt = new Date(d.timestamp * 1000);
+            return days <= 7
+              ? `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}h`
+              : `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}`;
+          });
+        } else {
+          // Linha — endpoint market_chart
+          const interval = days <= 1 ? 'hourly' : days <= 7 ? 'hourly' : 'daily';
+          const res = await fetch(`https://api.coingecko.com/api/v3/coins/${cgId}/market_chart?vs_currency=brl&days=${cgDays}&interval=${interval}`);
+          const data = await res.json();
+          if(!data.prices?.length) throw new Error('sem dados');
+          const step = Math.max(1, Math.floor(data.prices.length / 60));
+          const pts = data.prices.filter((_,i) => i % step === 0);
+          valuesBRL = pts.map(p => p[1]);
+          highsBRL  = valuesBRL;
+          lowsBRL   = valuesBRL;
+          labels = pts.map(p => {
+            const d = new Date(p[0]);
+            return days <= 7
+              ? `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}h`
+              : `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+          });
+        }
       } else if(days <= 1) {
         const res = await fetch(`https://economia.awesomeapi.com.br/json/daily/${code}-BRL/1`);
         const data = await res.json();
@@ -3261,7 +3290,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
         // ── CANDLESTICK com dados OHLC reais da AwesomeAPI ──
         const rawCandles = rawData.map((d, i) => ({
           x: labels[i],
-          o: toBase(parseFloat(i === 0 ? d.bid : rawData[i-1].bid)),
+          o: toBase(parseFloat(d.open !== undefined ? d.open : (i === 0 ? d.bid : rawData[i-1].bid))),
           h: toBase(parseFloat(d.high)),
           l: toBase(parseFloat(d.low)),
           c: toBase(parseFloat(d.bid)),
