@@ -699,7 +699,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     </div>
     <!-- Seletor período -->
     <div style="display:flex;gap:6px;margin-bottom:14px;align-items:center">
-      <button class="rpt-period on" id="mper-7"  onclick="setMoedaPeriod(7,this)" data-i18n="chart.7d">7D</button>
+      <button class="rpt-period on" id="mper-1"  onclick="setMoedaPeriod(1,this)">1D</button>
+      <button class="rpt-period"    id="mper-7"  onclick="setMoedaPeriod(7,this)" data-i18n="chart.7d">7D</button>
       <button class="rpt-period"    id="mper-30" onclick="setMoedaPeriod(30,this)">30D</button>
       <button class="rpt-period"    id="mper-90" onclick="setMoedaPeriod(90,this)">3M</button>
       <!-- Badge variação do período -->
@@ -3013,7 +3014,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
   // ── SHEET GRÁFICO ──
   window._moedaSheetCode = 'USD';
   window._moedaChartInst = null;
-  window._moedaPeriod    = 7;
+  window._moedaPeriod    = 1;
 
   const CRYPTO_IDS = {BTC:'bitcoin',ETH:'ethereum',BNB:'binancecoin',SOL:'solana',XRP:'ripple',ADA:'cardano',DOGE:'dogecoin',DOT:'polkadot'};
   const CRYPTO_META = {BTC:{ico:'₿',color:'#F7931A'},ETH:{ico:'Ξ',color:'#627EEA'},BNB:{ico:'🟡',color:'#F3BA2F'},SOL:{ico:'◎',color:'#9945FF'},XRP:{ico:'✕',color:'#346AA9'},ADA:{ico:'🔵',color:'#0033AD'},DOGE:{ico:'🐕',color:'#C2A633'},DOT:{ico:'⚪',color:'#E6007A'}};
@@ -3021,9 +3022,9 @@ tr+tr td{border-top:1px solid #f3f3f3}
   window.openMoedaSheet = async function(code){
     const isCrypto = !!CRYPTO_IDS[code];
     _moedaSheetCode = code;
-    _moedaPeriod = 7;
+    _moedaPeriod = 1;
     document.querySelectorAll('[id^=mper-]').forEach(b=>b.classList.remove('on'));
-    document.getElementById('mper-7')?.classList.add('on');
+    document.getElementById('mper-1')?.classList.add('on');
 
     const flagEl  = document.getElementById('msheet-flag');
     const flagIco = document.getElementById('msheet-flagico');
@@ -3163,8 +3164,9 @@ tr+tr td{border-top:1px solid #f3f3f3}
 
       if(isCrypto){
         const cgId = CRYPTO_IDS[code];
-        const interval = days <= 7 ? 'hourly' : 'daily';
-        const res = await fetch(`https://api.coingecko.com/api/v3/coins/${cgId}/market_chart?vs_currency=brl&days=${days}&interval=${interval}`);
+        const interval = days <= 1 ? 'hourly' : days <= 7 ? 'hourly' : 'daily';
+        const cgDays = days <= 1 ? 1 : days;
+        const res = await fetch(`https://api.coingecko.com/api/v3/coins/${cgId}/market_chart?vs_currency=brl&days=${cgDays}&interval=${interval}`);
         const data = await res.json();
         if(!data.prices?.length) throw new Error('sem dados');
         const step = Math.max(1, Math.floor(data.prices.length / 60));
@@ -3177,6 +3179,19 @@ tr+tr td{border-top:1px solid #f3f3f3}
           return days <= 7
             ? `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}h`
             : `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+        });
+      } else if(days <= 1) {
+        // Intraday: AwesomeAPI retorna pontos do dia atual
+        const res = await fetch(`https://economia.awesomeapi.com.br/json/daily/${code}-BRL/1`);
+        const data = await res.json();
+        if(!Array.isArray(data) || !data.length) throw new Error('sem dados');
+        const sorted = [...data].sort((a,b) => Number(a.timestamp) - Number(b.timestamp));
+        valuesBRL = sorted.map(d => parseFloat(d.bid));
+        highsBRL  = sorted.map(d => parseFloat(d.high));
+        lowsBRL   = sorted.map(d => parseFloat(d.low));
+        labels = sorted.map(d => {
+          const dt = new Date(Number(d.timestamp) * 1000);
+          return `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
         });
       } else {
         const res = await fetch(`https://economia.awesomeapi.com.br/json/daily/${code}-BRL/${days}`);
@@ -3206,7 +3221,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
       const last  = values[values.length - 1];
       const periodPct = first > 0 ? ((last - first) / first) * 100 : null;
       const periodUp  = periodPct !== null && periodPct >= 0;
-      const periodLbl = days === 7 ? '7D' : days === 30 ? '30D' : '3M';
+      const periodLbl = days === 1 ? '1D' : days === 7 ? '7D' : days === 30 ? '30D' : '3M';
 
       document.getElementById('msheet-min').textContent = fmtBase(min);
       document.getElementById('msheet-avg').textContent = fmtBase(avg);
