@@ -654,10 +654,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <button onclick="closeMoedaSheet()" style="background:var(--s2);border:1px solid var(--border2);border-radius:8px;color:var(--muted2);width:32px;height:32px;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">✕</button>
     </div>
     <!-- Seletor período -->
-    <div style="display:flex;gap:6px;margin-bottom:14px">
-      <button class="rpt-period on" id="mper-7" onclick="setMoedaPeriod(7,this)">7D</button>
-      <button class="rpt-period" id="mper-30" onclick="setMoedaPeriod(30,this)">30D</button>
-      <button class="rpt-period" id="mper-90" onclick="setMoedaPeriod(90,this)">3M</button>
+    <div style="display:flex;gap:6px;margin-bottom:14px;align-items:center">
+      <button class="rpt-period on" id="mper-7"  onclick="setMoedaPeriod(7,this)">7D</button>
+      <button class="rpt-period"    id="mper-30" onclick="setMoedaPeriod(30,this)">30D</button>
+      <button class="rpt-period"    id="mper-90" onclick="setMoedaPeriod(90,this)">3M</button>
+      <!-- Badge variação do período -->
+      <div id="msheet-period-var" style="margin-left:auto;font-size:11px;font-weight:700;border-radius:7px;padding:4px 10px;display:none"></div>
     </div>
     <!-- Canvas gráfico -->
     <div style="position:relative;height:160px;margin-bottom:12px">
@@ -665,18 +667,22 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <div id="moeda-chart-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">Carregando...</div>
     </div>
     <!-- Stats linha -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:16px">
       <div style="background:var(--s2);border-radius:10px;padding:10px;text-align:center">
         <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Mín</div>
-        <div id="msheet-min" style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--red)">—</div>
+        <div id="msheet-min" style="font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--red)">—</div>
       </div>
       <div style="background:var(--s2);border-radius:10px;padding:10px;text-align:center">
         <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Média</div>
-        <div id="msheet-avg" style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--text)">—</div>
+        <div id="msheet-avg" style="font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--text)">—</div>
       </div>
       <div style="background:var(--s2);border-radius:10px;padding:10px;text-align:center">
         <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Máx</div>
-        <div id="msheet-max" style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--green)">—</div>
+        <div id="msheet-max" style="font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--green)">—</div>
+      </div>
+      <div style="background:var(--s2);border-radius:10px;padding:10px;text-align:center">
+        <div id="msheet-var-lbl" style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">7D</div>
+        <div id="msheet-period-pct" style="font-family:'DM Mono',monospace;font-size:11px;font-weight:700">—</div>
       </div>
     </div>
     <button onclick="document.getElementById('conv-para').value=_moedaSheetCode;calcConv();closeMoedaSheet()" style="width:100%;padding:13px;background:var(--blue-bg);border:1px solid rgba(91,158,255,.25);border-radius:12px;color:var(--blue);font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;margin-bottom:8px">💱 Converter esta moeda</button>
@@ -3214,9 +3220,25 @@ tr+tr td{border-top:1px solid #f3f3f3}
       const max = Math.max(...highs);
       const avg = values.reduce((a,b) => a+b, 0) / values.length;
 
+      // Variação % do período: primeiro valor → último valor
+      const first = values[0];
+      const last  = values[values.length - 1];
+      const periodPct = first > 0 ? ((last - first) / first) * 100 : null;
+      const periodUp  = periodPct !== null && periodPct >= 0;
+      const periodLbl = days === 7 ? '7D' : days === 30 ? '30D' : '3M';
+
       document.getElementById('msheet-min').textContent = fmtBase(min);
       document.getElementById('msheet-avg').textContent = fmtBase(avg);
       document.getElementById('msheet-max').textContent = fmtBase(max);
+
+      // Card de variação %
+      const pctEl  = document.getElementById('msheet-period-pct');
+      const lblEl  = document.getElementById('msheet-var-lbl');
+      if(pctEl && periodPct !== null){
+        pctEl.textContent  = `${periodUp?'▲':'▼'} ${Math.abs(periodPct).toFixed(2)}%`;
+        pctEl.style.color  = periodUp ? 'var(--green)' : 'var(--red)';
+      }
+      if(lblEl) lblEl.textContent = periodLbl;
 
       const isUp = values[values.length-1] >= values[0];
       const lineColor = isCrypto ? (CRYPTO_META[code]?.color||'#00C896') : (isUp?'#00C896':'#FF5C5C');
