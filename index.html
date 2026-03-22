@@ -481,11 +481,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     <!-- Estado inicial: botão de analisar -->
     <div id="ai-analysis-idle">
       <div style="background:linear-gradient(135deg,#1a2040,#12192e);border:1px solid rgba(91,158,255,.2);border-radius:18px;padding:24px;text-align:center;margin-bottom:14px">
-        <div style="font-size:40px;margin-bottom:10px">🤖</div>
-        <div style="font-size:16px;font-weight:700;margin-bottom:8px">Análise Financeira com IA</div>
-        <div style="font-size:13px;color:var(--muted2);line-height:1.6;margin-bottom:18px">A IA vai analisar todos os seus gastos,<br>identificar padrões e sugerir como economizar.</div>
+        <div style="font-size:40px;margin-bottom:10px">📊</div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:8px">Análise Financeira</div>
+        <div style="font-size:13px;color:var(--muted2);line-height:1.6;margin-bottom:18px">Analisa seus gastos, metas e orçamento.<br>Identifica padrões e sugere como economizar.</div>
         <button onclick="runAIAnalysis()" style="padding:13px 28px;background:linear-gradient(135deg,var(--blue),#3a7ef0);border:none;border-radius:13px;color:#fff;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(91,158,255,.35)">✨ Analisar meus gastos</button>
-        <div style="font-size:11px;color:var(--muted);margin-top:12px">Requer conta gratuita no Puter.com</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:12px">Instantâneo · 100% local · sem internet</div>
       </div>
     </div>
 
@@ -678,6 +678,76 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       </div>
     </div>
 
+  </div>
+
+  <!-- ── SHEET: ONBOARDING PUTER ── -->
+  <div id="puter-onboarding-overlay" class="sheet-overlay" onclick="fecharOnboardingPuter()"></div>
+  <div id="puter-onboarding-sheet" class="sheet" style="max-height:92vh">
+    <div class="sheet-handle"></div>
+
+    <!-- Header -->
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:44px;margin-bottom:8px">🤖</div>
+      <div style="font-size:18px;font-weight:700;margin-bottom:6px">Análise de Impacto com IA</div>
+      <div style="font-size:13px;color:var(--muted2);line-height:1.5">Entenda como cada notícia afeta<br>diretamente o seu bolso</div>
+    </div>
+
+    <!-- Como funciona -->
+    <div style="background:var(--s2);border-radius:14px;padding:16px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">Como funciona</div>
+
+      <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start">
+        <div style="width:32px;height:32px;border-radius:99px;background:var(--green-bg);border:1px solid rgba(0,200,150,.25);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">📰</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:2px">Notícias filtradas</div>
+          <div style="font-size:12px;color:var(--muted2);line-height:1.5">Só economia, mercado e finanças. Sem esporte, política ou entretenimento.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start">
+        <div style="width:32px;height:32px;border-radius:99px;background:var(--blue-bg);border:1px solid rgba(91,158,255,.25);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">🧠</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:2px">IA analisa o impacto</div>
+          <div style="font-size:12px;color:var(--muted2);line-height:1.5">Cada notícia é analisada automaticamente: positivo, negativo ou neutro, com a área afetada.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div style="width:32px;height:32px;border-radius:99px;background:var(--amber-bg);border:1px solid rgba(255,184,77,.25);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">👤</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:2px">Personalizado pra você</div>
+          <div style="font-size:12px;color:var(--muted2);line-height:1.5">Se você tiver gastos cadastrados, a IA usa seus dados reais pra mostrar o impacto no seu bolso.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Créditos -->
+    <div style="background:rgba(91,158,255,.07);border:1px solid rgba(91,158,255,.15);border-radius:14px;padding:14px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">💰 Sobre os créditos</div>
+      <div style="font-size:12.5px;color:var(--muted2);line-height:1.7">
+        • A IA é fornecida pelo <b style="color:var(--text)">Puter.com</b> — plataforma gratuita<br>
+        • Cada conta recebe <b style="color:var(--text)">$0,25 de crédito grátis</b><br>
+        • Cada análise consome <b style="color:var(--text)">~$0,002</b> (menos de 1 centavo)<br>
+        • <b style="color:var(--green)">≈ 125 análises gratuitas</b> por conta<br>
+        • As análises já feitas ficam <b style="color:var(--text)">salvas</b> — não reconsomem crédito
+      </div>
+    </div>
+
+    <!-- Dica de economia de créditos -->
+    <div style="background:rgba(0,200,150,.07);border:1px solid rgba(0,200,150,.15);border-radius:14px;padding:14px;margin-bottom:20px">
+      <div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">💡 Dica pra economizar créditos</div>
+      <div style="font-size:12.5px;color:var(--muted2);line-height:1.7">
+        A análise só roda em notícias novas que você ainda não viu. Notícias já analisadas ficam salvas localmente e não consomem crédito no próximo acesso.
+      </div>
+    </div>
+
+    <!-- Botões -->
+    <button id="puter-signup-btn" onclick="confirmarAtivarPuter()" style="width:100%;padding:15px;background:linear-gradient(135deg,var(--blue),#3a7ef0);border:none;border-radius:13px;color:#fff;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;margin-bottom:10px;box-shadow:0 4px 16px rgba(91,158,255,.3)">
+      Criar conta grátis no Puter
+    </button>
+    <button onclick="fecharOnboardingPuter()" style="width:100%;padding:12px;background:none;border:none;color:var(--muted);font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer">
+      Agora não
+    </button>
   </div>
 
   <!-- ── SHEET: NOVO ALERTA ── -->
@@ -4167,7 +4237,7 @@ Formato exato (sem nada fora do JSON):
 {"impacto":"positivo"|"negativo"|"neutro","area":"Inflação|Juros|Câmbio|Emprego|Combustível|Investimentos|Energia|Alimentação|Crédito","resumo":"1 frase clara do que aconteceu","para_voce":"1 frase específica e direta do impacto real no bolso"}`;
 
     try {
-      const response = await puter.ai.chat(prompt);
+      const response = await puter.ai.chat(prompt, { model: 'google/gemini-2.5-flash-lite' });
       const text = response?.message?.content?.[0]?.text || response?.text || String(response);
       const clean = text.replace(/```json|```/g,'').trim();
       const start = clean.indexOf('{');
@@ -4226,8 +4296,8 @@ Formato exato (sem nada fora do JSON):
           <span style="font-size:20px;flex-shrink:0">🤖</span>
           <div style="flex:1;min-width:0">
             <div style="font-size:11.5px;font-weight:700;color:var(--blue);margin-bottom:3px">Análise de impacto com IA</div>
-            <div style="font-size:11px;color:var(--muted2);line-height:1.5">Veja como cada notícia afeta o seu bolso.<br>Requer conta gratuita no <b>Puter.com</b>.</div>
-            <button onclick="event.stopPropagation();ativarPuter()" style="margin-top:7px;padding:5px 14px;border-radius:99px;border:none;background:var(--blue);color:#fff;font-size:11px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">✨ Ativar análise grátis</button>
+            <div style="font-size:11px;color:var(--muted2);line-height:1.5">Veja como cada notícia afeta o seu bolso.</div>
+            <button onclick="event.stopPropagation();abrirOnboardingPuter()" style="margin-top:7px;padding:5px 14px;border-radius:99px;border:none;background:var(--blue);color:#fff;font-size:11px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">✨ Saiba como funciona</button>
           </div>
         </div>`}
 
@@ -4251,20 +4321,36 @@ Formato exato (sem nada fora do JSON):
     _analyzing = false;
   }
 
-  // ── Puter login ───────────────────────────────────────
+  // ── Puter onboarding ──────────────────────────────────
   let _puterReady = false;
 
-  window.ativarPuter = async function() {
+  window.abrirOnboardingPuter = function() {
+    document.getElementById('puter-onboarding-overlay').classList.add('open');
+    document.getElementById('puter-onboarding-sheet').classList.add('open');
+  };
+
+  window.fecharOnboardingPuter = function() {
+    document.getElementById('puter-onboarding-overlay').classList.remove('open');
+    document.getElementById('puter-onboarding-sheet').classList.remove('open');
+  };
+
+  window.confirmarAtivarPuter = async function() {
+    const btn = document.getElementById('puter-signup-btn');
+    btn.textContent = 'Conectando...';
+    btn.disabled = true;
     try {
-      // Força login/signup no Puter — abre popup
       await puter.auth.signIn();
       _puterReady = true;
+      fecharOnboardingPuter();
       renderNewsList();
       analyzeAll();
     } catch(e) {
-      // usuário fechou o popup sem logar
+      btn.textContent = 'Criar conta grátis no Puter';
+      btn.disabled = false;
     }
   };
+
+  window.ativarPuter = window.confirmarAtivarPuter;
 
   // Checa silenciosamente se já está logado (sem popup)
   async function checkPuterSession() {
@@ -4371,7 +4457,7 @@ Formato exato (sem nada fora do JSON):
 })();
 </script>
 
-<!-- ── ANÁLISE AI DO RELATÓRIO ── -->
+<!-- ── ANÁLISE LOCAL DO RELATÓRIO ── -->
 <script>
 (function(){
 
@@ -4384,6 +4470,289 @@ Formato exato (sem nada fora do JSON):
       if(btn) btn.classList.toggle('on', t === tab);
     });
   };
+
+  const fmt = v => 'R$\u00A0' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  // ── Motor de análise 100% local ───────────────────────
+  function analyzeLocally() {
+    const txData      = JSON.parse(localStorage.getItem('fin_txs')   || '[]');
+    const goalData    = JSON.parse(localStorage.getItem('fin_goals')  || '[]');
+    const budgetItems = JSON.parse(localStorage.getItem('fin_budget') || '[]');
+    const MN = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+    // ── Agrupa por mês ──────────────────────────────────
+    const now = new Date();
+    const monthKeys = [];
+    for(let i=0;i<6;i++){
+      const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+      monthKeys.push(`${d.getFullYear()}-${d.getMonth()}`);
+    }
+
+    const byMonth = {};
+    txData.forEach(tx => {
+      if(!monthKeys.includes(tx.month)) return;
+      if(!byMonth[tx.month]) byMonth[tx.month] = {inc:0, exp:0, cats:{}, txs:[]};
+      if(tx.type==='income') byMonth[tx.month].inc += tx.val;
+      else {
+        byMonth[tx.month].exp += tx.val;
+        const c = tx.cat||'Outros';
+        byMonth[tx.month].cats[c] = (byMonth[tx.month].cats[c]||0)+tx.val;
+        byMonth[tx.month].txs.push(tx);
+      }
+    });
+
+    const meses = Object.keys(byMonth).sort().reverse();
+    const curKey = meses[0];
+    const prevKey = meses[1];
+    const cur  = byMonth[curKey]  || {inc:0,exp:0,cats:{},txs:[]};
+    const prev = byMonth[prevKey] || {inc:0,exp:0,cats:{},txs:[]};
+
+    // Médias dos últimos 3 meses
+    const last3 = meses.slice(0,3).map(k=>byMonth[k]);
+    const avgInc = last3.reduce((s,m)=>s+m.inc,0) / (last3.length||1);
+    const avgExp = last3.reduce((s,m)=>s+m.exp,0) / (last3.length||1);
+    const avgSav = avgInc > 0 ? ((avgInc-avgExp)/avgInc*100) : 0;
+
+    // Saldo atual
+    const curSaldo = cur.inc - cur.exp;
+    const [cy,cm] = curKey ? curKey.split('-').map(Number) : [now.getFullYear(), now.getMonth()];
+
+    // ── Categorias com alta vs mês anterior ────────────
+    const catAlerts = [];
+    const catGood   = [];
+    Object.entries(cur.cats).forEach(([cat, val]) => {
+      const prevVal = prev.cats[cat] || 0;
+      if(prevVal > 0) {
+        const diff = val - prevVal;
+        const pct  = (diff/prevVal*100);
+        if(pct > 20 && diff > 50)  catAlerts.push({cat, val, prevVal, diff, pct});
+        if(pct < -15 && diff < -30) catGood.push({cat, val, prevVal, diff, pct});
+      }
+    });
+    catAlerts.sort((a,b)=>b.diff-a.diff);
+
+    // Maiores gastos do mês atual
+    const topCats = Object.entries(cur.cats).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+    // ── Taxa de poupança ────────────────────────────────
+    let savingClass = avgSav >= 20 ? 'bom' : avgSav >= 10 ? 'ok' : avgSav >= 0 ? 'alerta' : 'critico';
+
+    // ── Seção 1: Perfil ─────────────────────────────────
+    let html = `
+    <h3 style="font-size:14px;font-weight:700;margin:0 0 10px;color:var(--text)">📊 Perfil Financeiro</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+      <div style="background:var(--s2);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Receita média</div>
+        <div style="font-size:14px;font-weight:700;color:var(--green)">${fmt(avgInc)}</div>
+      </div>
+      <div style="background:var(--s2);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Gasto médio</div>
+        <div style="font-size:14px;font-weight:700;color:var(--red)">${fmt(avgExp)}</div>
+      </div>
+      <div style="background:var(--s2);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Taxa de poupança</div>
+        <div style="font-size:14px;font-weight:700;color:${savingClass==='bom'?'var(--green)':savingClass==='ok'?'var(--amber)':'var(--red)'}">
+          ${avgSav.toFixed(1)}%
+        </div>
+      </div>
+    </div>`;
+
+    // ── Seção 2: Maiores gastos ─────────────────────────
+    if(topCats.length) {
+      const totalExp = cur.exp || 1;
+      html += `<h3 style="font-size:14px;font-weight:700;margin:16px 0 10px;color:var(--text)">💸 Onde Você Mais Gasta (${MN[cm]})</h3>`;
+      topCats.forEach(([cat,val]) => {
+        const pct = (val/totalExp*100).toFixed(0);
+        const barColor = pct>40?'var(--red)':pct>25?'var(--amber)':'var(--blue)';
+        html += `
+        <div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px">
+            <span style="font-weight:600">${cat}</span>
+            <span style="font-family:var(--mono)">${fmt(val)} <span style="color:var(--muted);font-size:11px">(${pct}%)</span></span>
+          </div>
+          <div style="height:5px;background:var(--border);border-radius:99px">
+            <div style="height:5px;border-radius:99px;background:${barColor};width:${pct}%;transition:width .6s"></div>
+          </div>
+        </div>`;
+      });
+    }
+
+    // ── Seção 3: Alertas ────────────────────────────────
+    html += `<h3 style="font-size:14px;font-weight:700;margin:16px 0 10px;color:var(--text)">🔴 Alertas</h3>`;
+    const alertas = [];
+
+    if(catAlerts.length) {
+      catAlerts.slice(0,3).forEach(a => {
+        alertas.push(`<b>${a.cat}</b> subiu <span style="color:#FF5C5C">+${fmt(a.diff)} (+${a.pct.toFixed(0)}%)</span> vs mês anterior`);
+      });
+    }
+    if(cur.exp > cur.inc && cur.inc > 0) {
+      alertas.push(`Você gastou <span style="color:#FF5C5C">${fmt(cur.exp-cur.inc)} a mais</span> do que recebeu em ${MN[cm]}`);
+    }
+    if(avgSav < 0) {
+      alertas.push(`Taxa de poupança negativa nos últimos meses — você está gastando mais do que ganha`);
+    }
+    if(avgSav >= 0 && avgSav < 10) {
+      alertas.push(`Taxa de poupança de ${avgSav.toFixed(1)}% está abaixo do recomendado (mínimo 20%)`);
+    }
+    // Categoria única > 50% dos gastos
+    topCats.forEach(([cat,val]) => {
+      if(cur.exp>0 && val/cur.exp > 0.5)
+        alertas.push(`<b>${cat}</b> representa <span style="color:#FF5C5C">${(val/cur.exp*100).toFixed(0)}%</span> de todos os seus gastos — alta concentração`);
+    });
+
+    if(alertas.length) {
+      html += `<ul style="padding-left:18px;margin:0">`;
+      alertas.forEach(a => html += `<li style="margin-bottom:7px;font-size:13px;line-height:1.5">${a}</li>`);
+      html += `</ul>`;
+    } else {
+      html += `<p style="color:var(--green);font-size:13px">✅ Nenhum alerta crítico este mês!</p>`;
+    }
+
+    // ── Seção 4: Positivos ──────────────────────────────
+    html += `<h3 style="font-size:14px;font-weight:700;margin:16px 0 10px;color:var(--text)">✅ Pontos Positivos</h3>`;
+    const positivos = [];
+    if(curSaldo > 0) positivos.push(`Saldo positivo de <span style="color:#00C896">${fmt(curSaldo)}</span> em ${MN[cm]}`);
+    if(avgSav >= 20) positivos.push(`Excelente! Taxa de poupança de ${avgSav.toFixed(1)}% — acima dos 20% recomendados`);
+    else if(avgSav >= 10) positivos.push(`Taxa de poupança de ${avgSav.toFixed(1)}% — no caminho certo, tente chegar a 20%`);
+    catGood.slice(0,2).forEach(a => {
+      positivos.push(`<b>${a.cat}</b> caiu <span style="color:#00C896">${fmt(Math.abs(a.diff))} (${Math.abs(a.pct).toFixed(0)}%)</span> vs mês anterior`);
+    });
+    if(cur.exp < prev.exp && prev.exp > 0) {
+      positivos.push(`Gastos totais caíram <span style="color:#00C896">${fmt(prev.exp-cur.exp)}</span> em relação ao mês passado`);
+    }
+    if(!positivos.length) positivos.push('Continue registrando seus gastos para receber mais insights!');
+    html += `<ul style="padding-left:18px;margin:0">`;
+    positivos.forEach(p => html += `<li style="margin-bottom:7px;font-size:13px;line-height:1.5">${p}</li>`);
+    html += `</ul>`;
+
+    // ── Seção 5: Metas ──────────────────────────────────
+    if(goalData.length) {
+      html += `<h3 style="font-size:14px;font-weight:700;margin:16px 0 10px;color:var(--text)">🎯 Situação das Metas</h3>`;
+      goalData.forEach(g => {
+        const pct = g.target>0 ? Math.min(100,(g.saved/g.target)*100) : 0;
+        const falta = g.target - g.saved;
+        // Estima meses restantes baseado na poupança média
+        const monthlySav = avgInc - avgExp;
+        const mesesFalta = monthlySav > 0 && falta > 0 ? Math.ceil(falta/monthlySav) : null;
+        const barColor = pct>=100?'var(--green)':pct>=50?'var(--blue)':'var(--amber)';
+        html += `
+        <div style="background:var(--s2);border-radius:10px;padding:12px 14px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:13px;font-weight:600">${g.ico||'🎯'} ${g.name}</span>
+            <span style="font-size:12px;font-family:var(--mono);color:${barColor}">${pct.toFixed(0)}%</span>
+          </div>
+          <div style="height:5px;background:var(--border);border-radius:99px;margin-bottom:6px">
+            <div style="height:5px;border-radius:99px;background:${barColor};width:${pct}%"></div>
+          </div>
+          <div style="font-size:11.5px;color:var(--muted)">
+            ${fmt(g.saved)} de ${fmt(g.target)}
+            ${pct>=100 ? ' — <span style="color:var(--green)">✅ Concluída!</span>'
+              : mesesFalta ? ` — faltam ${fmt(falta)} • estimativa: ${mesesFalta} ${mesesFalta===1?'mês':'meses'}`
+              : ` — faltam ${fmt(falta)}`}
+          </div>
+        </div>`;
+      });
+    }
+
+    // ── Seção 6: Sugestões ──────────────────────────────
+    html += `<h3 style="font-size:14px;font-weight:700;margin:16px 0 10px;color:var(--text)">💡 Sugestões para Este Mês</h3>`;
+    const sugestoes = [];
+
+    // Baseado nas categorias que mais pesam
+    if(topCats[0]) {
+      const [bigCat, bigVal] = topCats[0];
+      const economia = bigVal * 0.15;
+      sugestoes.push(`Reduza <b>${bigCat}</b> em 15% → economize até <span style="color:#00C896">${fmt(economia)}</span>`);
+    }
+    if(topCats[1]) {
+      const [cat2, val2] = topCats[1];
+      const eco2 = val2 * 0.10;
+      sugestoes.push(`Corte 10% em <b>${cat2}</b> → até <span style="color:#00C896">${fmt(eco2)}</span> de economia`);
+    }
+    // Meta de poupança
+    if(avgInc > 0 && avgSav < 20) {
+      const metaPoup = avgInc * 0.20;
+      const expMax = avgInc - metaPoup;
+      sugestoes.push(`Para poupar 20%, limite seus gastos a <span style="color:#00C896">${fmt(expMax)}</span>/mês`);
+    }
+    // Categoria que cresceu muito
+    if(catAlerts[0]) {
+      sugestoes.push(`Investigue o aumento em <b>${catAlerts[0].cat}</b> — subiu ${fmt(catAlerts[0].diff)} este mês`);
+    }
+    // Fundo de emergência
+    if(avgExp > 0) {
+      const fundoIdeal = avgExp * 3;
+      sugestoes.push(`Fundo de emergência ideal: <span style="color:#5B9EFF">${fmt(fundoIdeal)}</span> (3x seus gastos mensais)`);
+    }
+
+    html += `<ul style="padding-left:18px;margin:0">`;
+    sugestoes.forEach(s => html += `<li style="margin-bottom:8px;font-size:13px;line-height:1.5">${s}</li>`);
+    html += `</ul>`;
+
+    // ── Seção 7: Meta do próximo mês ────────────────────
+    if(cur.exp > 0) {
+      const metaExp = cur.exp * 0.95; // 5% menos que o mês atual
+      const nextM = (cm+1) % 12;
+      html += `
+      <h3 style="font-size:14px;font-weight:700;margin:16px 0 10px;color:var(--text)">📅 Meta para ${MN[nextM]}</h3>
+      <div style="background:rgba(0,200,150,.08);border:1px solid rgba(0,200,150,.2);border-radius:12px;padding:14px 16px">
+        <div style="font-size:13px;line-height:1.6">
+          🎯 Tente gastar no máximo <b style="color:var(--green)">${fmt(metaExp)}</b> no próximo mês<br>
+          <span style="font-size:12px;color:var(--muted)">5% menos que ${MN[cm]} → economia de ${fmt(cur.exp-metaExp)}</span>
+        </div>
+      </div>`;
+    }
+
+    return html;
+  }
+
+  // ── Executa a análise ─────────────────────────────────
+  window.runAIAnalysis = function() {
+    const idle    = document.getElementById('ai-analysis-idle');
+    const loading = document.getElementById('ai-analysis-loading');
+    const result  = document.getElementById('ai-analysis-result');
+
+    idle.style.display    = 'none';
+    loading.style.display = 'block';
+    result.style.display  = 'none';
+
+    // Pequeno delay pra mostrar loading
+    setTimeout(() => {
+      try {
+        const html = analyzeLocally();
+        loading.style.display = 'none';
+        result.style.display  = 'block';
+        result.innerHTML = `
+          <div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin-bottom:12px;color:var(--text)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:20px">📊</span>
+                <span style="font-size:14px;font-weight:700">Análise Financeira</span>
+              </div>
+              <button onclick="resetAIAnalysis()" style="font-size:11px;padding:4px 12px;border-radius:99px;border:1px solid var(--border2);background:none;color:var(--muted);font-family:'DM Sans',sans-serif;cursor:pointer">↺ Refazer</button>
+            </div>
+            ${html}
+          </div>`;
+      } catch(e) {
+        loading.style.display = 'none';
+        idle.style.display    = 'block';
+        console.error('Análise erro:', e);
+      }
+    }, 600);
+  };
+
+  window.resetAIAnalysis = function() {
+    document.getElementById('ai-analysis-result').style.display = 'none';
+    document.getElementById('ai-analysis-idle').style.display   = 'block';
+  };
+
+})();
+</script>
+
+</body>
+</html>
+
 
   // ── Monta contexto completo dos gastos ───────────────
   function buildSpendingContext() {
@@ -4509,7 +4878,7 @@ Estruture sua resposta com exatamente estas seções, usando os valores reais:
 Seja DIRETO, use os números reais, evite conselhos genéricos que não usem os dados do usuário.`;
 
       setStep('Analisando seus gastos, metas e orçamento...');
-      const response = await puter.ai.chat(prompt);
+      const response = await puter.ai.chat(prompt, { model: 'google/gemini-2.5-flash-lite' });
       const html = response?.message?.content?.[0]?.text || response?.text || String(response);
 
       loading.style.display = 'none';
