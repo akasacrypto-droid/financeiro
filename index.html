@@ -427,6 +427,15 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     </div>
   </div>
 
+  <!-- SUB-TABS DO RELATÓRIO -->
+  <div style="display:flex;gap:7px;margin-bottom:14px">
+    <button class="plan-sub-tab on" id="rsub-dados" onclick="goReportTab('dados')" style="flex:1">📊 Dados</button>
+    <button class="plan-sub-tab" id="rsub-ai" onclick="goReportTab('ai')" style="flex:1">🤖 Análise AI</button>
+  </div>
+
+  <!-- SUB: DADOS (conteúdo original) -->
+  <div id="reportpage-dados">
+
   <!-- FILTRO PERÍODO -->
   <div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch">
     <button class="rep-period-btn on" id="rpb-month" onclick="setRepPeriod('month')">Este mês</button>
@@ -464,7 +473,34 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     <div id="rep-trend"></div>
   </div>
 
-</div>
+  </div><!-- fim reportpage-dados -->
+
+  <!-- SUB: ANÁLISE AI -->
+  <div id="reportpage-ai" style="display:none">
+
+    <!-- Estado inicial: botão de analisar -->
+    <div id="ai-analysis-idle">
+      <div style="background:linear-gradient(135deg,#1a2040,#12192e);border:1px solid rgba(91,158,255,.2);border-radius:18px;padding:24px;text-align:center;margin-bottom:14px">
+        <div style="font-size:40px;margin-bottom:10px">🤖</div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:8px">Análise Financeira com IA</div>
+        <div style="font-size:13px;color:var(--muted2);line-height:1.6;margin-bottom:18px">A IA vai analisar todos os seus gastos,<br>identificar padrões e sugerir como economizar.</div>
+        <button onclick="runAIAnalysis()" style="padding:13px 28px;background:linear-gradient(135deg,var(--blue),#3a7ef0);border:none;border-radius:13px;color:#fff;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(91,158,255,.35)">✨ Analisar meus gastos</button>
+        <div style="font-size:11px;color:var(--muted);margin-top:12px">Requer conta gratuita no Puter.com</div>
+      </div>
+    </div>
+
+    <!-- Estado: carregando -->
+    <div id="ai-analysis-loading" style="display:none;text-align:center;padding:40px 16px">
+      <div style="font-size:36px;margin-bottom:12px;animation:pulse-green 1.2s infinite">🤖</div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:6px">Analisando seus gastos...</div>
+      <div id="ai-loading-step" style="font-size:12px;color:var(--muted)">Lendo seus lançamentos</div>
+    </div>
+
+    <!-- Estado: resultado -->
+    <div id="ai-analysis-result" style="display:none"></div>
+
+  </div><!-- fim reportpage-ai -->
+
 
 <!-- ── PAGE: PLANEJAR ── -->
 <div class="page" id="page-plan">
@@ -4329,6 +4365,141 @@ Formato exato (sem nada fora do JSON):
     await window.loadNews(true);
     startCountdown();
   }, 1000);
+
+})();
+</script>
+
+<!-- ── ANÁLISE AI DO RELATÓRIO ── -->
+<script>
+(function(){
+
+  // ── Navegação entre sub-abas do relatório ────────────
+  window.goReportTab = function(tab) {
+    ['dados','ai'].forEach(t => {
+      const pg  = document.getElementById('reportpage-' + t);
+      const btn = document.getElementById('rsub-' + t);
+      if(pg)  pg.style.display  = t === tab ? 'block' : 'none';
+      if(btn) btn.classList.toggle('on', t === tab);
+    });
+  };
+
+  // ── Monta contexto completo dos gastos ───────────────
+  function buildSpendingContext() {
+    try {
+      const txData = JSON.parse(localStorage.getItem('fin_txs') || '[]');
+      if(!txData.length) return null;
+
+      // Últimos 3 meses
+      const now = new Date();
+      const months = [];
+      for(let i = 0; i < 3; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        months.push(`${d.getFullYear()}-${d.getMonth()}`);
+      }
+
+      const recent = txData.filter(t => months.includes(t.month));
+      if(!recent.length) return null;
+
+      // Agrupa por mês e categoria
+      const byMonth = {};
+      recent.forEach(t => {
+        if(!byMonth[t.month]) byMonth[t.month] = { inc: 0, exp: 0, cats: {} };
+        if(t.type === 'income') {
+          byMonth[t.month].inc += t.val;
+        } else {
+          byMonth[t.month].exp += t.val;
+          const c = t.cat || 'Outros';
+          byMonth[t.month].cats[c] = (byMonth[t.month].cats[c] || 0) + t.val;
+        }
+      });
+
+      // Monta texto resumido
+      const monthNames = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      let ctx = '';
+      Object.entries(byMonth).sort().reverse().forEach(([key, data]) => {
+        const [y, m] = key.split('-').map(Number);
+        const topCats = Object.entries(data.cats)
+          .sort((a,b) => b[1]-a[1]).slice(0,6)
+          .map(([c,v]) => `${c}: R$${v.toFixed(0)}`).join(', ');
+        ctx += `${monthNames[m]}/${y}: receita R$${data.inc.toFixed(0)}, gastos R$${data.exp.toFixed(0)} (${topCats})\n`;
+      });
+
+      return ctx.trim();
+    } catch(e) { return null; }
+  }
+
+  // ── Roda a análise com Puter ─────────────────────────
+  window.runAIAnalysis = async function() {
+    const ctx = buildSpendingContext();
+
+    document.getElementById('ai-analysis-idle').style.display    = 'none';
+    document.getElementById('ai-analysis-loading').style.display = 'block';
+    document.getElementById('ai-analysis-result').style.display  = 'none';
+
+    const setStep = txt => {
+      const el = document.getElementById('ai-loading-step');
+      if(el) el.textContent = txt;
+    };
+
+    try {
+      // Login Puter se necessário
+      setStep('Conectando com a IA...');
+      const logged = await puter.auth.isSignedIn().catch(() => false);
+      if(!logged) await puter.auth.signIn();
+
+      setStep('Analisando padrões de gasto...');
+
+      const noData = !ctx;
+      const prompt = noData
+        ? `Você é um consultor financeiro brasileiro. O usuário ainda não tem lançamentos cadastrados. Dê 5 dicas gerais e práticas de controle financeiro para brasileiros, com exemplos concretos e valores reais. Responda em HTML simples (use <h3>, <p>, <ul>, <li>, <b>, <span>). Sem markdown.`
+        : `Você é um consultor financeiro pessoal brasileiro. Analise os dados reais do usuário e responda em HTML simples (use <h3>, <p>, <ul>, <li>, <b>, <span style="color:#FF5C5C"> para alertas e <span style="color:#00C896"> para pontos positivos). Sem markdown, sem blocos de código.
+
+DADOS DO USUÁRIO (últimos 3 meses):
+${ctx}
+
+Faça uma análise completa com estas seções:
+1. 📊 Resumo do perfil financeiro (receita média, gasto médio, taxa de poupança)
+2. 🔴 Alertas — gastos que merecem atenção (com valores reais)
+3. ✅ Pontos positivos — o que está indo bem
+4. 💡 Top 5 ações concretas para economizar (com estimativa de quanto pode economizar em R$)
+5. 🎯 Meta sugerida para o próximo mês (valor específico baseado nos dados)
+
+Seja específico, use os valores reais do usuário, evite conselhos genéricos.`;
+
+      setStep('Gerando recomendações personalizadas...');
+      const response = await puter.ai.chat(prompt);
+      const html = response?.message?.content?.[0]?.text || response?.text || String(response);
+
+      document.getElementById('ai-analysis-loading').style.display = 'none';
+      document.getElementById('ai-analysis-result').style.display  = 'block';
+      document.getElementById('ai-analysis-result').innerHTML = `
+        <div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin-bottom:12px;line-height:1.7;font-size:13.5px;color:var(--text)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:20px">🤖</span>
+              <span style="font-size:14px;font-weight:700">Análise Financeira Personalizada</span>
+            </div>
+            <button onclick="resetAIAnalysis()" style="font-size:11px;padding:4px 12px;border-radius:99px;border:1px solid var(--border2);background:none;color:var(--muted);font-family:'DM Sans',sans-serif;cursor:pointer">↺ Refazer</button>
+          </div>
+          ${html}
+        </div>`;
+
+    } catch(e) {
+      document.getElementById('ai-analysis-loading').style.display = 'none';
+      document.getElementById('ai-analysis-idle').style.display    = 'block';
+      if(e?.message !== 'User cancelled') {
+        document.getElementById('ai-analysis-idle').innerHTML += `
+          <div style="background:rgba(255,92,92,.1);border:1px solid rgba(255,92,92,.2);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--red);margin-top:8px">
+            ❌ Erro ao conectar. Tente novamente.
+          </div>`;
+      }
+    }
+  };
+
+  window.resetAIAnalysis = function() {
+    document.getElementById('ai-analysis-result').style.display = 'none';
+    document.getElementById('ai-analysis-idle').style.display   = 'block';
+  };
 
 })();
 </script>
