@@ -4246,7 +4246,13 @@ Formato exato (sem nada fora do JSON):
       const impact = JSON.parse(clean.slice(start, end+1));
       setCachedImpact(news.title, impact);
       return impact;
-    } catch(e) { return null; }
+    } catch(e) {
+      const msg = (e?.message || e?.toString() || '').toLowerCase();
+      if(msg.includes('balance') || msg.includes('funding') || msg.includes('upgrade') || msg.includes('insufficient')) {
+        return 'LOW_BALANCE';
+      }
+      return null;
+    }
   }
 
   // ── render ────────────────────────────────────────────
@@ -4300,6 +4306,14 @@ Formato exato (sem nada fora do JSON):
             <button onclick="event.stopPropagation();abrirOnboardingPuter()" style="margin-top:7px;padding:5px 14px;border-radius:99px;border:none;background:var(--blue);color:#fff;font-size:11px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">✨ Saiba como funciona</button>
           </div>
         </div>`}
+        ${ _puterLowBalance ? `
+        <div style="margin-top:10px;padding:10px 13px;border-radius:10px;background:rgba(255,184,77,.08);border:1px solid rgba(255,184,77,.25);display:flex;align-items:center;gap:10px">
+          <span style="font-size:18px;flex-shrink:0">💰</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:11.5px;font-weight:700;color:var(--amber);margin-bottom:2px">Créditos Puter esgotados</div>
+            <div style="font-size:11px;color:var(--muted2);line-height:1.5">Recarregue sua conta em <b>puter.com</b> para continuar as análises. As já feitas continuam salvas.</div>
+          </div>
+        </div>` : ''}
 
         <div style="margin-top:8px;text-align:right">
           <span class="news-tag">↗ Abrir notícia</span>
@@ -4312,10 +4326,19 @@ Formato exato (sem nada fora do JSON):
     if(_analyzing || !_puterReady) return;
     _analyzing = true;
     const pending = _allNews.filter(n => !n.impact).length;
-    if(pending === 0) { _analyzing = false; return; } // tudo já cacheado
+    if(pending === 0) { _analyzing = false; return; }
     for(let i = 0; i < _allNews.length; i++) {
-      if(_allNews[i].impact) continue; // já tem — pula
-      _allNews[i].impact = await analyzeNews(_allNews[i]);
+      if(_allNews[i].impact) continue;
+      const result = await analyzeNews(_allNews[i]);
+      if(result === 'LOW_BALANCE') {
+        // Para tudo e marca como sem crédito
+        _puterReady = false;
+        _puterLowBalance = true;
+        renderNewsList();
+        _analyzing = false;
+        return;
+      }
+      _allNews[i].impact = result;
       renderNewsList();
     }
     _analyzing = false;
@@ -4323,6 +4346,7 @@ Formato exato (sem nada fora do JSON):
 
   // ── Puter onboarding ──────────────────────────────────
   let _puterReady = false;
+  let _puterLowBalance = false;
 
   window.abrirOnboardingPuter = function() {
     document.getElementById('puter-onboarding-overlay').classList.add('open');
