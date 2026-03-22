@@ -742,23 +742,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 <!-- ── PAGE: CONFIG ── -->
 <div class="page" id="page-cfg">
 
-  <div class="slbl" data-i18n="cfg.language">Idioma</div>
-  <div class="card" style="margin-bottom:12px">
-    <div style="padding:12px 14px">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-        <button onclick="setLang('pt')" id="lang-pt" style="padding:10px 6px;border-radius:10px;border:1px solid rgba(0,200,150,.35);background:var(--green-bg);color:var(--green);font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px">
-          <span style="font-size:20px">🇧🇷</span><span>Português</span>
-        </button>
-        <button onclick="setLang('en')" id="lang-en" style="padding:10px 6px;border-radius:10px;border:1px solid var(--border2);background:none;color:var(--muted);font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px">
-          <span style="font-size:20px">🇺🇸</span><span>English</span>
-        </button>
-        <button onclick="setLang('es')" id="lang-es" style="padding:10px 6px;border-radius:10px;border:1px solid var(--border2);background:none;color:var(--muted);font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px">
-          <span style="font-size:20px">🇪🇸</span><span>Español</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
   <div class="slbl" data-i18n="cfg.notifications">Notificações</div>
   <div class="card" style="margin-bottom:12px">
     <div class="notif-row">
@@ -3641,279 +3624,13 @@ tr+tr td{border-top:1px solid #f3f3f3}
       'cur.real':'Real','cur.dollar':'Dólar EUA','cur.euro':'Euro','cur.pound':'Libra',
       'cur.peso.arg':'Peso Arg','cur.yen':'Iene','cur.cad':'Dólar CA','cur.chf':'Franco CH',
       'cur.cny':'Yuan','cur.aud':'Dólar AU','cur.peso.mx':'Peso MX',
-    },
-    en: {
-      'nav.report':'Report','nav.txs':'Transactions','nav.plan':'Plan','nav.cfg':'Settings',
-      'cfg.language':'Language','cfg.notifications':'Notifications','cfg.nubank':'Import Nubank Statement',
-      'cfg.backup':'Backup','cfg.danger':'Danger Zone',
-      'cfg.notif.remind':'Remind to log expenses','cfg.notif.remind.sub':'Daily notification at chosen time',
-      'cfg.notif.sound':'App sounds','cfg.notif.sound.sub':'Sound effects on transactions',
-      'cfg.notif.status':'Notification status','cfg.notif.test':'Test',
-      'cfg.notif.time':'Reminder time',
-      'cfg.backup.export':'Export backup','cfg.backup.export.sub':'Saves transactions, goals and envelopes',
-      'cfg.backup.import':'Import backup','cfg.backup.import.sub':'Restore from exported .json file',
-      'cfg.backup.warning':'⚠️ Import will replace current data. Export a backup before importing.',
-      'cfg.danger.title':'Delete all data','cfg.danger.sub':'Permanently removes all transactions',
-      'cfg.danger.btn':'🗑️ Clear',
-      'plan.goals':'🎯 Goals','plan.budget':'⚖️ Budget','plan.cambio':'💱 Exchange',
-      'plan.newgoal':'+ New goal','plan.addenv':'+ Add',
-      'plan.goals.title':'Savings goals',
-      'goal.empty.main':'No goals created yet.','goal.start.hint':'Tap "+ New goal" to start.',
-      'goal.name':'Goal name','goal.emoji':'Emoji','goal.saved':'Already saved (R$)',
-      'goal.target':'Target amount (R$)','goal.save':'Save goal',
-      'budget.envelopes':'Monthly envelopes','budget.available':'Available balance',
-      'budget.allocated':'Allocated','budget.free':'Unallocated / Free',
-      'budget.empty.main':'No envelopes configured.','budget.start.hint':'Tap "+ Add" to split your balance.',
-      'budget.emoji':'Emoji / icon','budget.pct':'% of monthly balance',
-      'budget.free.pct':'free','budget.alloc.100':'allocated','budget.over100':'over 100%',
-      'budget.of':'of','budget.new':'New category',
-      'report.title':'Expense Report','report.spent':'Total spent','report.income':'Income','report.balance':'Balance',
-      'report.ranking':'🏆 Spending Ranking','report.top':'💸 Top Individual Expenses',
-      'report.dist':'Distribution by category','report.trend':'📅 Month-to-month Trend',
-      'report.period.month':'This month','report.period.3m':'3 months','report.period.6m':'6 months',
-      'report.period.year':'12 months','report.period.all':'All',
-      'report.pct.total':'% of total spending',
-      'report.no.expenses':'No expenses in period','report.no.txs':'No transactions in period',
-      'txs.filter':'Filter by category','txs.empty':'No transactions this month.',
-      'txs.add':'Add transactions',
-      'sheet.new':'New transaction','sheet.edit':'✏️ Edit transaction','sheet.save':'Save',
-      'sheet.cancel':'Cancel','sheet.desc':'Description','sheet.value.brl':'Amount (R$)',
-      'sheet.category':'Category','sheet.month':'Month','sheet.save.changes':'Save changes',
-      'sheet.expense.btn':'💸 Expense','sheet.income.btn':'💵 Income',
-      'sheet.text.title':'📝 Log by text','sheet.text.bulk':'📝 Bulk log by text',
-      'sheet.text.placeholder.lbl':'Paste or type your transactions',
-      'sheet.text.add.btn':'Add transactions','sheet.text.format':'Format:',
-      'alert.title':'New price alert','alert.asset':'Asset','alert.cond':'Condition',
-      'alert.above':'▲ Above','alert.below':'▼ Below',
-      'alert.target':'Target value in R$ (BRL)',
-      'alert.create':'Create alert','alert.new':'+ New alert','alert.section':'🔔 Price Alerts',
-      'alert.empty':'No alerts created.','alert.empty.hint':'E.g.: notify when USD > R$ 6.00',
-      'alert.triggered':'🔔 Triggered','alert.active':'Active','alert.paused':'Paused',
-      'notif.title':'🔔 Notification Center','notif.clear':'Clear all',
-      'notif.empty':'No notifications yet.','notif.empty.sub':'Price alerts will appear here.',
-      'notif.push.no.expense':"You haven\'t logged any expenses today. Want to update?",
-      'notif.push.has.expense':'You have {n} transaction(s) today. Great control!',
-      'cambio.converter':'💱 Converter','cambio.from':'From','cambio.to':'To',
-      'cambio.fiat':'🏦 Fiat','cambio.crypto':'₿ Crypto',
-      'cambio.update':'update','cambio.loading':'Loading rates...',
-      'cambio.source.fiat':'AwesomeAPI · real-time rates · updates every 60s',
-      'cambio.source.crypto':'CoinGecko · real-time rates · updates every 60s',
-      'cambio.convert.btn':'💱 Convert this currency','cambio.alert.btn':'🔔 Create alert for this currency',
-      'crypto.loading':'Loading crypto...',
-      'chart.min':'Min','chart.avg':'Avg','chart.max':'Max','chart.loading':'Loading...',
-      'confirm.delete.tx':'Remove transaction?','confirm.delete.tx.sub':'This action cannot be undone.',
-      'confirm.delete.all':'Delete everything?','confirm.delete.all.sub':'All transactions will be removed.',
-      'confirm.irreversible':'Irreversible.',
-      'confirm.yes.remove':'Yes, remove','confirm.yes.delete':'Yes, delete all',
-      'import.title':'Import data','import.add':'➕ Add to existing','import.replace':'🔄 Replace all',
-      'import.found':'transactions found. What do you want to do?',
-      'nubank.how':'How to export from Nubank:','nubank.safe':'✅ Safe — no data leaves your device',
-      'nubank.btn':'💜 Import CSV',
-      'nubank.csv.title':'Import Nubank CSV','nubank.csv.sub':'Auto-categorized',
-      'btn.export':'Export','btn.import':'Import','btn.save':'Save','btn.cancel':'Cancel',
-      'btn.test':'Test','btn.clear':'🗑️ Clear',
-            'toast.saved':'Changes saved ✓',
-      'toast.added':'Transaction added ✓',
-      'toast.removed':'Transaction removed',
-      'toast.alert.created':'✅ Alert created!',
-      'toast.notif.on':'🔔 Notifications enabled!',
-      'toast.notif.off':'Notifications disabled',
-      'toast.notif.test':'Test notification sent!',
-      'toast.notif.notsup':'Not supported in this browser',
-      'toast.notif.denied':'Permission denied by browser',
-      'toast.notif.noperm':'Enable notifications first',
-      'toast.fill':'Fill in description and amount!',
-      'toast.fill.value':'Enter a valid amount',
-      'toast.file.invalid':'❌ Invalid file',
-      'toast.file.nocols':'❌ Columns not found',
-      'toast.file.noformat':'❌ Format not recognized',
-      'toast.file.none':'❌ No transactions found',
-      'toast.file.noperm':'❌ Permission denied',
-      'chart.error':'Error loading chart',
-      'notif.push.title':'Controle+',
-      'goal.sheet.new':'New goal',
-      'goal.sheet.edit':'Edit goal',
-      'budget.sheet.new':'New category',
-      'budget.sheet.edit':'Edit category',
-      'budget.save':'Save',
-      'sheet.edit.small':'edit',
-      'report.pdf.title':'Controle+ — Report',
-      'report.header':'Expense Report',
-            'toast.goal.saved':'Goal saved ✓',
-      'toast.goal.removed':'Goal removed',
-      'toast.backup.restored':'✅ Backup restored!',
-      'toast.no.data':'No data to export',
-      'toast.sound.on':'Sounds enabled 🔊',
-      'toast.sound.off':'Sounds disabled',
-      'import.txs.done':'transactions imported!',
-      'import.txs.added':'transactions added',
-      'notif.disabled':'Notifications disabled',
-      'cfg.notif.time':'Reminder time',
-            'desc.placeholder':'E.g. Food, Gas, Clothing…',
-      'desc.placeholder2':'E.g. Rent, Salary…',
-      'notif.time.saved':'Time saved:',
-      'txs.count':'📋 ${n} transactions',
-      'sheet.text.lançar':'📝 Log by text',
-      'sheet.text.varios':'📝 Bulk log by text',
-      'report.trend.label':'📅 Month-to-month trend',
-      'sheet.edit.tx':'✏️ Edit transaction',
-      'import.merge.found':'transactions found. What do you want to do?',
-      'notif.cotacao':'Current rate: R$',
-      'cat.food':'Food',
-      'cat.edu':'Education',
-      'cat.health':'Health',
-      'cat.salary':'Salary',
-      'cat.transfer.out':'Pix transfer sent -',
-      'cat.transfer.in':'Pix transfer received -',
-            'chart.7d':'7D',
-      'btn.export.icon':'⬇️ Export',
-      'import.found':'transactions found. What do you want to do?',
-      'toast.lang':'🌐 Language changed!',
-      'months':['January','February','March','April','May','June','July','August','September','October','November','December'],
-      'months.short':['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
-      'cur.real':'Real','cur.dollar':'US Dollar','cur.euro':'Euro','cur.pound':'Pound',
-      'cur.peso.arg':'Argentine Peso','cur.yen':'Yen','cur.cad':'Canadian Dollar','cur.chf':'Swiss Franc',
-      'cur.cny':'Yuan','cur.aud':'Australian Dollar','cur.peso.mx':'Mexican Peso',
-    },
-    es: {
-      'nav.report':'Informe','nav.txs':'Extractos','nav.plan':'Planear','nav.cfg':'Config',
-      'cfg.language':'Idioma','cfg.notifications':'Notificaciones','cfg.nubank':'Importar extracto Nubank',
-      'cfg.backup':'Respaldo','cfg.danger':'Zona de peligro',
-      'cfg.notif.remind':'Recordar registrar gastos','cfg.notif.remind.sub':'Notificación diaria a la hora elegida',
-      'cfg.notif.sound':'Sonidos de la app','cfg.notif.sound.sub':'Efectos de sonido en transacciones',
-      'cfg.notif.status':'Estado de notificaciones','cfg.notif.test':'Probar',
-      'cfg.notif.time':'Hora del recordatorio',
-      'cfg.backup.export':'Exportar respaldo','cfg.backup.export.sub':'Guarda transacciones, metas y sobres',
-      'cfg.backup.import':'Importar respaldo','cfg.backup.import.sub':'Restaurar desde archivo .json exportado',
-      'cfg.backup.warning':'⚠️ La importación reemplaza los datos actuales. Exporta un respaldo antes de importar.',
-      'cfg.danger.title':'Borrar todos los datos','cfg.danger.sub':'Elimina permanentemente todas las transacciones',
-      'cfg.danger.btn':'🗑️ Limpiar',
-      'plan.goals':'🎯 Metas','plan.budget':'⚖️ Presupuesto','plan.cambio':'💱 Cambio',
-      'plan.newgoal':'+ Nueva meta','plan.addenv':'+ Agregar',
-      'plan.goals.title':'Metas de ahorro',
-      'goal.empty.main':'Ninguna meta creada aún.','goal.start.hint':'Toca "+ Nueva meta" para empezar.',
-      'goal.name':'Nombre de la meta','goal.emoji':'Emoji','goal.saved':'Ya guardado (R$)',
-      'goal.target':'Importe objetivo (R$)','goal.save':'Guardar meta',
-      'budget.envelopes':'Sobres mensuales','budget.available':'Saldo disponible',
-      'budget.allocated':'Asignado','budget.free':'Sin asignar / Libre',
-      'budget.empty.main':'Sin categorías configuradas.','budget.start.hint':'Toca "+ Agregar" para dividir tu saldo.',
-      'budget.emoji':'Emoji / ícono','budget.pct':'% del saldo mensual',
-      'budget.free.pct':'libre','budget.alloc.100':'asignado','budget.over100':'por encima del 100%',
-      'budget.of':'de','budget.new':'Nueva categoría',
-      'report.title':'Informe de gastos','report.spent':'Total gastado','report.income':'Ingresos','report.balance':'Saldo',
-      'report.ranking':'🏆 Ranking de gastos','report.top':'💸 Mayores gastos individuales',
-      'report.dist':'Distribución por categoría','report.trend':'📅 Tendencia mes a mes',
-      'report.period.month':'Este mes','report.period.3m':'3 meses','report.period.6m':'6 meses',
-      'report.period.year':'12 meses','report.period.all':'Todo',
-      'report.pct.total':'% del gasto total',
-      'report.no.expenses':'Sin gastos en el período','report.no.txs':'Sin transacciones en el período',
-      'txs.filter':'Filtrar por categoría','txs.empty':'Sin transacciones este mes.',
-      'txs.add':'Agregar transacciones',
-      'sheet.new':'Nueva transacción','sheet.edit':'✏️ Editar transacción','sheet.save':'Guardar',
-      'sheet.cancel':'Cancelar','sheet.desc':'Descripción','sheet.value.brl':'Importe (R$)',
-      'sheet.category':'Categoría','sheet.month':'Mes','sheet.save.changes':'Guardar cambios',
-      'sheet.expense.btn':'💸 Gasto','sheet.income.btn':'💵 Ingreso',
-      'sheet.text.title':'📝 Registrar por texto','sheet.text.bulk':'📝 Registro masivo por texto',
-      'sheet.text.placeholder.lbl':'Pega o escribe tus transacciones',
-      'sheet.text.add.btn':'Agregar transacciones','sheet.text.format':'Formato:',
-      'alert.title':'Nueva alerta de cotización','alert.asset':'Activo','alert.cond':'Condición',
-      'alert.above':'▲ Por encima de','alert.below':'▼ Por debajo de',
-      'alert.target':'Valor objetivo en R$ (BRL)',
-      'alert.create':'Crear alerta','alert.new':'+ Nueva alerta','alert.section':'🔔 Alertas de cotización',
-      'alert.empty':'Sin alertas creadas.','alert.empty.hint':'Ej: avisar cuando USD > R$ 6,00',
-      'alert.triggered':'🔔 Disparado','alert.active':'Activo','alert.paused':'Pausado',
-      'notif.title':'🔔 Centro de notificaciones','notif.clear':'Borrar todo',
-      'notif.empty':'Sin notificaciones aún.','notif.empty.sub':'Las alertas de cotización aparecerán aquí.',
-      'notif.push.no.expense':'No has registrado ningún gasto hoy. ¿Actualizar?',
-      'notif.push.has.expense':'Tienes {n} transacción(es) hoy. ¡Buen control!',
-      'cambio.converter':'💱 Conversor','cambio.from':'De','cambio.to':'Para',
-      'cambio.fiat':'🏦 Fiat','cambio.crypto':'₿ Cripto',
-      'cambio.update':'actualizar','cambio.loading':'Cargando cotizaciones...',
-      'cambio.source.fiat':'AwesomeAPI · tiempo real · actualiza cada 60s',
-      'cambio.source.crypto':'CoinGecko · tiempo real · actualiza cada 60s',
-      'cambio.convert.btn':'💱 Convertir esta moneda','cambio.alert.btn':'🔔 Crear alerta para esta moneda',
-      'crypto.loading':'Cargando cripto...',
-      'chart.min':'Mín','chart.avg':'Prom','chart.max':'Máx','chart.loading':'Cargando...',
-      'confirm.delete.tx':'¿Eliminar transacción?','confirm.delete.tx.sub':'Esta acción no se puede deshacer.',
-      'confirm.delete.all':'¿Borrar todo?','confirm.delete.all.sub':'Todas las transacciones serán eliminadas.',
-      'confirm.irreversible':'Irreversible.',
-      'confirm.yes.remove':'Sí, eliminar','confirm.yes.delete':'Sí, borrar todo',
-      'import.title':'Importar datos','import.add':'➕ Agregar a los existentes','import.replace':'🔄 Reemplazar todo',
-      'import.found':'transacciones encontradas. ¿Qué deseas hacer?',
-      'nubank.how':'Cómo exportar de Nubank:','nubank.safe':'✅ Seguro — ningún dato sale de tu dispositivo',
-      'nubank.btn':'💜 Importar CSV',
-      'nubank.csv.title':'Importar CSV de Nubank','nubank.csv.sub':'Categorizado automáticamente',
-      'btn.export':'Exportar','btn.import':'Importar','btn.save':'Guardar','btn.cancel':'Cancelar',
-      'btn.test':'Probar','btn.clear':'🗑️ Limpiar',
-            'toast.saved':'Cambio guardado ✓',
-      'toast.added':'Transacción agregada ✓',
-      'toast.removed':'Transacción eliminada',
-      'toast.alert.created':'✅ ¡Alerta creada!',
-      'toast.notif.on':'🔔 ¡Notificaciones activadas!',
-      'toast.notif.off':'Notificaciones desactivadas',
-      'toast.notif.test':'Notificación de prueba enviada!',
-      'toast.notif.notsup':'No soportado en este navegador',
-      'toast.notif.denied':'Permiso denegado por el navegador',
-      'toast.notif.noperm':'Activa las notificaciones primero',
-      'toast.fill':'¡Completa descripción e importe!',
-      'toast.fill.value':'Ingresa un importe válido',
-      'toast.file.invalid':'❌ Archivo inválido',
-      'toast.file.nocols':'❌ Columnas no encontradas',
-      'toast.file.noformat':'❌ Formato no reconocido',
-      'toast.file.none':'❌ Sin transacciones encontradas',
-      'toast.file.noperm':'❌ Permiso denegado',
-      'chart.error':'Error al cargar gráfico',
-      'notif.push.title':'Controle+',
-      'goal.sheet.new':'Nueva meta',
-      'goal.sheet.edit':'Editar meta',
-      'budget.sheet.new':'Nueva categoría',
-      'budget.sheet.edit':'Editar categoría',
-      'budget.save':'Guardar',
-      'sheet.edit.small':'editar',
-      'report.pdf.title':'Controle+ — Informe',
-      'report.header':'Informe de gastos',
-            'toast.goal.saved':'Meta guardada ✓',
-      'toast.goal.removed':'Meta eliminada',
-      'toast.backup.restored':'✅ ¡Respaldo restaurado!',
-      'toast.no.data':'Sin datos para exportar',
-      'toast.sound.on':'Sonidos activados 🔊',
-      'toast.sound.off':'Sonidos desactivados',
-      'import.txs.done':'transacciones importadas!',
-      'import.txs.added':'transacciones agregadas',
-      'notif.disabled':'Notificaciones desactivadas',
-      'cfg.notif.time':'Hora del recordatorio',
-            'desc.placeholder':'Ej. Comida, Gasolina, Ropa…',
-      'desc.placeholder2':'Ej. Alquiler, Salario…',
-      'notif.time.saved':'Hora guardada:',
-      'txs.count':'📋 ${n} transacciones',
-      'sheet.text.lançar':'📝 Registrar por texto',
-      'sheet.text.varios':'📝 Registro masivo',
-      'report.trend.label':'📅 Tendencia mes a mes',
-      'sheet.edit.tx':'✏️ Editar transacción',
-      'import.merge.found':'transacciones encontradas. ¿Qué deseas hacer?',
-      'notif.cotacao':'Cotización actual: R$',
-      'cat.food':'Comida',
-      'cat.edu':'Educación',
-      'cat.health':'Salud',
-      'cat.salary':'Salario',
-      'cat.transfer.out':'Transferencia Pix enviada -',
-      'cat.transfer.in':'Transferencia Pix recibida -',
-            'chart.7d':'7D',
-      'btn.export.icon':'⬇️ Exportar',
-      'import.found':'transacciones encontradas. ¿Qué deseas hacer?',
-      'toast.lang':'🌐 ¡Idioma cambiado!',
-      'months':['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
-      'months.short':['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
-      'cur.real':'Real','cur.dollar':'Dólar EUA','cur.euro':'Euro','cur.pound':'Libra',
-      'cur.peso.arg':'Peso Argentino','cur.yen':'Yen','cur.cad':'Dólar CA','cur.chf':'Franco Suizo',
-      'cur.cny':'Yuan','cur.aud':'Dólar AU','cur.peso.mx':'Peso MX',
     }
   };
 
-  let currentLang = localStorage.getItem('_lang') || 'pt';
-  function t(key){ return (LANGS[currentLang] && LANGS[currentLang][key]) || (LANGS.pt && LANGS.pt[key]) || key; }
+  const currentLang = 'pt';
+  function t(key){ return LANGS.pt[key] || key; }
   window.t = t;
-  window.getLang = () => currentLang;
+  window.getLang = () => 'pt';
 
   // Safe querySelector helper
   function qs(sel){ try{ return document.querySelector(sel); }catch(e){ return null; } }
@@ -3934,17 +3651,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
     // 1. data-i18n automático
     sela('[data-i18n]').forEach(el => { try{ el.textContent = t(el.getAttribute('data-i18n')); }catch(e){} });
 
-    // 2. Botões de idioma
-    ['pt','en','es'].forEach(l => {
-      const btn = sid('lang-'+l);
-      if(!btn) return;
-      const on = l === currentLang;
-      btn.style.borderColor = on ? 'rgba(0,200,150,.35)' : 'var(--border2)';
-      btn.style.background  = on ? 'var(--green-bg)' : 'none';
-      btn.style.color       = on ? 'var(--green)' : 'var(--muted)';
-    });
-
-    // 3. Nav tabs — only update text, keep existing icon spans
+    // 2. Nav tabs — only update text, keep existing icon spans
     const updateTab = (id, key) => {
       const el = sid(id); if(!el) return;
       const span = el.querySelector('[data-i18n]') || el.querySelector('span:last-child');
@@ -4109,12 +3816,6 @@ tr+tr td{border-top:1px solid #f3f3f3}
 
     } catch(globalErr){ console.warn('applyLang error:', globalErr); }
   }
-  window.setLang = function(lang){
-    currentLang = lang;
-    localStorage.setItem('_lang', lang);
-    applyLang();
-    if(window.showToast) showToast(t('toast.lang'));
-  };
 
   document.addEventListener('DOMContentLoaded', applyLang);
   if(document.readyState !== 'loading') setTimeout(applyLang, 150);
