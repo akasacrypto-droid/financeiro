@@ -4331,9 +4331,9 @@ Formato exato (sem nada fora do JSON):
       if(_allNews[i].impact) continue;
       const result = await analyzeNews(_allNews[i]);
       if(result === 'LOW_BALANCE') {
-        // Para tudo e marca como sem crédito
         _puterReady = false;
         _puterLowBalance = true;
+        localStorage.setItem('_puter_low_balance', '1');
         renderNewsList();
         _analyzing = false;
         return;
@@ -4346,7 +4346,7 @@ Formato exato (sem nada fora do JSON):
 
   // ── Puter onboarding ──────────────────────────────────
   let _puterReady = false;
-  let _puterLowBalance = false;
+  let _puterLowBalance = localStorage.getItem('_puter_low_balance') === '1';
 
   window.abrirOnboardingPuter = function() {
     document.getElementById('puter-onboarding-overlay').classList.add('open');
@@ -4365,6 +4365,8 @@ Formato exato (sem nada fora do JSON):
     try {
       await puter.auth.signIn();
       _puterReady = true;
+      _puterLowBalance = false;
+      localStorage.removeItem('_puter_low_balance');
       fecharOnboardingPuter();
       renderNewsList();
       analyzeAll();
@@ -4378,11 +4380,11 @@ Formato exato (sem nada fora do JSON):
 
   // Checa silenciosamente se já está logado (sem popup)
   async function checkPuterSession() {
+    // Se saldo acabou, nunca tenta de novo
+    if(localStorage.getItem('_puter_low_balance') === '1') return;
     try {
-      // Usa isSignedIn de forma síncrona se disponível, sem abrir WebSocket
       if(puter.auth && typeof puter.auth.isSignedIn === 'function') {
         const signed = puter.auth.isSignedIn();
-        // isSignedIn pode retornar bool direto (síncrono) ou Promise
         const logged = (signed instanceof Promise) ? false : !!signed;
         if(logged) {
           _puterReady = true;
@@ -4390,7 +4392,7 @@ Formato exato (sem nada fora do JSON):
           analyzeAll();
         }
       }
-    } catch(e) {} // falha silenciosa — usuário ativa manualmente
+    } catch(e) {}
   }
 
   window.loadNews = async function(force) {
@@ -4768,174 +4770,6 @@ Formato exato (sem nada fora do JSON):
         console.error('Análise erro:', e);
       }
     }, 600);
-  };
-
-  window.resetAIAnalysis = function() {
-    document.getElementById('ai-analysis-result').style.display = 'none';
-    document.getElementById('ai-analysis-idle').style.display   = 'block';
-  };
-
-})();
-</script>
-
-</body>
-</html>
-
-
-  // ── Monta contexto completo dos gastos ───────────────
-  function buildSpendingContext() {
-    try {
-      const txData      = JSON.parse(localStorage.getItem('fin_txs')      || '[]');
-      const goalData    = JSON.parse(localStorage.getItem('fin_goals')     || '[]');
-      const budgetItems = JSON.parse(localStorage.getItem('fin_budget')    || '[]');
-
-      // Últimos 3 meses
-      const now = new Date();
-      const months = [];
-      for(let i = 0; i < 3; i++) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        months.push(`${d.getFullYear()}-${d.getMonth()}`);
-      }
-
-      const recent = txData.filter(t => months.includes(t.month));
-      if(!recent.length && !goalData.length && !budgetItems.length) return null;
-
-      const monthNames = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-
-      // ── Por mês ──
-      const byMonth = {};
-      recent.forEach(t => {
-        if(!byMonth[t.month]) byMonth[t.month] = { inc:0, exp:0, cats:{} };
-        if(t.type==='income') {
-          byMonth[t.month].inc += t.val;
-        } else {
-          byMonth[t.month].exp += t.val;
-          const c = t.cat || 'Outros';
-          byMonth[t.month].cats[c] = (byMonth[t.month].cats[c]||0) + t.val;
-        }
-      });
-
-      let ctx = '=== HISTÓRICO DE GASTOS (últimos 3 meses) ===\n';
-      Object.entries(byMonth).sort().reverse().forEach(([key, data]) => {
-        const [y, m] = key.split('-').map(Number);
-        const saldo = data.inc - data.exp;
-        const topCats = Object.entries(data.cats)
-          .sort((a,b)=>b[1]-a[1]).slice(0,8)
-          .map(([c,v])=>`${c}: R$${v.toFixed(0)}`).join(', ');
-        ctx += `\n${monthNames[m]}/${y}: Receita R$${data.inc.toFixed(0)} | Gastos R$${data.exp.toFixed(0)} | Saldo R$${saldo.toFixed(0)}\n`;
-        if(topCats) ctx += `  Categorias: ${topCats}\n`;
-      });
-
-      // ── Metas ──
-      if(goalData.length) {
-        ctx += '\n=== METAS DE ECONOMIA ===\n';
-        goalData.forEach(g => {
-          const pct = g.target>0 ? ((g.saved/g.target)*100).toFixed(0) : 0;
-          ctx += `- ${g.name}: R$${g.saved.toFixed(0)} de R$${g.target.toFixed(0)} (${pct}% concluído)\n`;
-        });
-      }
-
-      // ── Orçamento ──
-      if(budgetItems.length) {
-        ctx += '\n=== ORÇAMENTO MENSAL CONFIGURADO ===\n';
-        budgetItems.forEach(b => {
-          ctx += `- ${b.name}: ${b.pct}% do saldo mensal\n`;
-        });
-      }
-
-      return ctx.trim();
-    } catch(e) { return null; }
-  }
-
-  // ── Roda a análise com Puter ─────────────────────────
-  let _aiRunning = false;
-
-  window.runAIAnalysis = async function() {
-    if(_aiRunning) return;
-    _aiRunning = true;
-
-    const ctx = buildSpendingContext();
-
-    const idle    = document.getElementById('ai-analysis-idle');
-    const loading = document.getElementById('ai-analysis-loading');
-    const result  = document.getElementById('ai-analysis-result');
-    const errEl   = document.getElementById('ai-error-msg');
-    if(errEl) errEl.remove();
-
-    idle.style.display    = 'none';
-    loading.style.display = 'block';
-    result.style.display  = 'none';
-
-    const setStep = txt => {
-      const el = document.getElementById('ai-loading-step');
-      if(el) el.textContent = txt;
-    };
-
-    try {
-      setStep('Conectando com a IA...');
-
-      const noData = !ctx;
-      const prompt = noData
-        ? `Você é um consultor financeiro brasileiro. O usuário ainda não tem lançamentos cadastrados. Dê 5 dicas práticas de controle financeiro para brasileiros com exemplos e valores reais. Responda em HTML simples (h3, p, ul, li, b). Sem markdown.`
-        : `Você é um consultor financeiro pessoal brasileiro altamente especializado. Analise os dados financeiros reais do usuário abaixo e gere uma análise personalizada e específica.
-
-${ctx}
-
-Responda APENAS em HTML simples (use h3, p, ul, li, b para estrutura; style="color:#FF5C5C" para alertas negativos; style="color:#00C896" para positivos). Sem markdown, sem blocos de código, sem texto fora do HTML.
-
-Estruture sua resposta com exatamente estas seções, usando os valores reais:
-
-<h3>📊 Perfil Financeiro</h3>
-[receita média, gasto médio, taxa de poupança % calculada dos dados reais]
-
-<h3>🔴 Alertas de Atenção</h3>
-[liste os gastos que estão altos ou crescendo, com os valores reais do usuário e comparação entre meses]
-
-<h3>✅ Pontos Positivos</h3>
-[o que o usuário está fazendo bem com base nos dados reais]
-
-<h3>🎯 Situação das Metas</h3>
-[análise de cada meta cadastrada: está no ritmo certo? quando vai atingir? o que precisa fazer]
-
-<h3>💡 5 Ações Concretas para Este Mês</h3>
-[ações específicas baseadas nos gastos reais, com valor estimado de economia em R$ para cada uma]
-
-<h3>📅 Meta para o Próximo Mês</h3>
-[meta específica em R$ baseada nos dados, não genérica]
-
-Seja DIRETO, use os números reais, evite conselhos genéricos que não usem os dados do usuário.`;
-
-      setStep('Analisando seus gastos, metas e orçamento...');
-      const response = await puter.ai.chat(prompt, { model: 'google/gemini-2.5-flash-lite' });
-      const html = response?.message?.content?.[0]?.text || response?.text || String(response);
-
-      loading.style.display = 'none';
-      result.style.display  = 'block';
-      result.innerHTML = `
-        <div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin-bottom:12px;line-height:1.8;font-size:13.5px;color:var(--text)">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">
-            <div style="display:flex;align-items:center;gap:8px">
-              <span style="font-size:20px">🤖</span>
-              <span style="font-size:14px;font-weight:700">Análise Financeira Personalizada</span>
-            </div>
-            <button onclick="resetAIAnalysis()" style="font-size:11px;padding:4px 12px;border-radius:99px;border:1px solid var(--border2);background:none;color:var(--muted);font-family:'DM Sans',sans-serif;cursor:pointer">↺ Refazer</button>
-          </div>
-          ${html}
-        </div>`;
-
-    } catch(e) {
-      loading.style.display = 'none';
-      idle.style.display    = 'block';
-      if(!e?.message?.includes('cancel') && !e?.message?.includes('Cancel')) {
-        const div = document.createElement('div');
-        div.id = 'ai-error-msg';
-        div.style.cssText = 'background:rgba(255,92,92,.1);border:1px solid rgba(255,92,92,.2);border-radius:10px;padding:10px 14px;font-size:12px;color:#FF5C5C;margin-top:8px';
-        div.textContent = '❌ Erro ao conectar. Verifique sua conta Puter e tente novamente.';
-        idle.appendChild(div);
-      }
-    } finally {
-      _aiRunning = false;
-    }
   };
 
   window.resetAIAnalysis = function() {
