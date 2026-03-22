@@ -351,8 +351,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 </div>
 
 <!-- TICKER DE COTAÇÕES -->
-<div style="overflow:hidden;background:var(--s1);border-bottom:1px solid var(--border);height:36px;display:flex;align-items:center;flex-shrink:0">
-  <div id="ticker-track" style="display:flex;align-items:center;white-space:nowrap;height:100%"></div>
+<div id="ticker-wrap" style="overflow:hidden;background:var(--s1);border-bottom:1px solid var(--border);height:36px;display:flex;align-items:center;flex-shrink:0">
+  <div id="ticker-track" style="display:inline-flex;align-items:center;white-space:nowrap;height:100%"></div>
 </div>
 
 <!-- NAV TABS -->
@@ -4240,30 +4240,30 @@ tr+tr td{border-top:1px solid #f3f3f3}
 
     if(!items.length) return;
 
-    const make = item => `<div class="ticker-item"
+    const make = item => `<span class="ticker-item"
       onclick="goTab('plan');setTimeout(()=>{goPlanTab('cambio');setTimeout(()=>openMoedaSheet('${item.code}'),350)},200)">
       <span class="ticker-flag">${item.flag}</span>
-      <div><div class="ticker-code">${item.code}</div><div class="ticker-price">R$ ${item.pStr}</div></div>
+      <span style="display:inline-flex;flex-direction:column;line-height:1.2">
+        <span class="ticker-code">${item.code}</span>
+        <span class="ticker-price">R$ ${item.pStr}</span>
+      </span>
       ${item.vStr?`<span class="ticker-var" style="color:${item.up?'var(--green)':'var(--red)'};background:${item.up?'rgba(0,200,150,.12)':'rgba(255,92,92,.12)'}">${item.vStr}</span>`:''}
-    </div>`;
+    </span>`;
 
-    // Duplica 3x para garantir loop suave
-    const html = [...items,...items,...items].map(make).join('');
-    track.innerHTML = html;
+    // Preenche com cópias suficientes para loop contínuo
+    const repeated = [...items,...items,...items].map(make).join('');
+    track.innerHTML = repeated;
 
-    // Calcula duração baseada na quantidade de itens
-    const itemW = 120; // largura estimada por item em px
-    const totalW = items.length * itemW;
-    const duration = totalW / 40; // 40px/s
-
-    // Injeta keyframe dinâmico
-    const styleId = 'ticker-keyframe';
-    let sEl = document.getElementById(styleId);
-    if(!sEl){ sEl = document.createElement('style'); sEl.id = styleId; document.head.appendChild(sEl); }
-    sEl.textContent = `@keyframes ticker-run{0%{transform:translateX(0)}100%{transform:translateX(-${totalW}px)}}`;
-
-    track.style.animation = `ticker-run ${duration}s linear infinite`;
-    track.style.willChange = 'transform';
+    // Mede largura real após render e aplica animação
+    requestAnimationFrame(() => {
+      const oneSetW = track.scrollWidth / 3;
+      const sEl = document.getElementById('ticker-keyframe') || document.createElement('style');
+      sEl.id = 'ticker-keyframe';
+      sEl.textContent = `@keyframes tk{from{transform:translateX(0)}to{transform:translateX(-${oneSetW}px)}}`;
+      document.head.appendChild(sEl);
+      const dur = Math.max(15, oneSetW / 50);
+      track.style.cssText += `;animation:tk ${dur}s linear infinite`;
+    });
   }
 
   window._updateTicker = buildTicker;
