@@ -3896,6 +3896,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
 })();
 </script>
 <!-- ── NOVIDADES (NEWS) ── -->
+<script src="https://js.puter.com/v2/"></script>
 <script>
 (function(){
 
@@ -3925,13 +3926,12 @@ tr+tr td{border-top:1px solid #f3f3f3}
     neutro:   { color: 'var(--muted2)', bg: 'var(--s2)',           border: 'var(--border)',         icon: '➖' },
   };
 
-  let _allNews   = [];   // { src, title, link, description, pubDate, impact }
+  let _allNews   = [];
   let _activeSource = 'all';
   let _loaded    = false;
   let _loading   = false;
   let _analyzing = false;
 
-  // ── helpers ──────────────────────────────────────────
   function timeAgo(d) {
     const diff = Math.floor((Date.now() - new Date(d)) / 1000);
     if(isNaN(diff)||diff<0) return '';
@@ -3973,35 +3973,24 @@ tr+tr td{border-top:1px solid #f3f3f3}
     return parseRSS(xml).slice(0, 10).map(item => ({ src: key, ...item, impact: null }));
   }
 
-  // ── Claude API — analisa UMA notícia ─────────────────
+  // ── Puter.js — sem CORS, sem API key, gratuito ────────
   async function analyzeNews(news) {
-    const prompt = `Você é um especialista financeiro brasileiro. Analise esta notícia e responda SOMENTE em JSON válido, sem markdown.
+    const prompt = `Você é um especialista financeiro brasileiro. Analise esta notícia e responda SOMENTE em JSON válido, sem markdown nem texto extra.
 
 Notícia: "${news.title}"
 ${news.description ? `Contexto: "${news.description}"` : ''}
 
-Responda exatamente neste formato JSON:
-{
-  "impacto": "positivo" | "negativo" | "neutro",
-  "area": "texto curto ex: Inflação, Juros, Câmbio, Emprego, Investimentos, Consumo",
-  "resumo": "1 frase simples explicando o que aconteceu",
-  "para_voce": "1 frase direta: o que isso muda na vida do brasileiro comum"
-}`;
+Formato exato:
+{"impacto":"positivo"|"negativo"|"neutro","area":"ex: Inflação, Juros, Câmbio, Emprego, Investimentos","resumo":"1 frase do que aconteceu","para_voce":"1 frase do impacto na vida do brasileiro"}`;
 
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 300,
-          messages: [{ role: 'user', content: prompt }]
-        })
-      });
-      const data = await res.json();
-      const text = data.content?.[0]?.text || '{}';
+      const response = await puter.ai.chat(prompt, { model: 'claude-haiku-4-5' });
+      const text = response?.message?.content?.[0]?.text || response?.text || String(response);
       const clean = text.replace(/```json|```/g,'').trim();
-      return JSON.parse(clean);
+      const start = clean.indexOf('{');
+      const end   = clean.lastIndexOf('}');
+      if(start === -1 || end === -1) return null;
+      return JSON.parse(clean.slice(start, end+1));
     } catch(e) { return null; }
   }
 
@@ -4045,7 +4034,7 @@ Responda exatamente neste formato JSON:
           <div style="font-size:11.5px;color:var(--muted2);line-height:1.4">👤 <b>Para você:</b> ${imp.para_voce}</div>
         </div>` : `
         <div style="margin-top:8px;padding:8px 12px;border-radius:8px;background:var(--s2);border:1px solid var(--border);display:flex;align-items:center;gap:7px">
-          <span style="font-size:11px;opacity:.4;animation:pulse-green 1.2s infinite">🤖</span>
+          <span style="font-size:11px;opacity:.5;animation:pulse-green 1.2s infinite">🤖</span>
           <span style="font-size:11px;color:var(--muted)">Analisando impacto...</span>
         </div>`}
 
@@ -4056,19 +4045,17 @@ Responda exatamente neste formato JSON:
     }).join('');
   }
 
-  // ── analisa todas em background ───────────────────────
   async function analyzeAll() {
     if(_analyzing) return;
     _analyzing = true;
     for(let i = 0; i < _allNews.length; i++) {
       if(_allNews[i].impact) continue;
       _allNews[i].impact = await analyzeNews(_allNews[i]);
-      renderNewsList(); // atualiza card a card conforme chega
+      renderNewsList();
     }
     _analyzing = false;
   }
 
-  // ── carga principal ───────────────────────────────────
   window.loadNews = async function(force) {
     if(_loaded && !force) { renderNewsList(); return; }
     if(_loading) return;
@@ -4084,7 +4071,6 @@ Responda exatamente neste formato JSON:
     _allNews = [];
     results.forEach(r => { if(r.status === 'fulfilled') _allNews.push(...r.value); });
 
-    // deduplica
     const seen = new Set();
     _allNews = _allNews.filter(n => {
       const k = n.title.slice(0,40).toLowerCase();
@@ -4106,7 +4092,7 @@ Responda exatamente neste formato JSON:
     }
 
     renderNewsList();
-    analyzeAll(); // inicia análise em background
+    analyzeAll();
   };
 
   window.filterNewsSource = function(src) {
