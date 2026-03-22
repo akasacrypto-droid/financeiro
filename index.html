@@ -318,7 +318,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse-green 2s infinite;flex-shrink:0"></span>
       <span id="online-count">1</span>
     </div>
-    <div id="version-badge" onclick="showVersionInfo()" title="Versão deployada" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);background:var(--s2);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;cursor:pointer;user-select:none;letter-spacing:.3px;transition:all .2s;display:flex;flex-direction:column;align-items:center;line-height:1.3"><span id="vbadge-hash">4c304cb</span><span id="vbadge-time" style="font-size:9px;color:var(--muted);opacity:.7"></span></div>
+    <div id="version-badge" onclick="showVersionInfo()" title="Versão deployada" style="display:none"><span id="vbadge-hash"></span><span id="vbadge-time"></span></div>
     <div class="notif-btn" onclick="goTab('notif')" title="Notificações">
       🔔<div class="notif-badge" id="notif-badge"></div>
     </div>
@@ -417,15 +417,15 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   <!-- SUB-TABS -->
   <div style="display:flex;gap:7px;margin-bottom:14px">
     <button class="plan-sub-tab on" id="psub-metas" onclick="goPlanTab('metas')" style="flex:1">🎯 Metas</button>
-    <button class="plan-sub-tab" id="psub-regra" onclick="goPlanTab('regra')" style="flex:1" data-i18n="plan.budget">⚖️ Orçamento</button>
-    <button class="plan-sub-tab" id="psub-cambio" onclick="goPlanTab('cambio')" style="flex:1" data-i18n="plan.cambio">💱 Câmbio</button>
+    <button class="plan-sub-tab" id="psub-regra" onclick="goPlanTab('regra')" style="flex:1">⚖️ Orçamento</button>
+    <button class="plan-sub-tab" id="psub-cambio" onclick="goPlanTab('cambio')" style="flex:1">💱 Câmbio</button>
   </div>
 
   <!-- ── SUB: METAS ── -->
   <div id="planpage-metas">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div class="slbl" style="margin:0" data-i18n="plan.goals.title">Metas de economia</div>
-      <button onclick="openGoalSheet()" style="font-size:11px;padding:5px 12px;border-radius:99px;border:1px solid rgba(0,200,150,.35);background:var(--green-bg);color:var(--green);font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700" data-i18n-onclick="plan.newgoal"><span data-i18n="plan.newgoal">+ Nova meta</span></button>
+      <button onclick="openGoalSheet()" style="font-size:11px;padding:5px 12px;border-radius:99px;border:1px solid rgba(0,200,150,.35);background:var(--green-bg);color:var(--green);font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700" data-i18n-onclick="plan.newgoal"><span data-i18n="plan.newgoal"><span data-i18n='plan.newgoal'>+ Nova meta</span></span></button>
     </div>
     <div id="goals-list">
       <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:22px;text-align:center;color:var(--muted);font-size:13px;line-height:1.7">
@@ -451,7 +451,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
       <div class="slbl" style="margin:0" data-i18n="budget.envelopes">Envelopes mensais</div>
-      <button onclick="openBudgetAddSheet()" style="font-size:11px;padding:5px 12px;border-radius:99px;border:1px solid rgba(0,200,150,.35);background:var(--green-bg);color:var(--green);font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700"><span data-i18n="plan.addenv">+ Adicionar</span></button>
+      <button onclick="openBudgetAddSheet()" style="font-size:11px;padding:5px 12px;border-radius:99px;border:1px solid rgba(0,200,150,.35);background:var(--green-bg);color:var(--green);font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700"><span data-i18n="plan.addenv"><span data-i18n='plan.addenv'>+ Adicionar</span></span></button>
     </div>
 
     <div id="budget-list">
@@ -577,7 +577,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     <div style="margin-top:14px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <div class="slbl" style="margin:0">🔔 Alertas de cotação</div>
-        <button onclick="openAlertSheet()" style="font-size:11px;padding:5px 12px;border-radius:99px;border:1px solid rgba(0,200,150,.35);background:var(--green-bg);color:var(--green);font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700">+ Novo alerta</button>
+        <button onclick="openAlertSheet()" style="font-size:11px;padding:5px 12px;border-radius:99px;border:1px solid rgba(0,200,150,.35);background:var(--green-bg);color:var(--green);font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700"><span data-i18n='alert.new'>+ Novo alerta</span></button>
       </div>
       <div id="alert-list">
         <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;color:var(--muted);font-size:12px;line-height:1.7">
@@ -633,7 +633,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <div id="al-cotacao-atual" style="font-size:11px;color:var(--muted);margin-top:6px;padding:0 2px"></div>
     </div>
     <button onclick="saveAlert()" class="sheet-save">Criar alerta</button>
-    <button onclick="closeAlertSheet()" class="sheet-cancel">Cancelar</button>
+    <button onclick="closeAlertSheet()" class="sheet-cancel" data-i18n="sheet.cancel">Cancelar</button>
   </div>
 
   <!-- ── SHEET: GRÁFICO MOEDA ── -->
@@ -788,7 +788,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
           <div class="ntitle">Exportar backup</div>
           <div class="nsub" id="export-sub" data-i18n="cfg.backup.export.sub">Salva lançamentos, metas e envelopes</div>
         </div>
-        <button onclick="exportData()" style="background:var(--green-bg);border:1px solid rgba(0,200,150,.25);color:var(--green);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px">⬇️ Exportar</button>
+        <button onclick="exportData()" style="background:var(--green-bg);border:1px solid rgba(0,200,150,.25);color:var(--green);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px"><span data-i18n-btn='btn.export'>⬇️ Exportar</span></button>
       </div>
       <div id="backup-info" style="display:none;background:var(--s2);border-radius:8px;padding:8px 10px;font-size:10.5px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap"></div>
     </div>
@@ -903,7 +903,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Encontrados <b id="import-count" style="color:var(--text)">0</b> lançamentos. O que deseja fazer?</div>
   <button onclick="confirmImport('merge')" style="width:100%;padding:14px;background:var(--green);border:none;border-radius:14px;color:#0a1a13;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;margin-bottom:8px" data-i18n="import.add">➕ Adicionar aos existentes</button>
   <button onclick="confirmImport('replace')" style="width:100%;padding:14px;background:var(--red-bg);border:1px solid rgba(255,92,92,.3);border-radius:14px;color:var(--red);font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;margin-bottom:8px" data-i18n="import.replace">🔄 Substituir tudo</button>
-  <button onclick="closeImport()" class="sheet-cancel">Cancelar</button>
+  <button onclick="closeImport()" class="sheet-cancel" data-i18n="sheet.cancel">Cancelar</button>
 </div>
 
 <!-- CLEAR ALL SHEET -->
@@ -914,7 +914,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   <div class="sheet-title" style="margin-bottom:6px" data-i18n="confirm.delete.all">Apagar tudo?</div>
   <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Todos os lançamentos serão removidos. <b style="color:var(--red)" data-i18n="confirm.irreversible">Irreversível.</b></div>
   <button onclick="confirmClear()" style="width:100%;padding:14px;background:var(--red);border:none;border-radius:14px;color:#fff;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;margin-bottom:8px" data-i18n="confirm.yes.delete">Sim, apagar tudo</button>
-  <button onclick="closeClear()" class="sheet-cancel">Cancelar</button>
+  <button onclick="closeClear()" class="sheet-cancel" data-i18n="sheet.cancel">Cancelar</button>
 </div>
 
 <!-- CONFIRM DELETE SHEET -->
@@ -925,7 +925,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   <div class="sheet-title" style="margin-bottom:8px" data-i18n="confirm.delete.tx">Remover lançamento?</div>
   <div style="font-size:13px;color:var(--muted);margin-bottom:20px" data-i18n="confirm.delete.tx.sub">Esta ação não pode ser desfeita.</div>
   <button onclick="confirmDel()" style="width:100%;padding:15px;background:var(--red);border:none;border-radius:14px;color:#fff;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;margin-bottom:8px" data-i18n="confirm.yes.remove">Sim, remover</button>
-  <button onclick="closeConfirm()" class="sheet-cancel">Cancelar</button>
+  <button onclick="closeConfirm()" class="sheet-cancel" data-i18n="sheet.cancel">Cancelar</button>
 </div>
 
 <!-- ADD SHEET -->
@@ -1142,11 +1142,11 @@ function addTx(){
   const desc=document.getElementById('f-desc').value.trim();
   const val=parseFloat(document.getElementById('f-val').value);
   const cat=document.getElementById('f-cat').value;
-  if(!desc||isNaN(val)||val<=0){showToast('Preencha descrição e valor!');return}
+  if(!desc||isNaN(val)||val<=0){showToast(window.t?t('toast.fill'):'Preencha descrição e valor!');return}
   txData.push({id:Date.now(),month:curKey(),desc,val,type:sheetType,cat});
   save();closeSheet();render();
   if(sheetType==='income')soundIncome();else soundExpense();
-  showToast('Lançamento adicionado ✓');
+  showToast(window.t?t('toast.added'):'Lançamento adicionado ✓');
 }
 
 /* ── EDIT ── */
@@ -1177,7 +1177,7 @@ function saveEdit(){
   const cat=document.getElementById('e-cat').value;
   if(!desc||isNaN(val)||val<=0)return;
   const t=txData.find(x=>x.id===editingId);
-  if(t){t.desc=desc;t.val=val;t.type=editType;t.cat=cat;save();render();if(canSound())soundSave();showToast('Alteração salva ✓')}
+  if(t){t.desc=desc;t.val=val;t.type=editType;t.cat=cat;save();render();if(canSound())soundSave();showToast(window.t?t('toast.saved'):'Alteração salva ✓')}
   closeModal();
 }
 let pendingDelId=null;
@@ -1192,7 +1192,7 @@ function confirmDel(){
   txData=txData.filter(x=>x.id!==pendingDelId);
   pendingDelId=null;
   closeConfirm();
-  save();render();showToast('Lançamento removido');
+  save();render();showToast(window.t?t('toast.removed'):'Lançamento removido');
 }
 function closeConfirm(){
   pendingDelId=null;
@@ -1217,20 +1217,20 @@ function toggleNotif(){
       if(perm==='granted'){
         localStorage.setItem('fin_notif','1');
         document.getElementById('notif-badge').classList.add('on');
-        document.getElementById('notif-status').textContent='✅ Notificações ativadas';
+        document.getElementById('notif-status').textContent=window.t?t('toast.notif.on'):'✅ Notificações ativadas';
         scheduleNotif();showToast('Notificações ativadas! 🔔');
       }else{
         document.getElementById('notif-toggle').checked=false;
         document.getElementById('notif-status').textContent='❌ Permissão negada';
-        showToast('Permissão negada pelo navegador');
+        showToast(window.t?t('toast.notif.denied'):'Permissão negada pelo navegador');
       }
     });
   }else{
     localStorage.setItem('fin_notif','0');
     document.getElementById('notif-badge').classList.remove('on');
-    document.getElementById('notif-status').textContent='Notificações desativadas';
+    document.getElementById('notif-status').textContent=window.t?t('toast.notif.off'):'Notificações desativadas';
     if(notifInterval){clearInterval(notifInterval);notifInterval=null}
-    showToast('Notificações desativadas');
+    showToast(window.t?t('toast.notif.off'):'Notificações desativadas');
   }
 }
 function saveNotifTime(){
@@ -1267,14 +1267,14 @@ function sendNotif(){
   }
 }
 function testNotif(){
-  if(!('Notification' in window)){showToast('Não suportado neste navegador');return}
-  if(Notification.permission!=='granted'){showToast('Ative as notificações primeiro');return}
-  sendNotif();showToast('Notificação de teste enviada!');
+  if(!('Notification' in window)){showToast(window.t?t('toast.notif.notsup'):'Não suportado neste navegador');return}
+  if(Notification.permission!=='granted'){showToast(window.t?t('toast.notif.noperm'):'Ative as notificações primeiro');return}
+  sendNotif();showToast(window.t?t('toast.notif.test'):'Notificação de teste enviada!');
 }
 /* ── EXPORT / IMPORT ── */
 function exportData(){
   const total=txData.length;
-  if(total===0&&goalData.length===0&&budgetItems.length===0){showToast('Nenhum dado para exportar');return}
+  if(total===0&&goalData.length===0&&budgetItems.length===0){showToast(window.t?t('toast.no.data'):'Nenhum dado para exportar');return}
   const payload={
     version:2,
     exportedAt:new Date().toISOString(),
@@ -1304,7 +1304,7 @@ function exportData(){
   if(infoEl){ infoEl.style.display='flex'; infoEl.innerHTML=parts.map(p=>`<span>${p}</span>`).join('<span style="opacity:.3">·</span>'); }
   const subEl=document.getElementById('export-sub');
   if(subEl)subEl.textContent=`Último backup: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
-  showToast('✅ Backup exportado!');
+  showToast(window.t?t('toast.backup.ok'):'✅ Backup exportado!');
 }
 
 function importData(event){
@@ -1320,7 +1320,7 @@ function importData(event){
         imported=parsed.data;
         if(Array.isArray(parsed.goals))importedGoals=parsed.goals;
         if(Array.isArray(parsed.budget))importedBudget=parsed.budget;
-      }else{showToast('❌ Arquivo inválido');return}
+      }else{showToast(window.t?t('toast.file.invalid'):'❌ Arquivo inválido');return}
 
       pendingImport={txs:imported,goals:importedGoals,budget:importedBudget};
       const el=document.getElementById('import-count');
@@ -1351,12 +1351,12 @@ function confirmImport(mode){
     txData=[...txData,...newOnes];
     if(goals){const eG=new Set(goalData.map(g=>g.id));goalData=[...goalData,...goals.filter(g=>!eG.has(g.id))]}
     if(budget){const eB=new Set(budgetItems.map(b=>b.id));budgetItems=[...budgetItems,...budget.filter(b=>!eB.has(b.id))]}
-    showToast(`✅ ${newOnes.length} lançamentos adicionados`);
+    showToast(`✅ ${newOnes.length} ${window.t?t('import.txs.added'):'lançamentos adicionados'}`);
   }
   pendingImport=null;
   saveGoals();saveBudgetData();
   closeImport();save();render();
-  if(mode==='replace')showToast('✅ Backup restaurado com sucesso!');
+  if(mode==='replace')showToast(window.t?t('toast.backup.restored'):'✅ Backup restaurado com sucesso!');
 }
 function closeImport(){
   pendingImport=null;
@@ -1735,7 +1735,7 @@ function saveGoals(){localStorage.setItem('fin_goals',JSON.stringify(goalData))}
 
 function openGoalSheet(id){
   const g=id?goalData.find(x=>x.id===id):null;
-  document.getElementById('goal-sheet-title').textContent=g?'Editar meta':'Nova meta';
+  document.getElementById('goal-sheet-title').textContent=g?(window.t?t('goal.sheet.edit'):'Editar meta'):(window.t?t('goal.sheet.new'):'Nova meta');
   document.getElementById('gf-name').value=g?g.name:'';
   document.getElementById('gf-target').value=g?g.target:'';
   document.getElementById('gf-saved').value=g?g.saved:0;
@@ -1762,7 +1762,7 @@ function saveGoal(){
   }else{
     goalData.push({id:Date.now(),name,target,saved,ico});
   }
-  saveGoals();closeGoalSheet();renderGoals();showToast('Meta salva ✓');
+  saveGoals();closeGoalSheet();renderGoals();showToast(window.t?t('toast.goal.saved'):'Meta salva ✓');
 }
 function addToGoal(id){
   const val=parseFloat(prompt('Quanto guardar agora? (R$)'));
@@ -1771,7 +1771,7 @@ function addToGoal(id){
   if(g){g.saved=Math.min(g.target,g.saved+val);saveGoals();renderGoals();showToast(`+${fmt(val)} guardado!`)}
 }
 function delGoal(id){
-  goalData=goalData.filter(x=>x.id!==id);saveGoals();renderGoals();showToast('Meta removida');
+  goalData=goalData.filter(x=>x.id!==id);saveGoals();renderGoals();showToast(window.t?t('toast.goal.removed'):'Meta removida');
 }
 function renderGoals(){
   const el=document.getElementById('goals-list');
@@ -1824,7 +1824,7 @@ function saveBudgetData(){localStorage.setItem('fin_budget',JSON.stringify(budge
 function openBudgetAddSheet(id){
   editingBudgetId=id||null;
   const existing=id?budgetItems.find(b=>b.id===id):null;
-  document.getElementById('budget-sheet-title').textContent=existing?'Editar categoria':'Nova categoria';
+  document.getElementById('budget-sheet-title').textContent=existing?(window.t?t('budget.sheet.edit'):'Editar categoria'):(window.t?t('budget.sheet.new'):'Nova categoria');
   document.getElementById('bf-name').value=existing?existing.name:'';
   document.getElementById('bf-ico').value=existing?existing.ico:'';
   document.getElementById('bf-pct').value=existing?existing.pct:10;
@@ -1854,11 +1854,11 @@ function saveBudgetItem(){
   }else{
     budgetItems.push({id:Date.now(),name,ico,pct,cats:[]});
   }
-  saveBudgetData();closeBudgetAddSheet();renderPlanRegra();showToast('Salvo ✓');
+  saveBudgetData();closeBudgetAddSheet();renderPlanRegra();showToast(window.t?t('toast.saved'):'Salvo ✓');
 }
 function delBudgetItem(id){
   budgetItems=budgetItems.filter(b=>b.id!==id);
-  saveBudgetData();renderPlanRegra();showToast('Removido');
+  saveBudgetData();renderPlanRegra();showToast(window.t?t('toast.removed'):'Removido');
 }
 
 /* ── RELATÓRIO ── */
@@ -2039,7 +2039,7 @@ function importNubankCSV(event){
       // Validate header: Data,Valor,Identificador,Descrição
       const header=lines[0].toLowerCase();
       if(!header.includes('data')&&!header.includes('valor')){
-        showToast('❌ Formato não reconhecido');event.target.value='';return;
+        showToast(window.t?t('toast.file.noformat'):'❌ Formato não reconhecido');event.target.value='';return;
       }
 
       // Parse columns from header
@@ -2048,7 +2048,7 @@ function importNubankCSV(event){
       const iVal=cols.findIndex(c=>c.includes('valor'));
       const iDesc=cols.findIndex(c=>c.includes('descri')||c.includes('title')||c.includes('título'));
 
-      if(iDate<0||iVal<0){showToast('❌ Colunas não encontradas');return}
+      if(iDate<0||iVal<0){showToast(window.t?t('toast.file.nocols'):'❌ Colunas não encontradas');return}
 
       let imported=0,skipped=0;
 
@@ -2101,7 +2101,7 @@ function importNubankCSV(event){
         imported++;
       });
 
-      if(!imported&&!skipped){showToast('❌ Nenhum lançamento encontrado');event.target.value='';return}
+      if(!imported&&!skipped){showToast(window.t?t('toast.file.none'):'❌ Nenhum lançamento encontrado');event.target.value='';return}
       save();
 
       // Navigate to most recent imported month
@@ -2112,7 +2112,7 @@ function importNubankCSV(event){
       }
       render();
       document.getElementById('nubank-sub').textContent=`${imported} importados · ${skipped} duplicatas ignoradas`;
-      showToast(`✅ ${imported} lançamentos importados!`);
+      showToast(`✅ ${imported} ${window.t?t('import.txs.done'):'lançamentos importados!'}`);
     }catch(err){
       console.error(err);
       showToast('❌ Erro ao ler CSV');
@@ -2283,90 +2283,9 @@ document.getElementById('budget-sheet').addEventListener('touchmove',e=>{if(e.to
 document.getElementById('goal-sheet').addEventListener('touchstart',e=>{startY=e.touches[0].clientY},{passive:true});
 document.getElementById('goal-sheet').addEventListener('touchmove',e=>{if(e.touches[0].clientY-startY>70)closeGoalSheet()},{passive:true});
 
-/* ── VERSION / DEPLOY CHECK ── */
-const GITHUB_REPO='akasacrypto-droid/financeiro';
-
-function timeSince(ms){
-  const s=Math.floor((Date.now()-ms)/1000);
-  if(s<60)return s+'s atrás';
-  const min=Math.floor(s/60);if(min<60)return min+'min atrás';
-  const h=Math.floor(min/60);if(h<24)return h+'h atrás';
-  const d=Math.floor(h/24);return d+'d atrás';
-}
-
-async function checkForNewDeploy(){
-  try{
-    // Usa a API com cache-busting para evitar rate limit
-    const res=await fetch(
-      `https://api.github.com/repos/${GITHUB_REPO}/commits?per_page=1`,
-      {headers:{'Accept':'application/vnd.github.v3+json','X-GitHub-Api-Version':'2022-11-28'}, cache:'no-store'}
-    );
-    if(!res.ok){
-      // Rate limit ou erro — esconde badge silenciosamente
-      const badge=document.getElementById('version-badge');
-      if(badge) badge.style.display='none';
-      return;
-    }
-    const data=await res.json();
-    if(!Array.isArray(data)||!data[0]) return;
-    const latestSha=data[0].sha?data[0].sha.slice(0,7):null;
-    const commitDate=data[0].commit?.committer?.date||data[0].commit?.author?.date||null;
-    if(!latestSha) return;
-
-    const badge=document.getElementById('version-badge');
-    const hashEl=document.getElementById('vbadge-hash');
-    const timeEl=document.getElementById('vbadge-time');
-    const seenKey='fin_seen_'+latestSha;
-    const tsKey='fin_ts_'+latestSha;
-
-    if(hashEl) hashEl.textContent=latestSha;
-
-    if(!localStorage.getItem(tsKey)){
-      const ts=commitDate?new Date(commitDate).getTime():Date.now();
-      localStorage.setItem(tsKey,ts.toString());
-    }
-    if(timeEl){
-      const ts=parseInt(localStorage.getItem(tsKey)||Date.now());
-      timeEl.textContent=timeSince(ts);
-    }
-
-    const seen=localStorage.getItem(seenKey);
-    if(!seen){
-      badge.style.color='var(--green)';badge.style.borderColor='rgba(0,200,150,.35)';badge.style.background='var(--green-bg)';
-      if(hashEl) hashEl.textContent='✓ '+latestSha;
-      setTimeout(()=>{
-        localStorage.setItem(seenKey,'1');
-        if(hashEl) hashEl.textContent=latestSha;
-        badge.style.color='var(--muted)';badge.style.borderColor='var(--border2)';badge.style.background='var(--s2)';
-      },5000);
-    } else {
-      badge.style.color='var(--muted)';badge.style.borderColor='var(--border2)';badge.style.background='var(--s2)';
-    }
-  }catch(e){
-    // Silencia erros de rede
-    const badge=document.getElementById('version-badge');
-    if(badge) badge.style.display='none';
-  }
-}
-
-function showVersionInfo(){ checkForNewDeploy(); }
-
-// Atualiza tempo a cada minuto sem nova chamada de API
-setInterval(()=>{
-  const hashEl=document.getElementById('vbadge-hash');
-  if(!hashEl) return;
-  const sha=hashEl.textContent.replace('✓ ','').trim();
-  if(sha.length===7){
-    const ts=parseInt(localStorage.getItem('fin_ts_'+sha)||'0');
-    const timeEl=document.getElementById('vbadge-time');
-    if(ts && timeEl) timeEl.textContent=timeSince(ts);
-  }
-},60*1000);
-
-// Só verifica uma vez ao carregar, com delay para não competir com outros requests
-setTimeout(checkForNewDeploy, 3000);
-// Re-verifica a cada 10 minutos (respeitando rate limit)
-setInterval(checkForNewDeploy, 10*60*1000);
+/* ── VERSION / DEPLOY CHECK — desativado para evitar 403 ── */
+function checkForNewDeploy(){}
+function showVersionInfo(){}
 </script>
 
 <script>
@@ -2561,12 +2480,12 @@ tr+tr td{border-top:1px solid #f3f3f3}
   window.saveAlert = function(){
     const moeda = document.getElementById('al-moeda').value;
     const valor = parseFloat(document.getElementById('al-valor').value);
-    if(!valor || valor<=0){ showToast('Informe um valor válido'); return; }
+    if(!valor || valor<=0){ showToast(window.t?t('toast.fill.value'):'Informe um valor válido'); return; }
     alerts.push({ id: Date.now(), moeda, cond: alertCond, valor, active: true, triggered: false });
     saveAlerts();
     renderAlerts();
     closeAlertSheet();
-    showToast('✅ Alerta criado!');
+    showToast(window.t?t('toast.alert.created'):'✅ Alerta criado!');
   };
 
   window.deleteAlert = function(id){
@@ -3306,7 +3225,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
       loadEl.style.display = 'none';
       canvas.style.opacity = '1';
     } catch(e){
-      loadEl.textContent = 'Erro ao carregar gráfico';
+      loadEl.textContent = window.t?t('chart.error'):'Erro ao carregar gráfico';
       loadEl.style.display = 'flex';
     }
   }
@@ -3578,7 +3497,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
       'budget.emoji':'Emoji / ícone','budget.pct':'% do saldo mensal',
       'budget.free.pct':'livre','budget.alloc.100':'alocado','budget.over100':'acima de 100%',
       'budget.of':'de','budget.new':'Nova categoria',
-      'report.title':'Relatório de gastos','report.spent':'Gasto total','report.income':'Receita','report.balance':'Saldo',
+      'report.title':window.t?t('report.header'):'Relatório de gastos','report.spent':'Gasto total','report.income':'Receita','report.balance':'Saldo',
       'report.ranking':'🏆 Ranking de gastos','report.top':'💸 Maiores gastos individuais',
       'report.dist':'Distribuição por categoria','report.trend':'📅 Tendência mês a mês',
       'report.period.month':'Este mês','report.period.3m':'3 meses','report.period.6m':'6 meses',
@@ -3623,6 +3542,43 @@ tr+tr td{border-top:1px solid #f3f3f3}
       'nubank.csv.title':'Importar CSV do Nubank','nubank.csv.sub':'Categorizado automaticamente',
       'btn.export':'Exportar','btn.import':'Importar','btn.save':'Salvar','btn.cancel':'Cancelar',
       'btn.test':'Testar','btn.clear':'🗑️ Limpar',
+            'toast.saved':'Alteração salva ✓',
+      'toast.added':'Lançamento adicionado ✓',
+      'toast.removed':'Lançamento removido',
+      'toast.alert.created':'✅ Alerta criado!',
+      'toast.notif.on':'🔔 Notificações ativadas!',
+      'toast.notif.off':'Notificações desativadas',
+      'toast.notif.test':'Notificação de teste enviada!',
+      'toast.notif.notsup':'Não suportado neste navegador',
+      'toast.notif.denied':'Permissão negada pelo navegador',
+      'toast.notif.noperm':'Ative as notificações primeiro',
+      'toast.fill':'Preencha descrição e valor!',
+      'toast.fill.value':'Informe um valor válido',
+      'toast.file.invalid':'❌ Arquivo inválido',
+      'toast.file.nocols':'❌ Colunas não encontradas',
+      'toast.file.noformat':'❌ Formato não reconhecido',
+      'toast.file.none':'❌ Nenhum lançamento encontrado',
+      'toast.file.noperm':'❌ Permissão negada',
+      'chart.error':'Erro ao carregar gráfico',
+      'notif.push.title':'Controle+',
+      'goal.sheet.new':'Nova meta',
+      'goal.sheet.edit':'Editar meta',
+      'budget.sheet.new':'Nova categoria',
+      'budget.sheet.edit':'Editar categoria',
+      'budget.save':'Salvar',
+      'sheet.edit.small':'editar',
+      'report.pdf.title':window.t?t('report.pdf.title'):'Controle+ — Relatório',
+      'report.header':'Relatório de gastos',
+            'toast.goal.saved':'Meta salva ✓',
+      'toast.goal.removed':'Meta removida',
+      'toast.backup.restored':'✅ Backup restaurado!',
+      'toast.no.data':'Nenhum dado para exportar',
+      'toast.sound.on':'Sons ativados 🔊',
+      'toast.sound.off':'Sons desativados',
+      'import.txs.done':'lançamentos importados!',
+      'import.txs.added':'lançamentos adicionados',
+      'notif.disabled':'Notificações desativadas',
+      'cfg.notif.time':'Horário do lembrete',
       'toast.lang':'🌐 Idioma alterado!',
       'months':['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
       'months.short':['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],
@@ -3700,6 +3656,43 @@ tr+tr td{border-top:1px solid #f3f3f3}
       'nubank.csv.title':'Import Nubank CSV','nubank.csv.sub':'Auto-categorized',
       'btn.export':'Export','btn.import':'Import','btn.save':'Save','btn.cancel':'Cancel',
       'btn.test':'Test','btn.clear':'🗑️ Clear',
+            'toast.saved':'Changes saved ✓',
+      'toast.added':'Transaction added ✓',
+      'toast.removed':'Transaction removed',
+      'toast.alert.created':'✅ Alert created!',
+      'toast.notif.on':'🔔 Notifications enabled!',
+      'toast.notif.off':'Notifications disabled',
+      'toast.notif.test':'Test notification sent!',
+      'toast.notif.notsup':'Not supported in this browser',
+      'toast.notif.denied':'Permission denied by browser',
+      'toast.notif.noperm':'Enable notifications first',
+      'toast.fill':'Fill in description and amount!',
+      'toast.fill.value':'Enter a valid amount',
+      'toast.file.invalid':'❌ Invalid file',
+      'toast.file.nocols':'❌ Columns not found',
+      'toast.file.noformat':'❌ Format not recognized',
+      'toast.file.none':'❌ No transactions found',
+      'toast.file.noperm':'❌ Permission denied',
+      'chart.error':'Error loading chart',
+      'notif.push.title':'Controle+',
+      'goal.sheet.new':'New goal',
+      'goal.sheet.edit':'Edit goal',
+      'budget.sheet.new':'New category',
+      'budget.sheet.edit':'Edit category',
+      'budget.save':'Save',
+      'sheet.edit.small':'edit',
+      'report.pdf.title':'Controle+ — Report',
+      'report.header':'Expense Report',
+            'toast.goal.saved':'Goal saved ✓',
+      'toast.goal.removed':'Goal removed',
+      'toast.backup.restored':'✅ Backup restored!',
+      'toast.no.data':'No data to export',
+      'toast.sound.on':'Sounds enabled 🔊',
+      'toast.sound.off':'Sounds disabled',
+      'import.txs.done':'transactions imported!',
+      'import.txs.added':'transactions added',
+      'notif.disabled':'Notifications disabled',
+      'cfg.notif.time':'Reminder time',
       'toast.lang':'🌐 Language changed!',
       'months':['January','February','March','April','May','June','July','August','September','October','November','December'],
       'months.short':['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
@@ -3777,6 +3770,43 @@ tr+tr td{border-top:1px solid #f3f3f3}
       'nubank.csv.title':'Importar CSV de Nubank','nubank.csv.sub':'Categorizado automáticamente',
       'btn.export':'Exportar','btn.import':'Importar','btn.save':'Guardar','btn.cancel':'Cancelar',
       'btn.test':'Probar','btn.clear':'🗑️ Limpiar',
+            'toast.saved':'Cambio guardado ✓',
+      'toast.added':'Transacción agregada ✓',
+      'toast.removed':'Transacción eliminada',
+      'toast.alert.created':'✅ ¡Alerta creada!',
+      'toast.notif.on':'🔔 ¡Notificaciones activadas!',
+      'toast.notif.off':'Notificaciones desactivadas',
+      'toast.notif.test':'Notificación de prueba enviada!',
+      'toast.notif.notsup':'No soportado en este navegador',
+      'toast.notif.denied':'Permiso denegado por el navegador',
+      'toast.notif.noperm':'Activa las notificaciones primero',
+      'toast.fill':'¡Completa descripción e importe!',
+      'toast.fill.value':'Ingresa un importe válido',
+      'toast.file.invalid':'❌ Archivo inválido',
+      'toast.file.nocols':'❌ Columnas no encontradas',
+      'toast.file.noformat':'❌ Formato no reconocido',
+      'toast.file.none':'❌ Sin transacciones encontradas',
+      'toast.file.noperm':'❌ Permiso denegado',
+      'chart.error':'Error al cargar gráfico',
+      'notif.push.title':'Controle+',
+      'goal.sheet.new':'Nueva meta',
+      'goal.sheet.edit':'Editar meta',
+      'budget.sheet.new':'Nueva categoría',
+      'budget.sheet.edit':'Editar categoría',
+      'budget.save':'Guardar',
+      'sheet.edit.small':'editar',
+      'report.pdf.title':'Controle+ — Informe',
+      'report.header':'Informe de gastos',
+            'toast.goal.saved':'Meta guardada ✓',
+      'toast.goal.removed':'Meta eliminada',
+      'toast.backup.restored':'✅ ¡Respaldo restaurado!',
+      'toast.no.data':'Sin datos para exportar',
+      'toast.sound.on':'Sonidos activados 🔊',
+      'toast.sound.off':'Sonidos desactivados',
+      'import.txs.done':'transacciones importadas!',
+      'import.txs.added':'transacciones agregadas',
+      'notif.disabled':'Notificaciones desactivadas',
+      'cfg.notif.time':'Hora del recordatorio',
       'toast.lang':'🌐 ¡Idioma cambiado!',
       'months':['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
       'months.short':['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
@@ -3820,13 +3850,18 @@ tr+tr td{border-top:1px solid #f3f3f3}
       btn.style.color       = on ? 'var(--green)' : 'var(--muted)';
     });
 
-    // 3. Nav tabs
-    setHTML(sid('tab-report'), `<span class="tab-ico">📈</span><span data-i18n="nav.report">${t('nav.report')}</span>`);
-    setHTML(sid('tab-txs'),    `<span class="tab-ico">📋</span><span data-i18n="nav.txs">${t('nav.txs')}</span>`);
-    setHTML(sid('tab-plan'),   `<span class="tab-ico">🎯</span><span data-i18n="nav.plan">${t('nav.plan')}</span>`);
-    setHTML(sid('tab-cfg'),    `<span class="tab-ico">⚙️</span><span data-i18n="nav.cfg">${t('nav.cfg')}</span>`);
+    // 3. Nav tabs — only update text, keep existing icon spans
+    const updateTab = (id, key) => {
+      const el = sid(id); if(!el) return;
+      const span = el.querySelector('[data-i18n]') || el.querySelector('span:last-child');
+      if(span) span.textContent = t(key);
+    };
+    updateTab('tab-report', 'nav.report');
+    updateTab('tab-txs',    'nav.txs');
+    updateTab('tab-plan',   'nav.plan');
+    updateTab('tab-cfg',    'nav.cfg');
 
-    // 4. Planejar sub-tabs
+    // 4. Planejar sub-tabs — preserve emoji
     setText(sid('psub-metas'),  `🎯 ${t('plan.goals')}`);
     setText(sid('psub-regra'),  `⚖️ ${t('plan.budget')}`);
     setText(sid('psub-cambio'), `💱 ${t('plan.cambio')}`);
@@ -4006,7 +4041,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
       // Pede permissão de notificação
       if(Notification.permission === 'default'){
         const p = await Notification.requestPermission();
-        if(p === 'granted') showToast('🔔 Notificações ativadas!');
+        if(p === 'granted') showToast(window.t?t('toast.notif.on'):'🔔 Notificações ativadas!');
       }
 
       await navigator.serviceWorker.ready;
