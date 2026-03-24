@@ -1008,6 +1008,16 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     <div id="overpass-status" style="font-size:11px;color:var(--muted);margin-bottom:10px;text-align:center"></div>
     <textarea id="overpass-query" style="display:none"></textarea>
 
+    <!-- PESQUISA LIVRE -->
+    <div class="card" style="margin-bottom:12px">
+      <div style="padding:12px 14px">
+        <div style="display:flex;gap:8px">
+          <input id="map-search-input" type="text" placeholder="Ex: açougue, shopping, padaria..." style="flex:1;padding:11px 14px;background:var(--s2);border:1px solid var(--border2);border-radius:11px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border .15s" onkeydown="if(event.key==='Enter')searchMapPlace()">
+          <button onclick="searchMapPlace()" style="padding:10px 18px;border-radius:11px;border:none;background:var(--green);color:#0a1a13;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;white-space:nowrap">🔍 Buscar</button>
+        </div>
+      </div>
+    </div>
+
     <!-- CATEGORIAS -->
     <div class="card" style="margin-bottom:12px">
       <div class="card-head">
@@ -4960,6 +4970,14 @@ function renderOverpassResults(elements){
   if(!_ovMap) initOverpassMap();
   _ovMarkers.clearLayers();
 
+  // Marcador da posição do usuário
+  const userMarker=L.circleMarker([_ovUserLat,_ovUserLng],{
+    radius:9, fillColor:'#4285F4', fillOpacity:1,
+    color:'#fff', weight:3
+  });
+  userMarker.bindPopup('\x3cdiv class="overpass-popup"\x3e\x3cb\x3e📍 Você está aqui\x3c/b\x3e\x3c/div\x3e');
+  _ovMarkers.addLayer(userMarker);
+
   const list=document.getElementById('overpass-results');
   const card=document.getElementById('overpass-results-card');
   list.innerHTML='';
@@ -4970,16 +4988,24 @@ function renderOverpassResults(elements){
   }
   card.style.display='block';
 
-  const bounds=[];
+  // Calcula distância e ordena
+  const items=[];
   elements.forEach((el,i)=>{
     let lat=el.lat, lng=el.lon;
     if(!lat&&el.center){ lat=el.center.lat; lng=el.center.lon; }
     if(!lat||!lng) return;
+    const dist=_haversine(_ovUserLat,_ovUserLng,lat,lng);
+    items.push({lat,lng,tags:el.tags||{},type:el.type,idx:i,dist});
+  });
+  items.sort((a,b)=>a.dist-b.dist);
 
+  const bounds=[[_ovUserLat,_ovUserLng]];
+  items.forEach((item)=>{
+    const {lat,lng,tags,dist,idx}=item;
     bounds.push([lat,lng]);
-    const tags=el.tags||{};
-    const name=tags.name||tags['name:pt']||tags.amenity||tags.shop||tags.tourism||('Item '+(i+1));
-    const type=tags.amenity||tags.shop||tags.tourism||tags.leisure||tags.highway||el.type||'';
+    const name=tags.name||tags['name:pt']||tags.amenity||tags.shop||tags.tourism||('Item '+(idx+1));
+    const type=tags.amenity||tags.shop||tags.tourism||tags.leisure||tags.highway||item.type||'';
+    const distStr=_formatDist(dist);
 
     // Marker
     const marker=L.circleMarker([lat,lng],{
@@ -4987,6 +5013,7 @@ function renderOverpassResults(elements){
       color:'#fff', weight:1.5
     });
     let popup='\x3cdiv class="overpass-popup"\x3e\x3cb\x3e'+escHTML(name)+'\x3c/b\x3e';
+    popup+='\x3cbr\x3e\x3cspan style="color:#4285F4;font-weight:600"\x3e📏 '+distStr+' de você\x3c/span\x3e';
     if(tags.addr_street||tags['addr:street']) popup+='\x3cbr\x3e📍 '+(tags['addr:street']||'')+' '+(tags['addr:housenumber']||'');
     if(tags.phone) popup+='\x3cbr\x3e📞 '+escHTML(tags.phone);
     if(tags.opening_hours) popup+='\x3cbr\x3e🕐 '+escHTML(tags.opening_hours);
@@ -4999,13 +5026,28 @@ function renderOverpassResults(elements){
     const div=document.createElement('div');
     div.className='result-item';
     div.innerHTML='\x3cspan class="result-name" title="'+escHTML(name)+'"\x3e'+escHTML(name)+'\x3c/span\x3e'
+      +'\x3cspan style="font-size:10px;color:#4285F4;font-weight:600;white-space:nowrap;margin:0 6px"\x3e'+distStr+'\x3c/span\x3e'
       +(type?'\x3cspan class="result-type"\x3e'+escHTML(type)+'\x3c/span\x3e':'');
     div.style.cursor='pointer';
     div.onclick=()=>{ _ovMap.setView([lat,lng],17); marker.openPopup(); };
     list.appendChild(div);
   });
 
-  if(bounds.length>0) _ovMap.fitBounds(bounds,{padding:[30,30],maxZoom:16});
+  if(bounds.length>1) _ovMap.fitBounds(bounds,{padding:[30,30],maxZoom:16});
+}
+
+/* Haversine: distância em metros entre dois pontos */
+function _haversine(lat1,lon1,lat2,lon2){
+  const R=6371000;
+  const dLat=(lat2-lat1)*Math.PI/180;
+  const dLon=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function _formatDist(m){
+  if(m<1000) return Math.round(m)+'m';
+  return (m/1000).toFixed(1)+'km';
 }
 
 function escHTML(s){ return String(s).replace(/&/g,'&amp;').replace(/\x3c/g,'&lt;').replace(/\x3e/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -5033,6 +5075,24 @@ function loadExample(key){
   if(!q) return;
   document.getElementById('overpass-query').value=q;
   // Auto-executa
+  runOverpassQuery();
+}
+
+function searchMapPlace(){
+  const input=document.getElementById('map-search-input');
+  const term=input.value.trim();
+  if(!term){ showToast('Digite o que deseja buscar'); return; }
+  // Monta query Overpass buscando por nome ou tipo
+  const q='[out:json][timeout:30];\n'
+    +'(\n'
+    +'  nwr["name"~"'+term+'",i](around:5000,{{lat}},{{lng}});\n'
+    +'  nwr["amenity"~"'+term+'",i](around:5000,{{lat}},{{lng}});\n'
+    +'  nwr["shop"~"'+term+'",i](around:5000,{{lat}},{{lng}});\n'
+    +'  nwr["cuisine"~"'+term+'",i](around:5000,{{lat}},{{lng}});\n'
+    +'  nwr["brand"~"'+term+'",i](around:5000,{{lat}},{{lng}});\n'
+    +');\n'
+    +'out center;';
+  document.getElementById('overpass-query').value=q;
   runOverpassQuery();
 }
 
@@ -5279,36 +5339,53 @@ function startOCR(imgData){
   });
 }
 
+/* Motor de tradução centralizado — tenta Google Translate primeiro, MyMemory como fallback */
+function _doTranslate(text, fromLang, toLang){
+  const q=text.slice(0,500);
+  // Google Translate API (gratuita, sem chave)
+  const gUrl='https://translate.googleapis.com/translate_a/single?client=gtx&sl='+fromLang+'&tl='+toLang+'&dt=t&q='+encodeURIComponent(q);
+  return fetch(gUrl).then(r=>{
+    if(!r.ok) throw new Error('G-fail');
+    return r.json();
+  }).then(data=>{
+    if(data&&data[0]){
+      let result='';
+      for(let i=0;i<data[0].length;i++){
+        if(data[0][i]&&data[0][i][0]) result+=data[0][i][0];
+      }
+      if(result.trim()) return result.trim();
+    }
+    throw new Error('G-empty');
+  }).catch(()=>{
+    // Fallback: MyMemory
+    const pair=fromLang+'|'+toLang;
+    const mUrl='https://api.mymemory.translated.net/get?q='+encodeURIComponent(q)+'&langpair='+encodeURIComponent(pair);
+    return fetch(mUrl).then(r=>r.json()).then(data=>{
+      const t=data.responseData&&data.responseData.translatedText;
+      return t||'Erro ao traduzir.';
+    });
+  });
+}
+
 function translateText(text){
   const fromSel=document.getElementById('tr-from').value;
   const toSel=document.getElementById('tr-to').value;
   const ocrToApi={por:'pt',eng:'en',spa:'es'};
   const fromLang=ocrToApi[fromSel]||'en';
   const toLang=toSel;
+  const resultText=document.getElementById('tr-result-text');
+  const resultCard=document.getElementById('tr-result-card');
   if(fromLang===toLang){
-    document.getElementById('tr-result-text').textContent=text;
-    document.getElementById('tr-result-card').style.display='block';
+    resultText.textContent=text;
+    resultCard.style.display='block';
     return;
   }
-  const resultCard=document.getElementById('tr-result-card');
-  const resultText=document.getElementById('tr-result-text');
   resultText.textContent='Traduzindo...';
   resultCard.style.display='block';
-
-  const pair=fromLang+'|'+toLang;
-  const url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(text.slice(0,500))+'&langpair='+encodeURIComponent(pair);
-  fetch(url)
-  .then(r=>r.json())
-  .then(data=>{
-    const translated=data.responseData&&data.responseData.translatedText;
-    if(translated){
-      resultText.textContent=translated;
-    } else {
-      resultText.textContent='Erro ao traduzir.';
-    }
-  })
-  .catch(err=>{
-    resultText.textContent='Erro: '+err.message;
+  _doTranslate(text,fromLang,toLang).then(t=>{
+    resultText.textContent=t;
+  }).catch(e=>{
+    resultText.textContent='Erro: '+e.message;
   });
 }
 
@@ -5342,12 +5419,9 @@ function toggleVoiceRecognition(){
   const recog=new SR();
   recog.lang=ocrToLang[fromSel]||'en-US';
   recog.interimResults=true;
-  recog.continuous=true;
+  recog.continuous=false;
   recog.maxAlternatives=1;
   _trVoiceRecog=recog;
-
-  let finalText='';
-  let interimText='';
 
   recog.onstart=function(){
     _trVoiceActive=true;
@@ -5361,17 +5435,17 @@ function toggleVoiceRecognition(){
   };
 
   recog.onresult=function(e){
-    interimText='';
-    for(let i=e.resultIndex;i<e.results.length;i++){
+    let final='', interim='';
+    for(let i=0;i<e.results.length;i++){
       if(e.results[i].isFinal){
-        finalText+=e.results[i][0].transcript+' ';
+        final+=e.results[i][0].transcript;
       } else {
-        interimText+=e.results[i][0].transcript;
+        interim+=e.results[i][0].transcript;
       }
     }
-    const display=finalText+(interimText?' '+interimText:'');
+    const display=(final+' '+interim).trim();
     document.getElementById('tr-voice-orig-card').style.display='block';
-    document.getElementById('tr-voice-orig-text').textContent=display.trim();
+    document.getElementById('tr-voice-orig-text').textContent=display;
   };
 
   recog.onerror=function(e){
@@ -5385,15 +5459,12 @@ function toggleVoiceRecognition(){
 
   recog.onend=function(){
     stopVoiceUI();
-    const text=finalText.trim();
+    const text=(document.getElementById('tr-voice-orig-text').textContent||'').trim();
     if(text){
-      document.getElementById('tr-voice-orig-text').textContent=text;
       translateVoiceText(text);
     }
   };
 
-  finalText='';
-  interimText='';
   document.getElementById('tr-voice-orig-card').style.display='none';
   document.getElementById('tr-voice-result-card').style.display='none';
   recog.start();
@@ -5424,16 +5495,10 @@ function translateVoiceText(text){
     resultText.textContent=text;
     return;
   }
-  const pair=fromLang+'|'+toLang;
-  const url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(text.slice(0,500))+'&langpair='+encodeURIComponent(pair);
-  fetch(url)
-  .then(r=>r.json())
-  .then(data=>{
-    const translated=data.responseData&&data.responseData.translatedText;
-    resultText.textContent=translated||'Erro ao traduzir.';
-  })
-  .catch(err=>{
-    resultText.textContent='Erro: '+err.message;
+  _doTranslate(text,fromLang,toLang).then(t=>{
+    resultText.textContent=t;
+  }).catch(e=>{
+    resultText.textContent='Erro: '+e.message;
   });
 }
 
@@ -5523,16 +5588,10 @@ function translateTextInput(){
     outputDiv.textContent=text;
     return;
   }
-  const pair=fromLang+'|'+toLang;
-  const url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(text.slice(0,500))+'&langpair='+encodeURIComponent(pair);
-  fetch(url)
-  .then(r=>r.json())
-  .then(data=>{
-    const translated=data.responseData&&data.responseData.translatedText;
-    outputDiv.textContent=translated||'Erro ao traduzir.';
-  })
-  .catch(err=>{
-    outputDiv.textContent='Erro: '+err.message;
+  _doTranslate(text,fromLang,toLang).then(t=>{
+    outputDiv.textContent=t;
+  }).catch(e=>{
+    outputDiv.textContent='Erro: '+e.message;
   });
 }
 
