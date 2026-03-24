@@ -4980,18 +4980,25 @@ function runOverpassQuery(){
   ];
 
   function _fetchOverpass(query, idx){
-    if(idx>=_ovEndpoints.length) return Promise.reject(new Error('Todos os servidores falharam'));
+    if(idx>=_ovEndpoints.length) return Promise.reject(new Error('Overpass indisponível'));
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),12000);
     return fetch(_ovEndpoints[idx],{
       method:'POST',
       headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body:'data='+encodeURIComponent(query)
+      body:'data='+encodeURIComponent(query),
+      signal:ctrl.signal
     }).then(r=>{
+      clearTimeout(timer);
       if(!r.ok) throw new Error('HTTP '+r.status);
       return r.json();
-    }).catch(()=>_fetchOverpass(query, idx+1));
+    }).catch(e=>{
+      clearTimeout(timer);
+      st.textContent='⏳ Servidor '+(idx+1)+' falhou, tentando próximo...';
+      return _fetchOverpass(query, idx+1);
+    });
   }
 
-  const url=_ovEndpoints[0];
   _fetchOverpass(query, 0)
   .then(data=>{
     const elements=data.elements||[];
@@ -5098,49 +5105,106 @@ function openInOverpassTurbo(){
 }
 
 const _overpassExamples={
-  restaurants:'[out:json][timeout:25];\nnwr["amenity"="restaurant"](around:2000,{{lat}},{{lng}});\nout center;',
-  atm:'[out:json][timeout:25];\nnwr["amenity"="atm"](around:3000,{{lat}},{{lng}});\nout center;',
-  pharmacy:'[out:json][timeout:25];\nnwr["amenity"="pharmacy"](around:2000,{{lat}},{{lng}});\nout center;',
-  fuel:'[out:json][timeout:25];\nnwr["amenity"="fuel"](around:3000,{{lat}},{{lng}});\nout center;',
-  supermarket:'[out:json][timeout:25];\nnwr["shop"="supermarket"](around:2000,{{lat}},{{lng}});\nout center;',
-  hospital:'[out:json][timeout:25];\nnwr["amenity"="hospital"](around:5000,{{lat}},{{lng}});\nout center;',
-  parking:'[out:json][timeout:25];\nnwr["amenity"="parking"](around:1500,{{lat}},{{lng}});\nout center;',
-  wifi:'[out:json][timeout:25];\nnwr["internet_access"="wlan"](around:2000,{{lat}},{{lng}});\nout center;'
+  restaurants:'[out:json][timeout:25];\n(nwr["amenity"="restaurant"](around:5000,{{lat}},{{lng}});\nnwr["amenity"="food_court"](around:5000,{{lat}},{{lng}}););\nout center;',
+  atm:'[out:json][timeout:25];\nnwr["amenity"="atm"](around:5000,{{lat}},{{lng}});\nout center;',
+  pharmacy:'[out:json][timeout:25];\nnwr["amenity"="pharmacy"](around:5000,{{lat}},{{lng}});\nout center;',
+  fuel:'[out:json][timeout:25];\nnwr["amenity"="fuel"](around:5000,{{lat}},{{lng}});\nout center;',
+  supermarket:'[out:json][timeout:25];\n(nwr["shop"="supermarket"](around:5000,{{lat}},{{lng}});\nnwr["shop"="convenience"](around:3000,{{lat}},{{lng}}););\nout center;',
+  hospital:'[out:json][timeout:25];\n(nwr["amenity"="hospital"](around:8000,{{lat}},{{lng}});\nnwr["amenity"="clinic"](around:5000,{{lat}},{{lng}}););\nout center;',
+  parking:'[out:json][timeout:25];\nnwr["amenity"="parking"](around:3000,{{lat}},{{lng}});\nout center;',
+  wifi:'[out:json][timeout:25];\nnwr["internet_access"="wlan"](around:3000,{{lat}},{{lng}});\nout center;'
+};
+
+/* Mapeamento categorias -> termo Nominatim (fallback) */
+const _nominatimFallback={
+  restaurants:'restaurant',atm:'atm',pharmacy:'pharmacy',fuel:'gas station',
+  supermarket:'supermarket',hospital:'hospital',parking:'parking',wifi:'wifi'
 };
 
 function loadExample(key){
   const q=_overpassExamples[key];
   if(!q) return;
   document.getElementById('overpass-query').value=q;
-  // Auto-executa
-  runOverpassQuery();
+  // Tenta Overpass, se falhar usa Nominatim
+  const st=document.getElementById('overpass-status');
+  st.textContent='⏳ Buscando...';
+  const center=_ovMap?_ovMap.getCenter():{lat:_ovUserLat,lng:_ovUserLng};
+  let query=q.replace(/\{\{lat\}\}/g,center.lat).replace(/\{\{lng\}\}/g,center.lng);
+  if(!query.includes('[out:json]')) query='[out:json][timeout:30];'+query;
+
+  const endpoints=[
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://maps.mail.ru/osm/tools/overpass/api/interpreter'
+  ];
+  function tryOv(idx){
+    if(idx>=endpoints.length) return Promise.reject(new Error('overpass-fail'));
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),12000);
+    return fetch(endpoints[idx],{
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'data='+encodeURIComponent(query),
+      signal:ctrl.signal
+    }).then(r=>{clearTimeout(timer);if(!r.ok)throw new Error('HTTP');return r.json();})
+    .catch(()=>{clearTimeout(timer);st.textContent='⏳ Tentando servidor '+(idx+2)+'...';return tryOv(idx+1);});
+  }
+
+  tryOv(0).then(data=>{
+    const elements=data.elements||[];
+    if(elements.length>0){
+      st.innerHTML='\u2705 \x3cb\x3e'+elements.length+'\x3c/b\x3e resultados encontrados';
+      document.getElementById('map-results-count').textContent=elements.length+' itens';
+      renderOverpassResults(elements);
+    } else {
+      throw new Error('empty');
+    }
+  }).catch(()=>{
+    // Fallback: Nominatim
+    st.textContent='⏳ Usando busca alternativa...';
+    const term=_nominatimFallback[key]||key;
+    _searchNominatim(term);
+  });
 }
 
 function searchMapPlace(){
   const input=document.getElementById('map-search-input');
   const term=input.value.trim();
   if(!term){ showToast('Digite o que deseja buscar'); return; }
+  document.getElementById('overpass-status').textContent='⏳ Buscando "'+term+'"...';
+  _searchNominatim(term);
+}
+
+function _searchNominatim(term){
   const st=document.getElementById('overpass-status');
-  st.textContent='⏳ Buscando "'+term+'"...';
-
-  // Usa Nominatim (OpenStreetMap) para busca por texto — gratuito, sem chave
-  const url='https://nominatim.openstreetmap.org/search?format=json&limit=30'
+  /* Tenta múltiplos endpoints Nominatim */
+  const endpoints=[
+    'https://nominatim.openstreetmap.org/search',
+    'https://nominatim.terrestris.de/search'
+  ];
+  const params='?format=json&limit=50'
     +'&q='+encodeURIComponent(term)
-    +'&viewbox='+(_ovUserLng-0.05)+','+(_ovUserLat+0.05)+','+(_ovUserLng+0.05)+','+(_ovUserLat-0.05)
-    +'&bounded=0'
-    +'&addressdetails=1';
+    +'&viewbox='+(_ovUserLng-0.06)+','+(_ovUserLat+0.06)+','+(_ovUserLng+0.06)+','+(_ovUserLat-0.06)
+    +'&bounded=0&addressdetails=1';
 
-  fetch(url,{headers:{'Accept-Language':'pt-BR,pt,en'}})
-  .then(r=>r.json())
-  .then(results=>{
+  function tryNom(idx){
+    if(idx>=endpoints.length) return Promise.reject(new Error('Busca indisponível'));
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),10000);
+    return fetch(endpoints[idx]+params,{
+      headers:{'Accept-Language':'pt-BR,pt,en'},
+      signal:ctrl.signal
+    }).then(r=>{clearTimeout(timer);return r.json();})
+    .catch(()=>{clearTimeout(timer);return tryNom(idx+1);});
+  }
+
+  tryNom(0).then(results=>{
     if(!results||!results.length){
       st.textContent='Nenhum resultado para "'+term+'"';
       return;
     }
     st.innerHTML='\x3cb\x3e'+results.length+'\x3c/b\x3e resultados para "'+term+'"';
     document.getElementById('map-results-count').textContent=results.length+' itens';
-
-    // Converte Nominatim pra formato compatível com renderOverpassResults
     const elements=results.map(r=>({
       lat:parseFloat(r.lat),
       lon:parseFloat(r.lon),
@@ -5149,14 +5213,12 @@ function searchMapPlace(){
         amenity:r.type||'',
         'addr:street':(r.address&&(r.address.road||r.address.pedestrian||''))||'',
         'addr:housenumber':(r.address&&r.address.house_number)||'',
-        phone:'',
-        opening_hours:''
+        phone:'',opening_hours:''
       },
       type:r.class
     }));
     renderOverpassResults(elements);
-  })
-  .catch(err=>{
+  }).catch(err=>{
     st.textContent='❌ Erro: '+err.message;
   });
 }
