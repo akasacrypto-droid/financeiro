@@ -5027,22 +5027,32 @@ function renderOverpassResults(elements){
   const card=document.getElementById('overpass-results-card');
   list.innerHTML='';
 
-  if(elements.length===0){
-    card.style.display='none';
-    return;
-  }
-  card.style.display='block';
-
-  // Calcula distância e ordena
+  // Calcula distância, filtra só próximos (max 15km) e ordena
+  const MAX_DIST=15000; // 15km
   const items=[];
   elements.forEach((el,i)=>{
     let lat=el.lat, lng=el.lon;
     if(!lat&&el.center){ lat=el.center.lat; lng=el.center.lon; }
     if(!lat||!lng) return;
     const dist=_haversine(_ovUserLat,_ovUserLng,lat,lng);
+    if(dist>MAX_DIST) return;
     items.push({lat,lng,tags:el.tags||{},type:el.type,idx:i,dist});
   });
   items.sort((a,b)=>a.dist-b.dist);
+
+  // Atualiza contagem com resultados filtrados
+  const st=document.getElementById('overpass-status');
+  if(items.length>0){
+    st.innerHTML='\u2705 \x3cb\x3e'+items.length+'\x3c/b\x3e resultados próximos';
+    document.getElementById('map-results-count').textContent=items.length+' itens';
+  }
+
+  if(items.length===0){
+    card.style.display='none';
+    st.textContent='Nenhum resultado próximo encontrado';
+    return;
+  }
+  card.style.display='block';
 
   const bounds=[[_ovUserLat,_ovUserLng]];
   items.forEach((item)=>{
@@ -5182,10 +5192,11 @@ function _searchNominatim(term){
     'https://nominatim.openstreetmap.org/search',
     'https://nominatim.terrestris.de/search'
   ];
+  const lat=_ovUserLat, lng=_ovUserLng;
   const params='?format=json&limit=50'
     +'&q='+encodeURIComponent(term)
-    +'&viewbox='+(_ovUserLng-0.06)+','+(_ovUserLat+0.06)+','+(_ovUserLng+0.06)+','+(_ovUserLat-0.06)
-    +'&bounded=0&addressdetails=1';
+    +'&viewbox='+(lng-0.08)+','+(lat+0.08)+','+(lng+0.08)+','+(lat-0.08)
+    +'&bounded=1&addressdetails=1';
 
   function tryNom(idx){
     if(idx>=endpoints.length) return Promise.reject(new Error('Busca indisponível'));
