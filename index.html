@@ -5312,40 +5312,60 @@ function searchMapPlace(){
   document.getElementById('map-results-count').textContent='';
   if(_ovMap) _ovMap.setView([_ovUserLat,_ovUserLng],15);
   document.getElementById('overpass-status').textContent='⏳ Buscando "'+term+'"...';
-  _searchNominatim(term,mySignal);
+  _searchByText(term,mySignal);
 }
 
-function _searchNominatim(term,mySignal){
+function _searchByText(term,mySignal){
   if(!mySignal) mySignal=_ovSearchAbort?_ovSearchAbort.signal:null;
   const st=document.getElementById('overpass-status');
   const lat=_ovUserLat, lng=_ovUserLng;
-  const vbox=(lng-0.03)+','+(lat+0.03)+','+(lng+0.03)+','+(lat-0.03);
 
-  function _abortable(fn,timeout){
+  function _fetch(fn,timeout){
     const ctrl=new AbortController();
-    const timer=setTimeout(()=>ctrl.abort(),timeout||8000);
+    const timer=setTimeout(()=>ctrl.abort(),timeout||15000);
     if(mySignal) mySignal.addEventListener('abort',()=>{clearTimeout(timer);ctrl.abort();},{once:true});
     return fn(ctrl.signal).then(r=>{clearTimeout(timer);return r;}).catch(e=>{clearTimeout(timer);throw e;});
   }
 
-  /* API 1: Nominatim (2 mirrors, bounded) */
-  const nomEndpoints=['https://nominatim.openstreetmap.org/search','https://nominatim.terrestris.de/search'];
-  const nomParams='?format=json&limit=40&q='+encodeURIComponent(term)+'&viewbox='+vbox+'&bounded=1&addressdetails=1';
-  function tryNom(idx){
-    if(idx>=nomEndpoints.length) return Promise.resolve(null);
+  /* ── API 1: Overpass (busca por nome — mais confiável para POIs próximos) ── */
+  function tryOverpassName(){
     if(mySignal&&mySignal.aborted) return Promise.reject('cancelled');
-    return _abortable(sig=>fetch(nomEndpoints[idx]+nomParams,{headers:{'Accept-Language':'pt-BR,pt,en'},signal:sig}).then(r=>r.json()))
-      .catch(()=>tryNom(idx+1));
+    st.textContent='⏳ Buscando "'+term+'" via Overpass...';
+    // Escapa aspas no termo para a query Overpass
+    const safe=term.replace(/"/g,'\\\\"');
+    const q='[out:json][timeout:25];(nwr["name"~"'+safe+'",i](around:3000,'+lat+','+lng+');nwr["cuisine"~"'+safe+'",i](around:3000,'+lat+','+lng+');nwr["brand"~"'+safe+'",i](around:3000,'+lat+','+lng+'););out center;';
+    const ovEndpoints=[
+      'https://overpass-api.de/api/interpreter',
+      'https://overpass.kumi.systems/api/interpreter',
+      'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+      'https://overpass.private.coffee/api/interpreter',
+      'https://overpass-api.fr/api/interpreter'
+    ];
+    function tryOv(idx){
+      if(idx>=ovEndpoints.length) return Promise.resolve(null);
+      if(mySignal&&mySignal.aborted) return Promise.reject('cancelled');
+      st.textContent='⏳ Overpass servidor '+(idx+1)+'/'+ovEndpoints.length+'...';
+      return _fetch(sig=>fetch(ovEndpoints[idx],{
+        method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body:'data='+encodeURIComponent(q),signal:sig
+      }).then(r=>{if(!r.ok)throw 0;return r.json();}),15000)
+      .then(data=>{
+        const els=data&&data.elements;
+        if(els&&els.length>0) return els;
+        return null;
+      }).catch(e=>{if(mySignal&&mySignal.aborted)throw 'cancelled';return tryOv(idx+1);});
+    }
+    return tryOv(0);
   }
 
-  /* API 2: Photon (Komoot) — proximidade */
+  /* ── API 2: Photon (Komoot) — busca por proximidade, muito boa ── */
   function tryPhoton(){
     if(mySignal&&mySignal.aborted) return Promise.reject('cancelled');
-    st.textContent='⏳ Tentando Photon...';
-    return _abortable(sig=>{
+    st.textContent='⏳ Buscando via Photon...';
+    return _fetch(sig=>{
       const purl='https://photon.komoot.io/api/?q='+encodeURIComponent(term)+'&lat='+lat+'&lon='+lng+'&limit=50&lang=default';
       return fetch(purl,{signal:sig}).then(r=>r.json());
-    }).then(data=>{
+    },12000).then(data=>{
       if(!data||!data.features||!data.features.length) return null;
       return data.features.map(f=>({lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0],
         tags:{name:f.properties.name||f.properties.street||'',amenity:f.properties.osm_value||'',
@@ -5354,40 +5374,66 @@ function _searchNominatim(term,mySignal){
     }).catch(()=>null);
   }
 
-  /* API 3: GeoNames (sem chave, endpoint demo) */
-  function tryGeoNames(){
+  /* ── API 3: Nominatim — bounded (área restrita ~5km) ── */
+  function tryNomBounded(){
     if(mySignal&&mySignal.aborted) return Promise.reject('cancelled');
-    st.textContent='⏳ Tentando GeoNames...';
-    return _abortable(sig=>{
-      const gurl='https://secure.geonames.org/searchJSON?q='+encodeURIComponent(term)
-        +'&lat='+lat+'&lng='+lng+'&radius=5&maxRows=30&username=demo&lang=pt';
-      return fetch(gurl,{signal:sig}).then(r=>r.json());
-    }).then(data=>{
-      if(!data||!data.geonames||!data.geonames.length) return null;
-      return data.geonames.map(g=>({lat:parseFloat(g.lat),lon:parseFloat(g.lng),
-        tags:{name:g.name||g.toponymName||'',amenity:g.fcodeName||'','addr:street':'','addr:housenumber':'',phone:'',opening_hours:''},
-        type:g.fclName||''}));
-    }).catch(()=>null);
+    st.textContent='⏳ Buscando via Nominatim...';
+    const vbox=(lng-0.05)+','+(lat+0.05)+','+(lng+0.05)+','+(lat-0.05);
+    const nomEndpoints=['https://nominatim.openstreetmap.org/search','https://nominatim.terrestris.de/search'];
+    const nomParams='?format=json&limit=50&q='+encodeURIComponent(term)+'&viewbox='+vbox+'&bounded=1&addressdetails=1';
+    function tryN(i){
+      if(i>=nomEndpoints.length) return Promise.resolve(null);
+      if(mySignal&&mySignal.aborted) return Promise.reject('cancelled');
+      return _fetch(sig=>fetch(nomEndpoints[i]+nomParams,{headers:{'Accept-Language':'pt-BR,pt,en'},signal:sig}).then(r=>r.json()),10000)
+        .catch(()=>tryN(i+1));
+    }
+    return tryN(0).then(res=>{
+      if(!res||!res.length) return null;
+      return _nomToEls(res);
+    });
   }
 
-  function nomToEls(results){
+  /* ── API 4: Nominatim sem bounded (mais amplo, filtra por distância depois) ── */
+  function tryNomWide(){
+    if(mySignal&&mySignal.aborted) return Promise.reject('cancelled');
+    st.textContent='⏳ Buscando via Nominatim (amplo)...';
+    const nomEndpoints=['https://nominatim.openstreetmap.org/search','https://nominatim.terrestris.de/search'];
+    const vbox=(lng-0.08)+','+(lat+0.08)+','+(lng+0.08)+','+(lat-0.08);
+    const nomParams='?format=json&limit=50&q='+encodeURIComponent(term)+'&viewbox='+vbox+'&bounded=0&addressdetails=1';
+    function tryN(i){
+      if(i>=nomEndpoints.length) return Promise.resolve(null);
+      if(mySignal&&mySignal.aborted) return Promise.reject('cancelled');
+      return _fetch(sig=>fetch(nomEndpoints[i]+nomParams,{headers:{'Accept-Language':'pt-BR,pt,en'},signal:sig}).then(r=>r.json()),10000)
+        .catch(()=>tryN(i+1));
+    }
+    return tryN(0).then(res=>{
+      if(!res||!res.length) return null;
+      return _nomToEls(res);
+    });
+  }
+
+  function _nomToEls(results){
     return results.map(r=>({lat:parseFloat(r.lat),lon:parseFloat(r.lon),
       tags:{name:r.display_name.split(',')[0],amenity:r.type||'',
         'addr:street':(r.address&&(r.address.road||r.address.pedestrian||''))||'',
         'addr:housenumber':(r.address&&r.address.house_number)||'',phone:'',opening_hours:''},type:r.class}));
   }
 
-  /* Cadeia: Nominatim → Photon → GeoNames */
-  tryNom(0).then(nomRes=>{
+  /* ── Cadeia: Overpass(nome) → Photon → Nominatim(bounded) → Nominatim(amplo) ── */
+  tryOverpassName().then(els=>{
     if(mySignal&&mySignal.aborted) return;
-    if(nomRes&&nomRes.length>0){ renderOverpassResults(nomToEls(nomRes)); return; }
+    if(els&&els.length>0){ renderOverpassResults(els); return; }
     return tryPhoton().then(pEls=>{
       if(mySignal&&mySignal.aborted) return;
       if(pEls&&pEls.length>0){ renderOverpassResults(pEls); return; }
-      return tryGeoNames().then(gEls=>{
+      return tryNomBounded().then(nEls=>{
         if(mySignal&&mySignal.aborted) return;
-        if(gEls&&gEls.length>0){ renderOverpassResults(gEls); return; }
-        st.textContent='Nenhum resultado próximo para "'+term+'"';
+        if(nEls&&nEls.length>0){ renderOverpassResults(nEls); return; }
+        return tryNomWide().then(wEls=>{
+          if(mySignal&&mySignal.aborted) return;
+          if(wEls&&wEls.length>0){ renderOverpassResults(wEls); return; }
+          st.textContent='Nenhum resultado próximo para "'+term+'"';
+        });
       });
     });
   }).catch(e=>{
