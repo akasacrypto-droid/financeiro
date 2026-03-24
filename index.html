@@ -359,6 +359,27 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 .voice-wave-bar:nth-child(5){animation-delay:.4s;height:20px}
 @keyframes voiceWave{0%{transform:scaleY(.4);opacity:.5}100%{transform:scaleY(1);opacity:1}}
 #tr-voice-wave{justify-content:center;align-items:center;gap:2px;height:40px}
+
+/* ── RESPONSIVIDADE OUTROS / TRADUTOR ── */
+@media(max-width:560px){
+  #overpass-map{height:260px !important}
+  .outros-cat-grid{grid-template-columns:1fr !important}
+  .tr-sub-tabs{gap:4px !important}
+  .tr-sub-tabs .plan-sub-tab{font-size:10px !important;padding:6px 6px !important}
+  .tr-lang-row{flex-direction:column !important;gap:6px !important}
+  .tr-lang-swap{margin-top:0 !important;align-self:center}
+  .tr-btn-row{flex-direction:column !important;align-items:stretch !important;gap:6px !important}
+  .tr-btn-row button{width:100%}
+  .card-head{flex-wrap:wrap;gap:6px}
+  .card-head>div{flex-wrap:wrap}
+  #tr-voice-btn{width:70px !important;height:70px !important;font-size:30px !important}
+}
+@media(min-width:561px) and (max-width:899px){
+  #overpass-map{height:320px !important}
+}
+@media(min-width:900px){
+  .outros-cat-grid{grid-template-columns:1fr 1fr 1fr 1fr !important}
+}
 </style>
 </head>
 <body>
@@ -992,7 +1013,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <div class="card-head">
         <span class="card-title">🔍 O que procura?</span>
       </div>
-      <div style="padding:10px 14px;display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <div class="outros-cat-grid" style="padding:10px 14px;display:grid;grid-template-columns:1fr 1fr;gap:6px">
         <button onclick="loadExample('restaurants')" class="example-query-btn">🍽️ Restaurantes</button>
         <button onclick="loadExample('atm')" class="example-query-btn">🏧 Caixas eletrônicos</button>
         <button onclick="loadExample('pharmacy')" class="example-query-btn">💊 Farmácias</button>
@@ -1029,7 +1050,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     <!-- SELEÇÃO DE IDIOMAS (compartilhada) -->
     <div class="card" style="margin-bottom:12px">
       <div style="padding:12px 14px">
-        <div style="display:flex;gap:8px;align-items:center">
+        <div class="tr-lang-row" style="display:flex;gap:8px;align-items:center">
           <div style="flex:1">
             <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:700;display:block;margin-bottom:5px">De</label>
             <select id="tr-from" style="width:100%;padding:10px 12px;background:var(--s2);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;appearance:none">
@@ -1038,7 +1059,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
               <option value="spa">🇪🇸 Espanhol</option>
             </select>
           </div>
-          <button onclick="swapTranslatorLangs()" style="margin-top:18px;width:36px;height:36px;border-radius:50%;border:1px solid var(--border2);background:var(--s2);color:var(--muted2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">⇄</button>
+          <button class="tr-lang-swap" onclick="swapTranslatorLangs()" style="margin-top:18px;width:36px;height:36px;border-radius:50%;border:1px solid var(--border2);background:var(--s2);color:var(--muted2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">⇄</button>
           <div style="flex:1">
             <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:700;display:block;margin-bottom:5px">Para</label>
             <select id="tr-to" style="width:100%;padding:10px 12px;background:var(--s2);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;appearance:none">
@@ -1052,7 +1073,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     </div>
 
     <!-- SUB-TABS DO TRADUTOR -->
-    <div style="display:flex;gap:6px;margin-bottom:12px">
+    <div class="tr-sub-tabs" style="display:flex;gap:6px;margin-bottom:12px">
       <button class="plan-sub-tab on" id="trsub-escrita" onclick="goTradutorTab('escrita')" style="flex:1">✏️ Escrita</button>
       <button class="plan-sub-tab" id="trsub-imagem" onclick="goTradutorTab('imagem')" style="flex:1">📷 Imagem</button>
       <button class="plan-sub-tab" id="trsub-voz" onclick="goTradutorTab('voz')" style="flex:1">🎙️ Voz</button>
@@ -1063,7 +1084,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <div class="card" style="margin-bottom:12px">
         <div style="padding:12px 14px">
           <textarea id="tr-text-input" placeholder="Digite ou cole o texto aqui..." style="width:100%;min-height:120px;padding:12px;background:var(--s2);border:1px solid var(--border2);border-radius:11px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;resize:none;line-height:1.6;transition:border .15s" oninput="onTranslatorTextInput()"></textarea>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+          <div class="tr-btn-row" style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
             <span id="tr-text-charcount" style="font-size:10px;color:var(--muted)">0 / 500</span>
             <div style="display:flex;gap:6px">
               <button onclick="speakText('tr-text-input','from')" style="padding:8px 14px;border-radius:10px;border:1px solid var(--border2);background:var(--s2);color:var(--muted2);font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">🔊 Ouvir</button>
