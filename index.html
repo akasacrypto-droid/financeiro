@@ -15,6 +15,8 @@
 <title>Controle+</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
 :root{
@@ -288,7 +290,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 /* ── PRINT / PDF ── */
 @media print {
   body { background:#fff !important; color:#111 !important; overflow:visible !important; max-width:100% !important; margin:0 !important; font-family:'DM Sans',sans-serif; }
-  .topbar,.nav-tabs,.fab,.sheet-overlay,.sheet,.toast,#page-txs,#page-plan,#page-cfg,.notif-badge,#online-badge,#version-badge { display:none !important; }
+  .topbar,.nav-tabs,.fab,.sheet-overlay,.sheet,.toast,#page-txs,#page-plan,#page-cfg,#page-outros,.notif-badge,#online-badge,#version-badge { display:none !important; }
   .page { display:block !important; overflow:visible !important; padding:0 !important; flex:none !important; }
   #page-report { display:block !important; }
   .rep-period-btn { display:none !important; }
@@ -330,6 +332,33 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   .mnav-btn{width:28px;height:28px}
   .logo-txt{max-width:110px}
 }
+
+/* ── OUTROS / MAPS ── */
+.example-query-btn{
+  width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--border2);
+  background:var(--s2);color:var(--muted2);font-size:12px;font-weight:600;
+  font-family:'DM Sans',sans-serif;cursor:pointer;text-align:left;
+  transition:all .15s;min-height:40px;
+}
+.example-query-btn:active{background:var(--s3);border-color:var(--green);color:var(--green)}
+#overpass-map .leaflet-control-attribution{font-size:9px;background:rgba(14,17,23,.8);color:var(--muted)}
+#overpass-map .leaflet-control-attribution a{color:var(--blue)}
+#overpass-map .leaflet-control-zoom a{background:var(--s1);color:var(--text);border-color:var(--border)}
+.overpass-popup{font-family:'DM Sans',sans-serif;font-size:12px;line-height:1.5}
+.overpass-popup b{color:var(--green)}
+.result-item{padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;display:flex;align-items:center;gap:8px}
+.result-item:last-child{border-bottom:none}
+.result-name{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.result-type{font-size:10px;color:var(--muted);background:var(--s2);padding:2px 7px;border-radius:4px;flex-shrink:0}
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+#tr-drop-zone.dragover{border-color:var(--green);background:var(--green-bg)}
+.voice-wave-bar{width:4px;height:20px;background:var(--green);border-radius:4px;margin:0 3px;animation:voiceWave .6s ease-in-out infinite alternate}
+.voice-wave-bar:nth-child(2){animation-delay:.1s;height:28px}
+.voice-wave-bar:nth-child(3){animation-delay:.2s;height:34px}
+.voice-wave-bar:nth-child(4){animation-delay:.3s;height:28px}
+.voice-wave-bar:nth-child(5){animation-delay:.4s;height:20px}
+@keyframes voiceWave{0%{transform:scaleY(.4);opacity:.5}100%{transform:scaleY(1);opacity:1}}
+#tr-voice-wave{justify-content:center;align-items:center;gap:2px;height:40px}
 </style>
 </head>
 <body>
@@ -368,6 +397,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   <button class="nav-tab" onclick="goTab('txs')" id="tab-txs"><span class="tab-ico">📋</span><span data-i18n="nav.txs">Extratos</span></button>
   <button class="nav-tab" onclick="goTab('plan')" id="tab-plan"><span class="tab-ico">🎯</span><span data-i18n="nav.plan">Planejar</span></button>
   <button class="nav-tab" onclick="goTab('cfg')" id="tab-cfg"><span class="tab-ico">⚙️</span><span data-i18n="nav.cfg">Config</span></button>
+  <button class="nav-tab" onclick="goTab('outros')" id="tab-outros"><span class="tab-ico">🧩</span><span>Outros</span></button>
 </div>
 
 <!-- ── PAGE: LANÇAMENTOS ── -->
@@ -938,6 +968,216 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   <button class="sheet-cancel" onclick="closeBudgetAddSheet()">Cancelar</button>
 </div>
 
+<!-- ── PAGE: OUTROS ── -->
+<div class="page" id="page-outros">
+
+  <!-- SUB-TABS -->
+  <div style="display:flex;gap:7px;margin-bottom:14px">
+    <button class="plan-sub-tab on" id="osub-maps" onclick="goOutrosTab('maps')" style="flex:1">🗺️ Maps</button>
+    <button class="plan-sub-tab" id="osub-tradutor" onclick="goOutrosTab('tradutor')" style="flex:1">🌐 Tradutor</button>
+  </div>
+
+  <!-- ── SUB: MAPS ── -->
+  <div id="outrospage-maps">
+
+    <!-- LOCALIZAÇÃO -->
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+      <button onclick="useMyLocation()" style="flex:1;padding:12px 16px;border-radius:12px;border:1px solid rgba(0,200,150,.3);background:var(--green-bg);color:var(--green);font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px">📍 Usar minha localização</button>
+    </div>
+    <div id="overpass-status" style="font-size:11px;color:var(--muted);margin-bottom:10px;text-align:center"></div>
+    <textarea id="overpass-query" style="display:none"></textarea>
+
+    <!-- CATEGORIAS -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-head">
+        <span class="card-title">🔍 O que procura?</span>
+      </div>
+      <div style="padding:10px 14px;display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <button onclick="loadExample('restaurants')" class="example-query-btn">🍽️ Restaurantes</button>
+        <button onclick="loadExample('atm')" class="example-query-btn">🏧 Caixas eletrônicos</button>
+        <button onclick="loadExample('pharmacy')" class="example-query-btn">💊 Farmácias</button>
+        <button onclick="loadExample('fuel')" class="example-query-btn">⛽ Postos</button>
+        <button onclick="loadExample('supermarket')" class="example-query-btn">🛒 Supermercados</button>
+        <button onclick="loadExample('hospital')" class="example-query-btn">🏥 Hospitais</button>
+        <button onclick="loadExample('parking')" class="example-query-btn">🅿️ Estacionamentos</button>
+        <button onclick="loadExample('wifi')" class="example-query-btn">📶 Wi-Fi público</button>
+      </div>
+    </div>
+
+    <!-- MAPA -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-head">
+        <span class="card-title">🗺️ Mapa</span>
+        <span id="map-results-count" style="font-size:11px;color:var(--muted)"></span>
+      </div>
+      <div id="overpass-map" style="height:400px;border-radius:0 0 15px 15px;background:var(--s2)"></div>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div class="card" id="overpass-results-card" style="display:none">
+      <div class="card-head">
+        <span class="card-title">📋 Resultados</span>
+      </div>
+      <div id="overpass-results" style="max-height:300px;overflow-y:auto;padding:8px 14px"></div>
+    </div>
+
+  </div>
+
+  <!-- ── SUB: TRADUTOR ── -->
+  <div id="outrospage-tradutor" style="display:none">
+
+    <!-- SELEÇÃO DE IDIOMAS (compartilhada) -->
+    <div class="card" style="margin-bottom:12px">
+      <div style="padding:12px 14px">
+        <div style="display:flex;gap:8px;align-items:center">
+          <div style="flex:1">
+            <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:700;display:block;margin-bottom:5px">De</label>
+            <select id="tr-from" style="width:100%;padding:10px 12px;background:var(--s2);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;appearance:none">
+              <option value="por">🇧🇷 Português</option>
+              <option value="eng" selected>🇺🇸 Inglês</option>
+              <option value="spa">🇪🇸 Espanhol</option>
+            </select>
+          </div>
+          <button onclick="swapTranslatorLangs()" style="margin-top:18px;width:36px;height:36px;border-radius:50%;border:1px solid var(--border2);background:var(--s2);color:var(--muted2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">⇄</button>
+          <div style="flex:1">
+            <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:700;display:block;margin-bottom:5px">Para</label>
+            <select id="tr-to" style="width:100%;padding:10px 12px;background:var(--s2);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;appearance:none">
+              <option value="pt" selected>🇧🇷 Português</option>
+              <option value="en">🇺🇸 Inglês</option>
+              <option value="es">🇪🇸 Espanhol</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUB-TABS DO TRADUTOR -->
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button class="plan-sub-tab on" id="trsub-escrita" onclick="goTradutorTab('escrita')" style="flex:1">✏️ Escrita</button>
+      <button class="plan-sub-tab" id="trsub-imagem" onclick="goTradutorTab('imagem')" style="flex:1">📷 Imagem</button>
+      <button class="plan-sub-tab" id="trsub-voz" onclick="goTradutorTab('voz')" style="flex:1">🎙️ Voz</button>
+    </div>
+
+    <!-- ── TRADUTOR ESCRITA ── -->
+    <div id="tradutorpage-escrita">
+      <div class="card" style="margin-bottom:12px">
+        <div style="padding:12px 14px">
+          <textarea id="tr-text-input" placeholder="Digite ou cole o texto aqui..." style="width:100%;min-height:120px;padding:12px;background:var(--s2);border:1px solid var(--border2);border-radius:11px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;resize:none;line-height:1.6;transition:border .15s" oninput="onTranslatorTextInput()"></textarea>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+            <span id="tr-text-charcount" style="font-size:10px;color:var(--muted)">0 / 500</span>
+            <div style="display:flex;gap:6px">
+              <button onclick="speakText('tr-text-input','from')" style="padding:8px 14px;border-radius:10px;border:1px solid var(--border2);background:var(--s2);color:var(--muted2);font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">🔊 Ouvir</button>
+              <button onclick="translateTextInput()" style="padding:8px 18px;border-radius:10px;border:none;background:var(--green);color:#0a1a13;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer">🌐 Traduzir</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="tr-text-result" class="card" style="display:none;margin-bottom:12px">
+        <div class="card-head">
+          <span class="card-title">🌐 Tradução</span>
+          <div style="display:flex;gap:6px">
+            <button onclick="speakText('tr-text-output','to')" style="font-size:11px;padding:4px 10px;border-radius:99px;border:1px solid var(--border2);background:var(--s2);color:var(--muted2);font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700">🔊 Ouvir</button>
+            <button onclick="copyToClip('tr-text-output')" style="font-size:11px;padding:4px 10px;border-radius:99px;border:1px solid var(--border2);background:var(--s2);color:var(--muted2);font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700">📋 Copiar</button>
+          </div>
+        </div>
+        <div id="tr-text-output" style="padding:12px 14px;font-size:14px;line-height:1.7;color:var(--green);white-space:pre-wrap;max-height:300px;overflow-y:auto"></div>
+      </div>
+    </div>
+
+    <!-- ── TRADUTOR IMAGEM ── -->
+    <div id="tradutorpage-imagem" style="display:none">
+      <div class="card" style="margin-bottom:12px">
+        <div style="padding:12px 14px">
+          <div id="tr-drop-zone" style="border:2px dashed var(--border2);border-radius:14px;padding:30px 16px;text-align:center;cursor:pointer;transition:all .2s;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px" onclick="document.getElementById('tr-file-input').click()">
+            <div style="font-size:36px;opacity:.4">📸</div>
+            <div style="font-size:13px;color:var(--muted)">Toque para selecionar ou tire uma foto</div>
+            <div style="font-size:11px;color:var(--muted);opacity:.6">JPG, PNG, WebP</div>
+          </div>
+          <input type="file" id="tr-file-input" accept="image/*" capture="environment" style="display:none" onchange="handleTranslatorImage(this)">
+          <div id="tr-preview-wrap" style="display:none;margin-top:10px;position:relative;user-select:none;-webkit-user-select:none">
+            <img id="tr-preview" style="width:100%;border-radius:12px;border:1px solid var(--border);display:block;pointer-events:none">
+            <canvas id="tr-select-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:12px;cursor:crosshair;touch-action:none"></canvas>
+            <div id="tr-select-hint" style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#fff;font-size:11px;padding:4px 12px;border-radius:99px;pointer-events:none;white-space:nowrap">Arraste para selecionar área</div>
+            <button onclick="clearTranslatorImage()" style="position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;border:none;background:rgba(0,0,0,.65);color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2">✕</button>
+            <button id="tr-scan-all-btn" onclick="scanFullImage()" style="position:absolute;top:6px;left:6px;padding:4px 10px;border-radius:99px;border:none;background:rgba(0,200,150,.85);color:#fff;font-size:11px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;z-index:2">🔍 Tudo</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROGRESSO OCR -->
+      <div id="tr-progress-card" class="card" style="margin-bottom:12px;display:none">
+        <div style="padding:14px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <div id="tr-progress-spinner" style="width:20px;height:20px;border:2.5px solid var(--border2);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0"></div>
+            <span id="tr-progress-text" style="font-size:12px;color:var(--muted2)">Processando...</span>
+          </div>
+          <div style="background:var(--s2);border-radius:6px;height:6px;overflow:hidden">
+            <div id="tr-progress-bar" style="height:100%;background:var(--green);border-radius:6px;width:0%;transition:width .3s"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TEXTO EXTRAÍDO -->
+      <div id="tr-extracted-card" class="card" style="margin-bottom:12px;display:none">
+        <div class="card-head">
+          <span class="card-title">📝 Texto Extraído (OCR)</span>
+          <div style="display:flex;gap:6px">
+            <button onclick="speakText('tr-extracted-text','from')" style="font-size:11px;padding:4px 10px;border-radius:99px;border:1px solid var(--border2);background:var(--s2);color:var(--muted2);font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700">🔊 Ouvir</button>
+            <button onclick="copyToClip('tr-extracted-text')" style="font-size:11px;padding:4px 10px;border-radius:99px;border:1px solid var(--border2);background:var(--s2);color:var(--muted2);font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700">📋 Copiar</button>
+          </div>
+        </div>
+        <div id="tr-extracted-text" style="padding:12px 14px;font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;max-height:200px;overflow-y:auto"></div>
+      </div>
+
+      <!-- TRADUÇÃO IMAGEM -->
+      <div id="tr-result-card" class="card" style="margin-bottom:12px;display:none">
+        <div class="card-head">
+          <span class="card-title">🌐 Tradução</span>
+          <div style="display:flex;gap:6px">
+            <button onclick="speakText('tr-result-text','to')" style="font-size:11px;padding:4px 10px;border-radius:99px;border:1px solid var(--border2);background:var(--s2);color:var(--muted2);font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700">🔊 Ouvir</button>
+            <button onclick="copyToClip('tr-result-text')" style="font-size:11px;padding:4px 10px;border-radius:99px;border:1px solid var(--border2);background:var(--s2);color:var(--muted2);font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700">📋 Copiar</button>
+          </div>
+        </div>
+        <div id="tr-result-text" style="padding:12px 14px;font-size:13px;line-height:1.7;color:var(--green);white-space:pre-wrap;max-height:300px;overflow-y:auto"></div>
+      </div>
+    </div>
+
+    <!-- ── TRADUTOR VOZ ── -->
+    <div id="tradutorpage-voz" style="display:none">
+      <div class="card" style="margin-bottom:12px">
+        <div style="padding:18px 14px;text-align:center">
+          <div id="tr-voice-status" style="font-size:12px;color:var(--muted);margin-bottom:14px">Toque no microfone e fale</div>
+          <button id="tr-voice-btn" onclick="toggleVoiceRecognition()" style="width:80px;height:80px;border-radius:50%;border:3px solid var(--border2);background:var(--s2);color:var(--muted2);font-size:36px;cursor:pointer;transition:all .25s;display:inline-flex;align-items:center;justify-content:center">🎙️</button>
+          <div id="tr-voice-wave" style="margin-top:12px;display:none;text-align:center">
+            <div class="voice-wave-bar"></div><div class="voice-wave-bar"></div><div class="voice-wave-bar"></div><div class="voice-wave-bar"></div><div class="voice-wave-bar"></div>
+          </div>
+        </div>
+      </div>
+      <div id="tr-voice-orig-card" class="card" style="display:none;margin-bottom:12px">
+        <div class="card-head">
+          <span class="card-title">📝 Texto Original</span>
+          <button onclick="copyToClip('tr-voice-orig-text')" style="font-size:11px;padding:4px 10px;border-radius:99px;border:1px solid var(--border2);background:var(--s2);color:var(--muted2);font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700">📋 Copiar</button>
+        </div>
+        <div id="tr-voice-orig-text" style="padding:12px 14px;font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap;max-height:200px;overflow-y:auto"></div>
+      </div>
+      <div id="tr-voice-result-card" class="card" style="display:none;margin-bottom:12px">
+        <div class="card-head">
+          <span class="card-title">🌐 Tradução</span>
+          <div style="display:flex;gap:6px">
+            <button onclick="speakTranslation()" style="font-size:11px;padding:4px 10px;border-radius:99px;border:1px solid var(--border2);background:var(--s2);color:var(--muted2);font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700">🔊 Ouvir</button>
+            <button onclick="copyToClip('tr-voice-result-text')" style="font-size:11px;padding:4px 10px;border-radius:99px;border:1px solid var(--border2);background:var(--s2);color:var(--muted2);font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700">📋 Copiar</button>
+          </div>
+        </div>
+        <div id="tr-voice-result-text" style="padding:12px 14px;font-size:14px;line-height:1.7;color:var(--green);white-space:pre-wrap;max-height:200px;overflow-y:auto"></div>
+      </div>
+    </div>
+
+  </div>
+
+  </div>
+
+</div>
+
 <!-- FAB -->
 <button class="fab" onclick="openSheet()" id="fab">＋</button>
 
@@ -1238,6 +1478,7 @@ function goTab(tab){
   document.getElementById('fab').style.display=(tab==='txs'||tab==='report')?'flex':'none';
   if(tab==='plan')renderPlan();
   if(tab==='report')renderReport();
+  if(tab==='outros')initOverpassMap();
   if(tab==='notif'){
     // Limpa badge ao abrir
     document.getElementById('notif-badge').classList.remove('on');
@@ -4600,6 +4841,696 @@ Inclua: 1)📊 Perfil financeiro com os valores reais 2)🔴 Alertas usando os v
     fetchTickerRates().then(r => { if(r){ window._tickerRatesOverride=r; buildTicker(); } });
   }
 })();
+</script>
+
+<!-- ── OUTROS: MAPS / OVERPASS TURBO ── -->
+<script>
+/* ══════════════════════════════════════════════════
+   ── OUTROS TAB: MAPS / OVERPASS TURBO ──
+   ══════════════════════════════════════════════════ */
+
+let _ovMap=null, _ovMarkers=null, _ovUserLat=-23.5505, _ovUserLng=-46.6333;
+
+function initOverpassMap(){
+  if(_ovMap) { _ovMap.invalidateSize(); return; }
+  _ovMap = L.map('overpass-map',{zoomControl:true}).setView([_ovUserLat, _ovUserLng], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'\x3ca href="https://www.openstreetmap.org/copyright"\x3e\u00a9 OSM\x3c/a\x3e',
+    maxZoom:19
+  }).addTo(_ovMap);
+  _ovMarkers = L.layerGroup().addTo(_ovMap);
+  setTimeout(()=>_ovMap.invalidateSize(),200);
+}
+
+function goOutrosTab(sub){
+  const subs=['maps','tradutor'];
+  subs.forEach(s=>{
+    const pg=document.getElementById('outrospage-'+s);
+    const btn=document.getElementById('osub-'+s);
+    if(pg) pg.style.display=s===sub?'block':'none';
+    if(btn) btn.classList.toggle('on',s===sub);
+  });
+  if(sub==='maps') setTimeout(()=>{ if(_ovMap) _ovMap.invalidateSize(); },100);
+}
+
+function useMyLocation(){
+  const st=document.getElementById('overpass-status');
+  if(!navigator.geolocation){ st.textContent='Geolocalização não suportada.'; return; }
+  st.textContent='📍 Obtendo localização...';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    _ovUserLat=pos.coords.latitude;
+    _ovUserLng=pos.coords.longitude;
+    if(_ovMap) _ovMap.setView([_ovUserLat,_ovUserLng],15);
+    st.innerHTML='✅ Localização obtida: \x3cb\x3e'+_ovUserLat.toFixed(4)+', '+_ovUserLng.toFixed(4)+'\x3c/b\x3e';
+    // Auto-executa se tiver query
+    const q=document.getElementById('overpass-query').value.trim();
+    if(q) setTimeout(()=>runOverpassQuery(),500);
+  }, err=>{
+    st.textContent='❌ Erro ao obter localização: '+err.message;
+  },{enableHighAccuracy:true,timeout:10000});
+}
+
+function getOverpassBbox(){
+  // Usa raio pequeno ao redor do centro do mapa para evitar timeout
+  const c=_ovMap?_ovMap.getCenter():{lat:_ovUserLat,lng:_ovUserLng};
+  const r=0.015; // ~1.5km
+  return (c.lat-r)+','+(c.lng-r)+','+(c.lat+r)+','+(c.lng+r);
+}
+
+function runOverpassQuery(){
+  const ta=document.getElementById('overpass-query');
+  let query=ta.value.trim();
+  if(!query){ showToast('Digite uma consulta Overpass'); return; }
+  const st=document.getElementById('overpass-status');
+  st.textContent='⏳ Executando consulta...';
+
+  // Replace placeholders
+  const bbox=getOverpassBbox();
+  const center=_ovMap?_ovMap.getCenter():{lat:_ovUserLat,lng:_ovUserLng};
+  query=query.replace(/\{\{bbox\}\}/g, bbox);
+  query=query.replace(/\{\{lat\}\}/g, center.lat);
+  query=query.replace(/\{\{lng\}\}/g, center.lng);
+
+  // Ensure [out:json] is present
+  if(!query.includes('[out:json]')) query='[out:json][timeout:30];'+query;
+
+  const url='https://overpass-api.de/api/interpreter';
+  fetch(url,{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'data='+encodeURIComponent(query)
+  })
+  .then(r=>{
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  })
+  .then(data=>{
+    const elements=data.elements||[];
+    st.innerHTML='✅ \x3cb\x3e'+elements.length+'\x3c/b\x3e resultados encontrados';
+    document.getElementById('map-results-count').textContent=elements.length+' itens';
+    renderOverpassResults(elements);
+  })
+  .catch(err=>{
+    st.textContent='❌ Erro: '+err.message;
+  });
+}
+
+function renderOverpassResults(elements){
+  if(!_ovMap) initOverpassMap();
+  _ovMarkers.clearLayers();
+
+  const list=document.getElementById('overpass-results');
+  const card=document.getElementById('overpass-results-card');
+  list.innerHTML='';
+
+  if(elements.length===0){
+    card.style.display='none';
+    return;
+  }
+  card.style.display='block';
+
+  const bounds=[];
+  elements.forEach((el,i)=>{
+    let lat=el.lat, lng=el.lon;
+    if(!lat&&el.center){ lat=el.center.lat; lng=el.center.lon; }
+    if(!lat||!lng) return;
+
+    bounds.push([lat,lng]);
+    const tags=el.tags||{};
+    const name=tags.name||tags['name:pt']||tags.amenity||tags.shop||tags.tourism||('Item '+(i+1));
+    const type=tags.amenity||tags.shop||tags.tourism||tags.leisure||tags.highway||el.type||'';
+
+    // Marker
+    const marker=L.circleMarker([lat,lng],{
+      radius:7, fillColor:'#00C896', fillOpacity:.85,
+      color:'#fff', weight:1.5
+    });
+    let popup='\x3cdiv class="overpass-popup"\x3e\x3cb\x3e'+escHTML(name)+'\x3c/b\x3e';
+    if(tags.addr_street||tags['addr:street']) popup+='\x3cbr\x3e📍 '+(tags['addr:street']||'')+' '+(tags['addr:housenumber']||'');
+    if(tags.phone) popup+='\x3cbr\x3e📞 '+escHTML(tags.phone);
+    if(tags.opening_hours) popup+='\x3cbr\x3e🕐 '+escHTML(tags.opening_hours);
+    if(tags.website) popup+='\x3cbr\x3e🌐 \x3ca href="'+escHTML(tags.website)+'" target="_blank" rel="noopener"\x3eSite\x3c/a\x3e';
+    popup+='\x3cbr\x3e\x3cspan style="font-size:10px;color:#6B738F"\x3e'+escHTML(type)+'\x3c/span\x3e\x3c/div\x3e';
+    marker.bindPopup(popup);
+    _ovMarkers.addLayer(marker);
+
+    // List
+    const div=document.createElement('div');
+    div.className='result-item';
+    div.innerHTML='\x3cspan class="result-name" title="'+escHTML(name)+'"\x3e'+escHTML(name)+'\x3c/span\x3e'
+      +(type?'\x3cspan class="result-type"\x3e'+escHTML(type)+'\x3c/span\x3e':'');
+    div.style.cursor='pointer';
+    div.onclick=()=>{ _ovMap.setView([lat,lng],17); marker.openPopup(); };
+    list.appendChild(div);
+  });
+
+  if(bounds.length>0) _ovMap.fitBounds(bounds,{padding:[30,30],maxZoom:16});
+}
+
+function escHTML(s){ return String(s).replace(/&/g,'&amp;').replace(/\x3c/g,'&lt;').replace(/\x3e/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function openInOverpassTurbo(){
+  const q=document.getElementById('overpass-query').value.trim();
+  if(!q){ showToast('Digite uma consulta primeiro'); return; }
+  const encoded=encodeURIComponent(q);
+  window.open('https://overpass-turbo.eu/?Q='+encoded+'&R','_blank');
+}
+
+const _overpassExamples={
+  restaurants:'[out:json][timeout:25];\nnwr["amenity"="restaurant"](around:2000,{{lat}},{{lng}});\nout center;',
+  atm:'[out:json][timeout:25];\nnwr["amenity"="atm"](around:3000,{{lat}},{{lng}});\nout center;',
+  pharmacy:'[out:json][timeout:25];\nnwr["amenity"="pharmacy"](around:2000,{{lat}},{{lng}});\nout center;',
+  fuel:'[out:json][timeout:25];\nnwr["amenity"="fuel"](around:3000,{{lat}},{{lng}});\nout center;',
+  supermarket:'[out:json][timeout:25];\nnwr["shop"="supermarket"](around:2000,{{lat}},{{lng}});\nout center;',
+  hospital:'[out:json][timeout:25];\nnwr["amenity"="hospital"](around:5000,{{lat}},{{lng}});\nout center;',
+  parking:'[out:json][timeout:25];\nnwr["amenity"="parking"](around:1500,{{lat}},{{lng}});\nout center;',
+  wifi:'[out:json][timeout:25];\nnwr["internet_access"="wlan"](around:2000,{{lat}},{{lng}});\nout center;'
+};
+
+function loadExample(key){
+  const q=_overpassExamples[key];
+  if(!q) return;
+  document.getElementById('overpass-query').value=q;
+  // Auto-executa
+  runOverpassQuery();
+}
+
+</script>
+
+<!-- ── TRADUTOR POR IMAGEM ── -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script>
+
+const TR_OCR_LANGS={por:'por',eng:'eng',spa:'spa'};
+const TR_API_LANGS={pt:'pt',en:'en',es:'es'};
+
+function goTradutorTab(sub){
+  ['escrita','imagem','voz'].forEach(s=>{
+    const pg=document.getElementById('tradutorpage-'+s);
+    const btn=document.getElementById('trsub-'+s);
+    if(pg) pg.style.display=s===sub?'block':'none';
+    if(btn) btn.classList.toggle('on',s===sub);
+  });
+  // Para reconhecimento de voz se sair da aba
+  if(sub!=='voz' && _trVoiceRecog) try{_trVoiceRecog.stop();}catch(e){}
+}
+
+function swapTranslatorLangs(){
+  const f=document.getElementById('tr-from');
+  const t=document.getElementById('tr-to');
+  const fv=f.value, tv=t.value;
+  // Map between OCR codes and API codes
+  const ocrToApi={por:'pt',eng:'en',spa:'es'};
+  const apiToOcr={pt:'por',en:'eng',es:'spa'};
+  f.value=apiToOcr[tv]||'eng';
+  t.value=ocrToApi[fv]||'pt';
+}
+
+let _trOrigImg=null; // guarda Image original
+let _trSel={active:false,x0:0,y0:0,x1:0,y1:0};
+
+function handleTranslatorImage(input){
+  const file=input.files&&input.files[0];
+  if(!file) return;
+  const preview=document.getElementById('tr-preview');
+  const wrap=document.getElementById('tr-preview-wrap');
+  const drop=document.getElementById('tr-drop-zone');
+
+  const img=new Image();
+  img.onload=function(){
+    _trOrigImg=img;
+    preview.src=img.src;
+    wrap.style.display='block';
+    drop.style.display='none';
+    document.getElementById('tr-select-hint').style.display='block';
+    // Configura canvas de seleção
+    setTimeout(()=>initSelectCanvas(),100);
+  };
+  img.src=URL.createObjectURL(file);
+}
+
+function initSelectCanvas(){
+  const canvas=document.getElementById('tr-select-canvas');
+  const preview=document.getElementById('tr-preview');
+  canvas.width=preview.offsetWidth;
+  canvas.height=preview.offsetHeight;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  _trSel={active:false,x0:0,y0:0,x1:0,y1:0};
+
+  function getPos(e){
+    const rect=canvas.getBoundingClientRect();
+    const t=e.touches?e.touches[0]:e;
+    return {x:t.clientX-rect.left, y:t.clientY-rect.top};
+  }
+
+  canvas.onmousedown=canvas.ontouchstart=function(e){
+    e.preventDefault();
+    const p=getPos(e);
+    _trSel={active:true,x0:p.x,y0:p.y,x1:p.x,y1:p.y};
+    document.getElementById('tr-select-hint').style.display='none';
+  };
+  canvas.onmousemove=canvas.ontouchmove=function(e){
+    if(!_trSel.active) return;
+    e.preventDefault();
+    const p=getPos(e);
+    _trSel.x1=p.x; _trSel.y1=p.y;
+    drawSelection(ctx,canvas.width,canvas.height);
+  };
+  canvas.onmouseup=canvas.ontouchend=function(e){
+    if(!_trSel.active) return;
+    _trSel.active=false;
+    const w=Math.abs(_trSel.x1-_trSel.x0);
+    const h=Math.abs(_trSel.y1-_trSel.y0);
+    if(w>15&&h>15){
+      cropAndOCR();
+    }
+  };
+}
+
+function drawSelection(ctx,cw,ch){
+  ctx.clearRect(0,0,cw,ch);
+  const x=Math.min(_trSel.x0,_trSel.x1);
+  const y=Math.min(_trSel.y0,_trSel.y1);
+  const w=Math.abs(_trSel.x1-_trSel.x0);
+  const h=Math.abs(_trSel.y1-_trSel.y0);
+  // Escurece fora da seleção
+  ctx.fillStyle='rgba(0,0,0,0.45)';
+  ctx.fillRect(0,0,cw,ch);
+  ctx.clearRect(x,y,w,h);
+  // Borda da seleção
+  ctx.strokeStyle='#00C896';
+  ctx.lineWidth=2;
+  ctx.setLineDash([6,3]);
+  ctx.strokeRect(x,y,w,h);
+  ctx.setLineDash([]);
+}
+
+function cropAndOCR(){
+  if(!_trOrigImg) return;
+  const canvas=document.getElementById('tr-select-canvas');
+  const preview=document.getElementById('tr-preview');
+  // Calcula proporção entre canvas (display) e imagem real
+  const scaleX=_trOrigImg.naturalWidth/preview.offsetWidth;
+  const scaleY=_trOrigImg.naturalHeight/preview.offsetHeight;
+  const sx=Math.round(Math.min(_trSel.x0,_trSel.x1)*scaleX);
+  const sy=Math.round(Math.min(_trSel.y0,_trSel.y1)*scaleY);
+  const sw=Math.round(Math.abs(_trSel.x1-_trSel.x0)*scaleX);
+  const sh=Math.round(Math.abs(_trSel.y1-_trSel.y0)*scaleY);
+  if(sw<10||sh<10) return;
+
+  // Crop da imagem original em resolução máxima
+  const cropCanvas=document.createElement('canvas');
+  cropCanvas.width=sw; cropCanvas.height=sh;
+  const cctx=cropCanvas.getContext('2d');
+  cctx.drawImage(_trOrigImg,sx,sy,sw,sh,0,0,sw,sh);
+
+  // Pré-processa o crop para OCR
+  const ocrImg=prepareCanvasForOCR(cropCanvas);
+  startOCR(ocrImg);
+}
+
+function scanFullImage(){
+  if(!_trOrigImg) return;
+  // Limpa seleção
+  const canvas=document.getElementById('tr-select-canvas');
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const ocrImg=prepareImageForOCR(_trOrigImg);
+  startOCR(ocrImg);
+}
+
+function prepareCanvasForOCR(srcCanvas){
+  const canvas=document.createElement('canvas');
+  const ctx=canvas.getContext('2d');
+  const scale=Math.max(1, Math.min(3, 2000/Math.max(srcCanvas.width,srcCanvas.height)));
+  canvas.width=Math.round(srcCanvas.width*scale);
+  canvas.height=Math.round(srcCanvas.height*scale);
+  ctx.fillStyle='#fff';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(srcCanvas,0,0,canvas.width,canvas.height);
+  enhanceForOCR(ctx,canvas.width,canvas.height);
+  return canvas.toDataURL('image/png');
+}
+
+function prepareImageForOCR(img){
+  const canvas=document.createElement('canvas');
+  const ctx=canvas.getContext('2d');
+  const scale=Math.max(1, Math.min(3, 2000/Math.max(img.naturalWidth,img.naturalHeight)));
+  canvas.width=Math.round(img.naturalWidth*scale);
+  canvas.height=Math.round(img.naturalHeight*scale);
+  ctx.fillStyle='#fff';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(img,0,0,canvas.width,canvas.height);
+  enhanceForOCR(ctx,canvas.width,canvas.height);
+  return canvas.toDataURL('image/png');
+}
+
+function enhanceForOCR(ctx,w,h){
+  const imageData=ctx.getImageData(0,0,w,h);
+  const d=imageData.data;
+  // Primeiro calcula luminância média pra detectar fundo escuro
+  let totalGray=0;
+  for(let i=0;i<d.length;i+=4){
+    totalGray+=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+  }
+  const avgGray=totalGray/(d.length/4);
+  const isDark=avgGray<128; // fundo predominantemente escuro
+
+  for(let i=0;i<d.length;i+=4){
+    let gray=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+    // Se fundo escuro, inverte antes de processar
+    if(isDark) gray=255-gray;
+    // Aumenta contraste (sigmoid)
+    gray=255/(1+Math.exp(-0.06*(gray-128)));
+    // Binarização
+    gray=gray<140?0:255;
+    d[i]=gray; d[i+1]=gray; d[i+2]=gray;
+  }
+  ctx.putImageData(imageData,0,0);
+}
+
+function clearTranslatorImage(){
+  document.getElementById('tr-preview-wrap').style.display='none';
+  document.getElementById('tr-drop-zone').style.display='flex';
+  document.getElementById('tr-file-input').value='';
+  document.getElementById('tr-progress-card').style.display='none';
+  document.getElementById('tr-extracted-card').style.display='none';
+  document.getElementById('tr-result-card').style.display='none';
+}
+
+function startOCR(imgData){
+  const lang=document.getElementById('tr-from').value;
+  const progCard=document.getElementById('tr-progress-card');
+  const progText=document.getElementById('tr-progress-text');
+  const progBar=document.getElementById('tr-progress-bar');
+  progCard.style.display='block';
+  progText.textContent='Carregando motor OCR...';
+  progBar.style.width='10%';
+  document.getElementById('tr-extracted-card').style.display='none';
+  document.getElementById('tr-result-card').style.display='none';
+
+  Tesseract.recognize(imgData, lang, {
+    logger: m=>{
+      if(m.status==='recognizing text'){
+        const pct=Math.round((m.progress||0)*100);
+        progText.textContent='Lendo texto... '+pct+'%';
+        progBar.style.width=Math.max(10,pct)+'%';
+      } else if(m.status==='loading language traineddata'){
+        progText.textContent='Baixando idioma...';
+        progBar.style.width='5%';
+      }
+    }
+  }).then(result=>{
+    const text=(result.data.text||'').trim();
+    progCard.style.display='none';
+    if(!text){
+      showToast('Nenhum texto encontrado na imagem');
+      return;
+    }
+    document.getElementById('tr-extracted-text').textContent=text;
+    document.getElementById('tr-extracted-card').style.display='block';
+    // Auto-traduzir
+    translateText(text);
+  }).catch(err=>{
+    progCard.style.display='none';
+    showToast('Erro OCR: '+err.message);
+  });
+}
+
+function translateText(text){
+  const fromSel=document.getElementById('tr-from').value;
+  const toSel=document.getElementById('tr-to').value;
+  const ocrToApi={por:'pt',eng:'en',spa:'es'};
+  const fromLang=ocrToApi[fromSel]||'en';
+  const toLang=toSel;
+  if(fromLang===toLang){
+    document.getElementById('tr-result-text').textContent=text;
+    document.getElementById('tr-result-card').style.display='block';
+    return;
+  }
+  const resultCard=document.getElementById('tr-result-card');
+  const resultText=document.getElementById('tr-result-text');
+  resultText.textContent='Traduzindo...';
+  resultCard.style.display='block';
+
+  const pair=fromLang+'|'+toLang;
+  const url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(text.slice(0,500))+'&langpair='+encodeURIComponent(pair);
+  fetch(url)
+  .then(r=>r.json())
+  .then(data=>{
+    const translated=data.responseData&&data.responseData.translatedText;
+    if(translated){
+      resultText.textContent=translated;
+    } else {
+      resultText.textContent='Erro ao traduzir.';
+    }
+  })
+  .catch(err=>{
+    resultText.textContent='Erro: '+err.message;
+  });
+}
+
+function copyToClip(elId){
+  const el=document.getElementById(elId);
+  if(!el) return;
+  const text=el.textContent||el.innerText;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(()=>showToast('Copiado!')).catch(()=>showToast('Erro ao copiar'));
+  } else {
+    showToast('Clipboard n\u00e3o dispon\u00edvel');
+  }
+}
+
+/* ── VOZ TRANSLATION ── */
+let _trVoiceRecog=null;
+let _trVoiceActive=false;
+
+function toggleVoiceRecognition(){
+  if(_trVoiceActive){
+    if(_trVoiceRecog) _trVoiceRecog.stop();
+    return;
+  }
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){
+    showToast('Seu navegador não suporta reconhecimento de voz. Use o Chrome.');
+    return;
+  }
+  const fromSel=document.getElementById('tr-from').value;
+  const ocrToLang={por:'pt-BR',eng:'en-US',spa:'es-ES'};
+  const recog=new SR();
+  recog.lang=ocrToLang[fromSel]||'en-US';
+  recog.interimResults=true;
+  recog.continuous=true;
+  recog.maxAlternatives=1;
+  _trVoiceRecog=recog;
+
+  let finalText='';
+  let interimText='';
+
+  recog.onstart=function(){
+    _trVoiceActive=true;
+    const btn=document.getElementById('tr-voice-btn');
+    btn.style.background='var(--green-bg)';
+    btn.style.borderColor='var(--green)';
+    btn.style.color='var(--green)';
+    document.getElementById('tr-voice-wave').style.display='flex';
+    document.getElementById('tr-voice-status').textContent='Ouvindo... fale agora';
+    document.getElementById('tr-voice-status').style.color='var(--green)';
+  };
+
+  recog.onresult=function(e){
+    interimText='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal){
+        finalText+=e.results[i][0].transcript+' ';
+      } else {
+        interimText+=e.results[i][0].transcript;
+      }
+    }
+    const display=finalText+(interimText?' '+interimText:'');
+    document.getElementById('tr-voice-orig-card').style.display='block';
+    document.getElementById('tr-voice-orig-text').textContent=display.trim();
+  };
+
+  recog.onerror=function(e){
+    if(e.error==='no-speech'){
+      document.getElementById('tr-voice-status').textContent='Nenhuma fala detectada. Tente novamente.';
+    } else if(e.error==='not-allowed'){
+      showToast('Permissão de microfone negada');
+    }
+    stopVoiceUI();
+  };
+
+  recog.onend=function(){
+    stopVoiceUI();
+    const text=finalText.trim();
+    if(text){
+      document.getElementById('tr-voice-orig-text').textContent=text;
+      translateVoiceText(text);
+    }
+  };
+
+  finalText='';
+  interimText='';
+  document.getElementById('tr-voice-orig-card').style.display='none';
+  document.getElementById('tr-voice-result-card').style.display='none';
+  recog.start();
+}
+
+function stopVoiceUI(){
+  _trVoiceActive=false;
+  const btn=document.getElementById('tr-voice-btn');
+  btn.style.background='var(--s2)';
+  btn.style.borderColor='var(--border2)';
+  btn.style.color='var(--muted2)';
+  document.getElementById('tr-voice-wave').style.display='none';
+  document.getElementById('tr-voice-status').textContent='Toque no microfone e fale';
+  document.getElementById('tr-voice-status').style.color='var(--muted)';
+}
+
+function translateVoiceText(text){
+  const fromSel=document.getElementById('tr-from').value;
+  const toSel=document.getElementById('tr-to').value;
+  const ocrToApi={por:'pt',eng:'en',spa:'es'};
+  const fromLang=ocrToApi[fromSel]||'en';
+  const toLang=toSel;
+  const resultCard=document.getElementById('tr-voice-result-card');
+  const resultText=document.getElementById('tr-voice-result-text');
+  resultCard.style.display='block';
+  resultText.textContent='Traduzindo...';
+  if(fromLang===toLang){
+    resultText.textContent=text;
+    return;
+  }
+  const pair=fromLang+'|'+toLang;
+  const url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(text.slice(0,500))+'&langpair='+encodeURIComponent(pair);
+  fetch(url)
+  .then(r=>r.json())
+  .then(data=>{
+    const translated=data.responseData&&data.responseData.translatedText;
+    resultText.textContent=translated||'Erro ao traduzir.';
+  })
+  .catch(err=>{
+    resultText.textContent='Erro: '+err.message;
+  });
+}
+
+function speakTranslation(){
+  speakText('tr-voice-result-text','to');
+}
+
+/* Fala o conteúdo de qualquer elemento. dir='from' usa idioma De, dir='to' usa idioma Para */
+let _trPreferredVoice={}; // cache por idioma
+
+function _findBestVoice(langCode){
+  if(_trPreferredVoice[langCode]) return _trPreferredVoice[langCode];
+  const voices=window.speechSynthesis.getVoices();
+  if(!voices.length) return null;
+  // Prioridade: Google feminina > Microsoft feminina > qualquer feminina > primeira do idioma
+  const matching=voices.filter(v=>v.lang.startsWith(langCode.split('-')[0]));
+  if(!matching.length) return null;
+  const preferred=[
+    v=>(/google/i.test(v.name)&&/female|feminino/i.test(v.name)),
+    v=>(/microsoft/i.test(v.name)&&/aria|maria|sabina|elvira|francisca/i.test(v.name)),
+    v=>(/google/i.test(v.name)),
+    v=>(/microsoft.*(aria|maria|sabina|zira|hazel|elvira|francisca)/i.test(v.name)),
+    v=>(/female|feminino/i.test(v.name)),
+    v=>true
+  ];
+  for(const test of preferred){
+    const found=matching.find(test);
+    if(found){_trPreferredVoice[langCode]=found; return found;}
+  }
+  return matching[0];
+}
+
+function speakText(elId,dir){
+  const el=document.getElementById(elId);
+  if(!el) return;
+  const text=el.textContent||el.value||'';
+  if(!text.trim()||text==='Traduzindo...') return;
+  const ocrToApi={por:'pt',eng:'en',spa:'es'};
+  const fromLang=ocrToApi[document.getElementById('tr-from').value]||'en';
+  const toLang=document.getElementById('tr-to').value||'pt';
+  const lang=dir==='from'?fromLang:toLang;
+  const langMap={pt:'pt-BR',en:'en-US',es:'es-ES'};
+  const langCode=langMap[lang]||'en-US';
+  const utterance=new SpeechSynthesisUtterance(text.trim());
+  utterance.lang=langCode;
+  utterance.rate=0.92;
+  utterance.pitch=1.05;
+  const voice=_findBestVoice(langCode);
+  if(voice) utterance.voice=voice;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
+}
+
+// Pré-carrega vozes (Chrome carrega async)
+if(window.speechSynthesis){
+  window.speechSynthesis.onvoiceschanged=function(){_trPreferredVoice={};};
+  window.speechSynthesis.getVoices();
+}
+
+let _trTextTimer=null;
+function onTranslatorTextInput(){
+  const ta=document.getElementById('tr-text-input');
+  const len=ta.value.length;
+  document.getElementById('tr-text-charcount').textContent=len+' / 500';
+  // Auto-traduz após parar de digitar 800ms
+  clearTimeout(_trTextTimer);
+  if(len>0){
+    _trTextTimer=setTimeout(()=>translateTextInput(),800);
+  } else {
+    document.getElementById('tr-text-result').style.display='none';
+  }
+}
+
+function translateTextInput(){
+  const text=document.getElementById('tr-text-input').value.trim();
+  if(!text){ showToast('Digite algo para traduzir'); return; }
+  const fromSel=document.getElementById('tr-from').value;
+  const toSel=document.getElementById('tr-to').value;
+  const ocrToApi={por:'pt',eng:'en',spa:'es'};
+  const fromLang=ocrToApi[fromSel]||'en';
+  const toLang=toSel;
+  const resultDiv=document.getElementById('tr-text-result');
+  const outputDiv=document.getElementById('tr-text-output');
+  resultDiv.style.display='block';
+  outputDiv.textContent='Traduzindo...';
+  if(fromLang===toLang){
+    outputDiv.textContent=text;
+    return;
+  }
+  const pair=fromLang+'|'+toLang;
+  const url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(text.slice(0,500))+'&langpair='+encodeURIComponent(pair);
+  fetch(url)
+  .then(r=>r.json())
+  .then(data=>{
+    const translated=data.responseData&&data.responseData.translatedText;
+    outputDiv.textContent=translated||'Erro ao traduzir.';
+  })
+  .catch(err=>{
+    outputDiv.textContent='Erro: '+err.message;
+  });
+}
+
+// Drag & drop support
+document.addEventListener('DOMContentLoaded',function(){
+  const dz=document.getElementById('tr-drop-zone');
+  if(!dz) return;
+  dz.addEventListener('dragover',function(e){e.preventDefault();dz.classList.add('dragover');});
+  dz.addEventListener('dragleave',function(){dz.classList.remove('dragover');});
+  dz.addEventListener('drop',function(e){
+    e.preventDefault();dz.classList.remove('dragover');
+    const file=e.dataTransfer.files&&e.dataTransfer.files[0];
+    if(file&&file.type.startsWith('image/')){
+      const dt=new DataTransfer();dt.items.add(file);
+      document.getElementById('tr-file-input').files=dt.files;
+      handleTranslatorImage(document.getElementById('tr-file-input'));
+    }
+  });
+});
 
 </script>
 
