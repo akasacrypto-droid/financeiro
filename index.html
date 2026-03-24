@@ -351,8 +351,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 </div>
 
 <!-- TICKER DE COTAÇÕES -->
-<div id="ticker-wrap" style="overflow:hidden;background:var(--s1);border-bottom:1px solid var(--border);height:36px;display:flex;align-items:center;flex-shrink:0">
-  <div id="ticker-track" style="display:inline-flex;align-items:center;white-space:nowrap;height:100%"></div>
+<div id="ticker-wrap" style="overflow:hidden;background:var(--s1);border-bottom:1px solid var(--border);height:38px;display:flex;align-items:center;flex-shrink:0">
+  <div id="ticker-track" style="display:inline-flex;align-items:center;white-space:nowrap;height:100%;will-change:transform"></div>
 </div>
 
 <!-- NAV TABS -->
@@ -2894,13 +2894,14 @@ tr+tr td{border-top:1px solid #f3f3f3}
   async function fetchRates(force){
     if(!force && Object.keys(ratesInBRL).length > 1 && Date.now()-lastFetch < 55000) return;
     try {
+      const syms  = MOEDAS.map(m=>m.code).join(',');
       const pairs = MOEDAS.map(m=>`${m.code}-BRL`).join(',');
-      // Busca cotação atual + ontem via awesomeapi (CORS liberado)
-      const [resHoje, resYest] = await Promise.all([
+      const [resAwe, resYest] = await Promise.all([
         fetch(`https://economia.awesomeapi.com.br/json/last/${pairs}`),
-        fetch(`https://economia.awesomeapi.com.br/json/daily/${MOEDAS[0].code}-BRL/2`)
+        fetch(`https://api.frankfurter.app/${daysAgo(2)}?from=BRL&to=${syms}`)
       ]);
-      const awe  = await resHoje.json();
+      const awe  = await resAwe.json();
+      const yest = await resYest.json();
 
       // Atualiza in-place para não quebrar referências
       Object.keys(ratesInBRL).forEach(k=>{ if(k!=='BRL') delete ratesInBRL[k]; });
@@ -2914,31 +2915,16 @@ tr+tr td{border-top:1px solid #f3f3f3}
         Object.entries(cr).forEach(([k,v])=>{ ratesInBRL[k]=v; });
       }
 
-      // Busca ontem para cada moeda individualmente (awesomeapi suporta)
       ratesYestInBRL = { BRL: 1 };
-      try {
-        const yestResults = await Promise.all(
-          MOEDAS.map(m => fetch(`https://economia.awesomeapi.com.br/json/daily/${m.code}-BRL/2`).then(r=>r.json()).catch(()=>null))
-        );
-        MOEDAS.forEach((m, i) => {
-          const data = yestResults[i];
-          if(data && data[1]) ratesYestInBRL[m.code] = parseFloat(data[1].bid);
-          else if(data && data[0]) ratesYestInBRL[m.code] = parseFloat(data[0].bid);
-        });
-      } catch(ey){}
-
+      if(yest.rates) Object.entries(yest.rates).forEach(([k,v]) => { ratesYestInBRL[k] = 1/v; });
       lastFetch = Date.now();
     } catch(e){
-      // Fallback: tenta só cotação atual sem ontem
       try {
-        const pairs = MOEDAS.map(m=>`${m.code}-BRL`).join(',');
-        const res  = await fetch(`https://economia.awesomeapi.com.br/json/last/${pairs}`);
+        const syms = MOEDAS.map(m=>m.code).join(',');
+        const res = await fetch(`https://api.frankfurter.app/latest?from=BRL&to=${syms}`);
         const data = await res.json();
         Object.keys(ratesInBRL).forEach(k=>{ if(k!=='BRL') delete ratesInBRL[k]; });
-        MOEDAS.forEach(m => {
-          const key = `${m.code}BRL`;
-          if(data[key]) ratesInBRL[m.code] = parseFloat(data[key].bid);
-        });
+        Object.entries(data.rates).forEach(([k,v]) => { ratesInBRL[k] = 1/v; });
         lastFetch = Date.now();
       } catch(e2){}
     }
@@ -4320,110 +4306,92 @@ Inclua: 1)📊 Perfil financeiro com os valores reais 2)🔴 Alertas usando os v
 <!-- ── TICKER DE COTAÇÕES ── -->
 <script>
 (function(){
-  const TICKER_ITEMS = [
+  var ITEMS = [
     {code:'USD',flag:'🇺🇸'},{code:'EUR',flag:'🇪🇺'},{code:'GBP',flag:'🇬🇧'},
     {code:'JPY',flag:'🇯🇵'},{code:'CAD',flag:'🇨🇦'},{code:'CHF',flag:'🇨🇭'},
     {code:'ARS',flag:'🇦🇷'},{code:'CNY',flag:'🇨🇳'},{code:'AUD',flag:'🇦🇺'},
     {code:'BTC',flag:'₿'  },{code:'ETH',flag:'Ξ'  },{code:'SOL',flag:'◎' },
     {code:'BNB',flag:'🟡' },{code:'XRP',flag:'✕'  },{code:'DOGE',flag:'🐕'},
   ];
+  var FB = {USD:5.24,EUR:6.08,GBP:6.82,JPY:0.0349,CAD:3.72,CHF:5.89,ARS:0.0052,CNY:0.72,AUD:3.31,BTC:371000,ETH:11150,SOL:470,BNB:3800,XRP:8.1,DOGE:0.85};
+  var liveRates = {};
 
-  const STATIC_FALLBACK = {USD:5.73,EUR:6.22,GBP:7.43,JPY:0.0382,CAD:4.10,CHF:6.53,ARS:0.0057,CNY:0.79,AUD:3.64,BTC:520000,ETH:14200,SOL:720,BNB:4100,XRP:9.2,DOGE:1.1};
-  window._tickerRatesOverride = STATIC_FALLBACK;
-
-  function buildTicker() {
-    const track = document.getElementById('ticker-track');
-    if(!track) return;
-
-    const override = window._tickerRatesOverride || {};
-    const live     = window._getRatesInBRL?.()    || {};
-    const crypto   = window._cryptoRatesInBRL?.() || {};
-    const all      = {...override, ...live, ...crypto};
-
-    if(!Object.keys(all).length) return;
-
-    const yest = window._getRatesYestInBRL?.() || {};
-
-    const items = TICKER_ITEMS.map(item => {
-      const price = all[item.code];
-      if(!price) return null;
-      const prev = yest[item.code];
-      const pct  = prev ? ((price - prev) / prev) * 100 : null;
-      const up   = pct !== null && pct >= 0;
-      const pStr = price >= 10000
-        ? price.toLocaleString('pt-BR',{maximumFractionDigits:0})
-        : price >= 1
-          ? price.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:4})
-          : price.toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:6});
-      const vStr = pct !== null ? `${up?'▲':'▼'} ${Math.abs(pct).toFixed(2)}%` : '';
-      return {...item, pStr, vStr, up, hasPct: pct !== null};
-    }).filter(Boolean);
-
-    if(!items.length) return;
-
-    const make = item => `<span class="ticker-item"
-      onclick="goTab('plan');setTimeout(()=>{goPlanTab('cambio');setTimeout(()=>openMoedaSheet('${item.code}'),350)},200)">
-      <span class="ticker-flag">${item.flag}</span>
-      <span style="display:inline-flex;flex-direction:column;line-height:1.2">
-        <span class="ticker-code">${item.code}</span>
-        <span class="ticker-price">R$ ${item.pStr}</span>
-      </span>
-      ${item.hasPct?`<span class="ticker-var" style="color:${item.up?'var(--green)':'var(--red)'};background:${item.up?'rgba(0,200,150,.12)':'rgba(255,92,92,.12)'}">${item.vStr}</span>`:''}
-    </span>`;
-
-    track.innerHTML = [...items,...items,...items].map(make).join('');
-
-    requestAnimationFrame(() => {
-      const oneSetW = track.scrollWidth / 3;
-      if(!oneSetW) return;
-      const sEl = document.getElementById('ticker-keyframe') || document.createElement('style');
-      sEl.id = 'ticker-keyframe';
-      sEl.textContent = `@keyframes tk{from{transform:translateX(0)}to{transform:translateX(-${oneSetW}px)}}`;
-      document.head.appendChild(sEl);
-      const dur = Math.max(15, oneSetW / 50);
-      track.style.animation = `tk ${dur}s linear infinite`;
-    });
+  function fmt(v){
+    if(v>=100000) return v.toLocaleString('pt-BR',{maximumFractionDigits:0});
+    if(v>=1) return v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:4});
+    return v.toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:6});
   }
 
-  window._updateTicker = buildTicker;
+  function render(){
+    var track = document.getElementById('ticker-track');
+    if(!track){ setTimeout(render,100); return; }
+    var all = Object.assign({}, FB, liveRates);
+    var yest = (window._getRatesYestInBRL && window._getRatesYestInBRL()) || {};
+    var live = (window._getRatesInBRL && window._getRatesInBRL()) || {};
+    var crypto = (window._cryptoRatesInBRL && window._cryptoRatesInBRL()) || {};
+    Object.assign(all, live, crypto);
 
-  document.addEventListener('mouseover', e => {
-    if(e.target.closest('#ticker-track')) {
-      const t = document.getElementById('ticker-track');
-      if(t) t.style.animationPlayState = 'paused';
+    var html = '';
+    for(var i=0;i<ITEMS.length;i++){
+      var it = ITEMS[i];
+      var p = all[it.code]; if(!p) continue;
+      var prev = yest[it.code];
+      var pct = prev ? ((p-prev)/prev)*100 : null;
+      var up = pct!==null && pct>=0;
+      var badge = pct!==null
+        ? '<span style="font-size:9px;font-weight:700;border-radius:3px;padding:1px 5px;color:'+(up?'var(--green)':'var(--red)')+';background:'+(up?'rgba(0,200,150,.15)':'rgba(255,92,92,.15)')+';">'+(up?'▲':'▼')+' '+Math.abs(pct).toFixed(2)+'%</span>'
+        : '';
+      html += '<span style="display:inline-flex;align-items:center;gap:6px;padding:0 14px;border-right:1px solid var(--border);flex-shrink:0;cursor:pointer;height:38px;transition:background .15s" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background=''" onclick="try{goTab('plan');setTimeout(function(){goPlanTab('cambio');setTimeout(function(){openMoedaSheet(''+it.code+'')},350)},200)}catch(e){}">'
+        + '<span style="font-size:13px;line-height:1">'+it.flag+'</span>'
+        + '<span style="display:inline-flex;flex-direction:column;line-height:1.25">'
+          + '<span style="font-size:9.5px;font-weight:700;color:var(--muted2)">'+it.code+'</span>'
+          + '<span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--text)">R$ '+fmt(p)+'</span>'
+        + '</span>'
+        + badge
+        + '</span>';
     }
-  });
-  document.addEventListener('mouseout', e => {
-    if(e.target.closest('#ticker-track')) {
-      const t = document.getElementById('ticker-track');
-      if(t) t.style.animationPlayState = 'running';
-    }
-  });
+    if(!html) return;
 
-  async function fetchTickerRates() {
-    try {
-      const MOEDAS = ['USD','EUR','GBP','JPY','CAD','CHF','ARS','CNY','AUD'];
-      const pairs = MOEDAS.map(m=>`${m}-BRL`).join(',');
-      const res = await fetch(`https://economia.awesomeapi.com.br/json/last/${pairs}`);
-      const data = await res.json();
-      const rates = {};
-      MOEDAS.forEach(code => {
-        const key = `${code}BRL`;
-        if(data[key]) rates[code] = parseFloat(data[key].bid);
-      });
-      return rates;
-    } catch(e) { return null; }
+    // triplicar para scroll infinito
+    track.innerHTML = html+html+html;
+
+    setTimeout(function(){
+      var W = track.scrollWidth/3;
+      if(!W) return;
+      var s = document.getElementById('_tkf');
+      if(!s){s=document.createElement('style');s.id='_tkf';document.head.appendChild(s);}
+      s.textContent='@keyframes _tk{0%{transform:translateX(0)}100%{transform:translateX(-'+W+'px)}}';
+      track.style.animation='_tk '+Math.max(18,W/55)+'s linear infinite';
+    },50);
   }
 
-  window.addEventListener('load', () => {
-    buildTicker();
-    fetchTickerRates().then(r => {
-      if(r && Object.keys(r).length) {
-        window._tickerRatesOverride = {...STATIC_FALLBACK, ...r};
-        buildTicker();
-      }
-    });
-  });
+  window._updateTicker = render;
+
+  // hover pause
+  var wrap = document.getElementById('ticker-wrap');
+  if(wrap){
+    wrap.addEventListener('mouseenter',function(){ var t=document.getElementById('ticker-track');if(t)t.style.animationPlayState='paused'; });
+    wrap.addEventListener('mouseleave',function(){ var t=document.getElementById('ticker-track');if(t)t.style.animationPlayState='running'; });
+  }
+
+  // busca cotações reais
+  function fetchLive(){
+    var fiat=['USD','EUR','GBP','JPY','CAD','CHF','ARS','CNY','AUD'];
+    fetch('https://economia.awesomeapi.com.br/json/last/'+fiat.map(function(m){return m+'-BRL';}).join(','))
+      .then(function(r){return r.json();})
+      .then(function(data){
+        fiat.forEach(function(code){
+          var k=code+'BRL';
+          if(data[k]) liveRates[code]=parseFloat(data[k].bid);
+        });
+        render();
+      }).catch(function(){});
+  }
+
+  // roda imediatamente — ticker-track já existe no DOM pois script está no final do body
+  render();
+  fetchLive();
+  setInterval(fetchLive, 60000);
 })();
 
 </body>
