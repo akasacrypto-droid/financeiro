@@ -1196,7 +1196,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       </div>
 
       <!-- LISTA DE PRODUTOS -->
-      <div class="card" id="mkt-list-card">
+      <div class="card" id="mkt-list-card" style="margin-bottom:4px">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--border)">
           <span style="font-size:12.5px;font-weight:700;color:var(--muted2)">🛒 Produtos</span>
           <span id="mkt-item-count" style="font-size:11px;color:var(--muted)">0 itens</span>
@@ -1208,16 +1208,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
             <span style="font-size:11px;opacity:.7">Use o formulário acima para começar</span>
           </div>
         </div>
-      </div>
-
-      <!-- AÇÕES -->
-      <div id="mkt-actions" style="display:none;flex-direction:column;gap:8px;margin-top:10px">
-        <button onclick="mktSaveToHistory()" style="width:100%;padding:14px;border:1px solid rgba(0,200,150,.3);border-radius:13px;background:rgba(0,200,150,.07);color:var(--green);font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px">
-          💾 Salvar compra no histórico
-        </button>
-        <button onclick="mktClearList()" style="width:100%;padding:12px;border:1px solid rgba(255,90,90,.18);border-radius:13px;background:rgba(255,90,90,.04);color:var(--red);font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px">
-          🗑️ Limpar lista
-        </button>
       </div>
 
     </div>
@@ -1241,6 +1231,18 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       </div>
     </div>
 
+  </div>
+
+  <!-- ── BARRA FIXA MERCADO: Salvar / Limpar ── -->
+  <div id="mkt-actions" style="display:none;position:fixed;bottom:calc(var(--sb) + 56px);left:0;right:0;z-index:40;padding:10px 14px;background:linear-gradient(to top,var(--bg) 70%,transparent);pointer-events:none">
+    <div style="display:flex;gap:8px;pointer-events:all;max-width:600px;margin:0 auto">
+      <button onclick="mktSaveToHistory()" style="flex:1;padding:14px;border:1px solid rgba(0,200,150,.35);border-radius:13px;background:rgba(0,200,150,.12);color:var(--green);font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 4px 20px rgba(0,0,0,.4)">
+        💾 Salvar compra
+      </button>
+      <button onclick="mktClearList()" style="width:50px;padding:14px;border:1px solid rgba(255,90,90,.25);border-radius:13px;background:rgba(255,90,90,.08);color:var(--red);font-size:18px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 4px 20px rgba(0,0,0,.4);flex-shrink:0" title="Limpar lista">
+        🗑️
+      </button>
+    </div>
   </div>
 
   <!-- ── SHEET: EDITAR ITEM MERCADO ── -->
@@ -1569,6 +1571,8 @@ function goTab(tab){
   document.getElementById('fab').style.display=(tab==='txs'||tab==='report')?'flex':'none';
   if(tab==='plan')renderPlan();
   if(tab==='report')renderReport();
+  // Esconde barra flutuante do mercado ao sair da aba Outros
+  if(tab!=='outros'){ const a=document.getElementById('mkt-actions'); if(a) a.style.display='none'; }
 
   if(tab==='notif'){
     // Limpa badge ao abrir
@@ -5481,6 +5485,12 @@ document.addEventListener('DOMContentLoaded',function(){
   let _mktHist=JSON.parse(localStorage.getItem(HIST_KEY)||'[]');
   let _mktEditId=null; // id do item sendo editado
 
+  /* ── Esconder barra de ações ── */
+  function mktHideActions(){
+    const a=document.getElementById('mkt-actions');
+    if(a) a.style.display='none';
+  }
+
   /* ── Sub-tabs Outros ── */
   window.goOutrosTab=function(sub){
     ['tradutor','mercado'].forEach(s=>{
@@ -5490,6 +5500,7 @@ document.addEventListener('DOMContentLoaded',function(){
       if(btn) btn.classList.toggle('on',s===sub);
     });
     if(sub==='mercado'){ mktRender(); mktRenderHist(); }
+    else { mktHideActions(); }
   };
 
   /* ── Sub-tabs Mercado (Lista/Histórico) ── */
@@ -5500,7 +5511,8 @@ document.addEventListener('DOMContentLoaded',function(){
       if(pg) pg.style.display=s===sub?'block':'none';
       if(btn) btn.classList.toggle('on',s===sub);
     });
-    if(sub==='historico') mktRenderHist();
+    if(sub==='historico'){ mktRenderHist(); mktHideActions(); }
+    if(sub==='lista') mktRender();
   };
 
   /* ── Adicionar item ── */
@@ -5618,7 +5630,7 @@ document.addEventListener('DOMContentLoaded',function(){
     const cntTxt=n+' ite'+(n===1?'m':'ns');
     countEl.textContent=cntTxt;
     countHero.textContent=cntTxt;
-    actionsEl.style.display=n?'flex':'none';
+    actionsEl.style.display=n?'block':'none';
     subEl.textContent=n?'Toque em "Salvar compra" ao finalizar':'Adicione produtos abaixo';
 
     // Barra de progresso de itens marcados
