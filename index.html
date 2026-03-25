@@ -1131,10 +1131,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 
   </div>
 
-  </div>
-
   <!-- ── MODO MERCADO ── -->
-  <div id="outrospage-mercado" style="display:none;padding-bottom:24px">
+  <div id="outrospage-mercado" style="display:none;padding-bottom:130px">
 
     <!-- HERO TOTAL -->
     <div style="background:linear-gradient(135deg,#0b2016 0%,#112a1a 60%,#0d2214 100%);border:1px solid rgba(0,200,150,.22);border-radius:18px;padding:16px 16px 14px;margin-bottom:12px;position:relative;overflow:hidden">
@@ -1231,43 +1229,45 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       </div>
     </div>
 
-  </div>
+  </div><!-- fim outrospage-mercado -->
 
-  <!-- ── BARRA FIXA MERCADO: Salvar / Limpar ── -->
-  <div id="mkt-actions" style="display:none;position:fixed;bottom:calc(var(--sb) + 56px);left:0;right:0;z-index:40;padding:10px 14px;background:linear-gradient(to top,var(--bg) 70%,transparent);pointer-events:none">
-    <div style="display:flex;gap:8px;pointer-events:all;max-width:600px;margin:0 auto">
-      <button onclick="mktSaveToHistory()" style="flex:1;padding:14px;border:1px solid rgba(0,200,150,.35);border-radius:13px;background:rgba(0,200,150,.12);color:var(--green);font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 4px 20px rgba(0,0,0,.4)">
-        💾 Salvar compra
-      </button>
-      <button onclick="mktClearList()" style="width:50px;padding:14px;border:1px solid rgba(255,90,90,.25);border-radius:13px;background:rgba(255,90,90,.08);color:var(--red);font-size:18px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 4px 20px rgba(0,0,0,.4);flex-shrink:0" title="Limpar lista">
-        🗑️
-      </button>
-    </div>
-  </div>
+</div><!-- fim page-outros -->
 
-  <!-- ── SHEET: EDITAR ITEM MERCADO ── -->
-  <div id="mkt-edit-overlay" class="sheet-overlay" onclick="mktCancelEdit()"></div>
-  <div id="mkt-edit-sheet" class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">✏️ Editar produto</div>
-    <input type="hidden" id="mkt-edit-id"/>
+<!-- ── BARRA FIXA MERCADO: Salvar / Limpar ── -->
+<div id="mkt-actions" style="display:none;position:fixed;bottom:calc(var(--sb) + 56px);left:0;right:0;z-index:40;padding:10px 14px;background:linear-gradient(to top,var(--bg) 75%,transparent);pointer-events:none">
+  <div style="display:flex;gap:8px;pointer-events:all;max-width:600px;margin:0 auto">
+    <button onclick="mktSaveToHistory()" style="flex:1;padding:14px;border:1px solid rgba(0,200,150,.35);border-radius:13px;background:rgba(14,26,20,.95);color:var(--green);font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 20px rgba(0,0,0,.5)">
+      💾 Salvar compra
+    </button>
+    <button onclick="mktClearList()" style="width:50px;padding:14px;border:1px solid rgba(255,90,90,.25);border-radius:13px;background:rgba(20,10,10,.95);color:var(--red);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,.5);flex-shrink:0" title="Limpar lista">
+      🗑️
+    </button>
+  </div>
+</div>
+
+<!-- ── SHEET: EDITAR ITEM MERCADO ── -->
+<div id="mkt-edit-overlay" class="sheet-overlay" onclick="mktCancelEdit()"></div>
+<div id="mkt-edit-sheet" class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">✏️ Editar produto</div>
+  <input type="hidden" id="mkt-edit-id"/>
+  <div class="field">
+    <label>Nome do produto</label>
+    <input type="text" id="mkt-edit-nome" placeholder="Nome" autocomplete="off"/>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
     <div class="field">
-      <label>Nome do produto</label>
-      <input type="text" id="mkt-edit-nome" placeholder="Nome" autocomplete="off"/>
+      <label>Preço (R$)</label>
+      <input type="number" id="mkt-edit-preco" inputmode="decimal" step="0.01" min="0" placeholder="0,00"/>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div class="field">
-        <label>Preço (R$)</label>
-        <input type="number" id="mkt-edit-preco" inputmode="decimal" step="0.01" min="0" placeholder="0,00"/>
-      </div>
-      <div class="field">
-        <label>Quantidade</label>
-        <input type="number" id="mkt-edit-qtd" inputmode="numeric" min="1" placeholder="1"/>
-      </div>
+    <div class="field">
+      <label>Quantidade</label>
+      <input type="number" id="mkt-edit-qtd" inputmode="numeric" min="1" placeholder="1"/>
     </div>
-    <button class="sheet-save" onclick="mktSaveEdit()" style="background:var(--blue)">✔ Salvar alteração</button>
-    <button class="sheet-cancel" onclick="mktCancelEdit()">Cancelar</button>
   </div>
+  <button class="sheet-save" onclick="mktSaveEdit()" style="background:var(--blue)">✔ Salvar alteração</button>
+  <button class="sheet-cancel" onclick="mktCancelEdit()">Cancelar</button>
+</div>
 
 </div>
 
@@ -5485,6 +5485,21 @@ document.addEventListener('DOMContentLoaded',function(){
   let _mktHist=JSON.parse(localStorage.getItem(HIST_KEY)||'[]');
   let _mktEditId=null; // id do item sendo editado
 
+  /* ── Lançar compra no extrato ── */
+  window.mktLancarExtrato=function(total, desc){
+    if(window.goTab) goTab('txs');
+    setTimeout(function(){
+      if(window.setType) setType('expense');
+      const descEl=document.getElementById('f-desc');
+      const valEl=document.getElementById('f-val');
+      if(descEl) descEl.value=desc||'Compras no mercado';
+      if(valEl) valEl.value=total.toFixed(2);
+      if(window.renderCatChipPicker) renderCatChipPicker('f','Alimentação');
+      document.getElementById('sheet-overlay').classList.add('open');
+      document.getElementById('sheet').classList.add('open');
+    }, 320);
+  };
+
   /* ── Esconder barra de ações ── */
   function mktHideActions(){
     const a=document.getElementById('mkt-actions');
@@ -5796,6 +5811,10 @@ document.addEventListener('DOMContentLoaded',function(){
         // Produtos
         +'<div style="padding:4px 14px 8px">'
         +prodHtml
+        +'</div>'
+        // Botão lançar no extrato
+        +'<div style="padding:0 14px 12px">'
+        +'<button onclick="mktLancarExtrato('+entry.total+',\'Mercado - '+dateStr+'\')" style="width:100%;padding:10px;border:1px solid rgba(91,158,255,.25);border-radius:10px;background:rgba(91,158,255,.07);color:var(--blue);font-size:12.5px;font-weight:700;font-family:\'DM Sans\',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">📤 Lançar no extrato</button>'
         +'</div>'
         +'</div>';
     });
