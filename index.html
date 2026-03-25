@@ -1167,10 +1167,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     </div>
 
     <!-- ── ABA LISTA ── -->
-    <div id="mktpage-lista" style="display:flex;flex-direction:column;gap:0">
+    <div id="mktpage-lista" style="display:flex;flex-direction:column;gap:0;height:100%">
 
-      <!-- FORMULÁRIO TOPO -->
-      <div class="card" style="margin-bottom:10px" id="mkt-form-card">
+      <!-- FORMULÁRIO TOPO - FIXO -->
+      <div class="card" style="margin-bottom:10px;flex-shrink:0" id="mkt-form-card">
         <div style="padding:13px 13px 11px">
           <div style="display:flex;flex-direction:column;gap:8px">
             <input id="mkt-nome" type="text" placeholder="Nome do produto" autocomplete="off"
@@ -1189,8 +1189,28 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
         </div>
       </div>
 
-      <!-- LISTA DE PRODUTOS -->
-      <div class="card" id="mkt-list-card" style="margin-bottom:10px">
+      <!-- SELETOR DE LISTA -->
+      <div style="display:flex;gap:6px;margin-bottom:12px;flex-shrink:0;overflow-x:auto;align-items:center" id="mkt-list-selector">
+        <button class="cat-chip on" onclick="mktSelectList('default')" id="mkt-list-btn-default" style="background:var(--green-bg);border-color:rgba(0,200,150,.3);color:var(--green);font-weight:600">📋 Principal</button>
+        <button class="cat-chip" onclick="mktSelectList('list2')" id="mkt-list-btn-list2">📝 Lista 2</button>
+        <button class="cat-chip" onclick="mktSelectList('list3')" id="mkt-list-btn-list3">📌 Lista 3</button>
+        <button onclick="mktNewList()" style="padding:6px 10px;border-radius:99px;border:1px solid var(--border2);background:none;color:var(--muted);font-size:11.5px;font-family:'DM Sans',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0;min-height:32px">➕ Nova</button>
+      </div>
+
+      <!-- BARRA DE BUSCA -->
+      <input id="mkt-search" type="text" placeholder="🔍 Buscar produto..." 
+        style="width:100%;padding:10px 13px;background:var(--s2);border:1.5px solid var(--border2);border-radius:11px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;margin-bottom:10px;outline:none;transition:border .15s"
+        onfocus="this.style.borderColor='var(--green)'" 
+        onblur="this.style.borderColor='var(--border2)'"
+        oninput="mktFilterList(this.value)">
+
+      <!-- MENU AVANÇADO -->
+      <div style="display:flex;gap:4px;margin-bottom:12px;flex-shrink:0;flex-wrap:wrap">
+        <button onclick="mktDuplicateList()" title="Duplicar lista ativa" style="flex:1;min-width:120px;padding:8px 12px;border:1px solid var(--border2);border-radius:10px;background:var(--s2);color:var(--muted2);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer">📋 Duplicar</button>
+        <button onclick="mktExportList()" title="Baixar lista em JSON" style="flex:1;min-width:100px;padding:8px 12px;border:1px solid var(--border2);border-radius:10px;background:var(--s2);color:var(--muted2);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer">📤 Exportar</button>
+        <button onclick="mktImportList()" title="Carregar lista de arquivo" style="flex:1;min-width:100px;padding:8px 12px;border:1px solid var(--border2);border-radius:10px;background:var(--s2);color:var(--muted2);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer">📥 Importar</button>
+      </div>
+      <div class="card" id="mkt-list-card" style="margin-bottom:10px;flex:1;overflow-y:auto;display:flex;flex-direction:column">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--border)">
           <span style="font-size:12.5px;font-weight:700;color:var(--muted2)">🛒 Produtos</span>
           <span id="mkt-item-count" style="font-size:11px;color:var(--muted)">0 itens</span>
@@ -1573,6 +1593,7 @@ function goTab(tab){
     // Limpa badge ao abrir
     document.getElementById('notif-badge').classList.remove('on');
     localStorage.setItem('_fin_notif_unseen','0');
+    document.getElementById('month-label').textContent=`${getMonthsShort()[curM]} ${curY}`;
     renderNotifHistory();
   }
 }
@@ -5476,8 +5497,12 @@ document.addEventListener('DOMContentLoaded',function(){
 (function(){
   const MKT_KEY='_fin_mkt_list';
   const HIST_KEY='_fin_mkt_history';
+  const LISTS_KEY='_fin_mkt_lists'; // chaves de listas disponíveis
+  
+  let _currentList='default'; // lista ativa
   let _mktItems=JSON.parse(localStorage.getItem(MKT_KEY)||'[]');
   let _mktHist=JSON.parse(localStorage.getItem(HIST_KEY)||'[]');
+  let _mktLists=JSON.parse(localStorage.getItem(LISTS_KEY)||'["default"]'); // lista de listas
   let _mktEditId=null; // id do item sendo editado
 
   /* ── Lançar compra no extrato ── */
@@ -5518,6 +5543,149 @@ document.addEventListener('DOMContentLoaded',function(){
     if(sub==='lista') mktRender();
   };
 
+  /* ── Selecionar Lista ── */
+  window.mktSelectList=function(listId){
+    _currentList=listId;
+    _mktItems=JSON.parse(localStorage.getItem(MKT_KEY+'_'+listId)||'[]');
+    document.querySelectorAll('#mkt-list-selector .cat-chip').forEach(b=>b.classList.remove('on'));
+    const btn=document.getElementById('mkt-list-btn-'+listId);
+    if(btn){
+      btn.classList.add('on');
+      btn.style.background='var(--green-bg)';
+      btn.style.borderColor='rgba(0,200,150,.3)';
+      btn.style.color='var(--green)';
+      btn.style.fontWeight='600';
+    }
+    mktRender();
+  };
+
+  /* ── Nova Lista ── */
+  window.mktNewList=function(){
+    const name=prompt('Nome da nova lista:','Lista '+(_mktLists.length+1));
+    if(!name) return;
+    const id='list'+(Date.now()%1000);
+    _mktLists.push(id);
+    localStorage.setItem(LISTS_KEY,JSON.stringify(_mktLists));
+    localStorage.setItem(MKT_KEY+'_'+id,JSON.stringify([]));
+    _mktSelectList(id);
+    mktRenderListSelector();
+  };
+
+  /* ── Renderizar seletor de listas ── */
+  function mktRenderListSelector(){
+    const sel=document.getElementById('mkt-list-selector');
+    if(!sel) return;
+    const buttons=['<button class="cat-chip '+((_currentList==='default')?'on':'')+'" onclick="mktSelectList(\'default\')" id="mkt-list-btn-default" style="'+((_currentList==='default')?'background:var(--green-bg);border-color:rgba(0,200,150,.3);color:var(--green);font-weight:600':'')+'">📋 Principal</button>'];
+    _mktLists.forEach((id,i)=>{
+      if(id!=='default'){
+        const itemCount=JSON.parse(localStorage.getItem(MKT_KEY+'_'+id)||'[]').length;
+        const label='📝 Lista '+(i+1);
+        const display=itemCount>0?label+' ('+itemCount+')':label;
+        buttons.push('<button class="cat-chip '+((_currentList===id)?'on':'')+'" onclick="mktSelectList(\''+id+'\')" id="mkt-list-btn-'+id+'" style="'+((_currentList===id)?'background:var(--green-bg);border-color:rgba(0,200,150,.3);color:var(--green);font-weight:600':'')+'">'+display+'<span onclick="event.stopPropagation();mktDeleteList(\''+id+'\')" style="margin-left:4px;cursor:pointer;opacity:.7;font-size:11px;padding:2px 4px">✕</span></button>');
+      }
+    });
+    buttons.push('<button onclick="mktNewList()" style="padding:6px 10px;border-radius:99px;border:1px solid var(--border2);background:none;color:var(--muted);font-size:11.5px;font-family:\'DM Sans\',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0;min-height:32px">➕ Nova</button>');
+    sel.innerHTML=buttons.join('');
+  }
+
+  /* ── Deletar Lista ── */
+  window.mktDeleteList=function(listId){
+    if(listId==='default'){ showToast('❌ Não pode deletar a lista principal'); return; }
+    if(!confirm('Deletar esta lista? Os produtos serão perdidos.')) return;
+    _mktLists=_mktLists.filter(id=>id!==listId);
+    localStorage.setItem(LISTS_KEY,JSON.stringify(_mktLists));
+    localStorage.removeItem(MKT_KEY+'_'+listId);
+    if(_currentList===listId){
+      _currentList='default';
+      _mktItems=JSON.parse(localStorage.getItem(MKT_KEY+'_default')||'[]');
+    }
+    mktRenderListSelector();
+    mktRender();
+    showToast('✅ Lista deletada');
+  };
+
+  /* ── Filtrar lista por busca ── */
+  let _mktSearchFilter='';
+  window.mktFilterList=function(query){
+    _mktSearchFilter=query.toLowerCase().trim();
+    mktRender();
+  };
+
+  /* ── Duplicar Lista ── */
+  window.mktDuplicateList=function(){
+    if(!_mktItems.length){ showToast('❌ Lista vazia, nada para duplicar'); return; }
+    const id='list'+(Date.now()%1000);
+    _mktLists.push(id);
+    localStorage.setItem(LISTS_KEY,JSON.stringify(_mktLists));
+    localStorage.setItem(MKT_KEY+'_'+id,JSON.stringify(JSON.parse(JSON.stringify(_mktItems))));
+    mktSelectList(id);
+    mktRenderListSelector();
+    showToast('✅ Lista duplicada');
+  };
+
+  /* ── Exportar Lista ── */
+  window.mktExportList=function(){
+    if(!_mktItems.length){ showToast('❌ Lista vazia'); return; }
+    const data={
+      nome:'Lista de Compras',
+      data:new Date().toLocaleDateString('pt-BR'),
+      itens:_mktItems.map(i=>({nome:i.nome,preco:i.preco,qtd:i.qtd}))
+    };
+    const json=JSON.stringify(data,null,2);
+    const blob=new Blob([json],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='lista-compras-'+(Date.now())+'.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('✅ Lista exportada');
+  };
+
+  /* ── Importar Lista ── */
+  window.mktImportList=function(){
+    const input=document.createElement('input');
+    input.type='file';
+    input.accept='.json';
+    input.onchange=function(e){
+      const file=e.target.files[0];
+      if(!file) return;
+      const reader=new FileReader();
+      reader.onload=function(event){
+        try {
+          const data=JSON.parse(event.target.result);
+          if(!Array.isArray(data.itens)){ showToast('❌ Formato inválido'); return; }
+          const id='list'+(Date.now()%1000);
+          _mktLists.push(id);
+          localStorage.setItem(LISTS_KEY,JSON.stringify(_mktLists));
+          localStorage.setItem(MKT_KEY+'_'+id,JSON.stringify(data.itens));
+          mktSelectList(id);
+          mktRenderListSelector();
+          showToast('✅ Lista importada');
+        } catch(err){
+          showToast('❌ Erro ao importar: '+err.message);
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+
+  /* ── Reordenar itens (mover para cima/baixo) ── */
+  window.mktMoveItem=function(id,direction){
+    const idx=_mktItems.findIndex(i=>i.id===id);
+    if(idx<0) return;
+    if(direction==='up' && idx>0){
+      [_mktItems[idx],_mktItems[idx-1]]=[_mktItems[idx-1],_mktItems[idx]];
+      localStorage.setItem(MKT_KEY+'_'+_currentList,JSON.stringify(_mktItems));
+      mktRender();
+    } else if(direction==='down' && idx<_mktItems.length-1){
+      [_mktItems[idx],_mktItems[idx+1]]=[_mktItems[idx+1],_mktItems[idx]];
+      localStorage.setItem(MKT_KEY+'_'+_currentList,JSON.stringify(_mktItems));
+      mktRender();
+    }
+  };
+
   /* ── Adicionar item ── */
   window.mktAddItem=function(){
     const nomeEl=document.getElementById('mkt-nome');
@@ -5529,7 +5697,7 @@ document.addEventListener('DOMContentLoaded',function(){
     if(!nome){ showToast('Digite o nome do produto'); nomeEl.focus(); return; }
     if(!preco||preco<=0){ showToast('Digite um preço válido'); precoEl.focus(); return; }
     _mktItems.push({ id:Date.now(), nome:nome, preco:preco, qtd:Math.max(1,qtd), checked:false });
-    _save();
+    localStorage.setItem(MKT_KEY+'_'+_currentList,JSON.stringify(_mktItems));
     nomeEl.value=''; precoEl.value=''; qtdEl.value='1';
     nomeEl.focus();
     mktRender();
@@ -5538,13 +5706,14 @@ document.addEventListener('DOMContentLoaded',function(){
   /* ── Remover item ── */
   window.mktRemoveItem=function(id){
     _mktItems=_mktItems.filter(i=>i.id!==id);
-    _save(); mktRender();
+    localStorage.setItem(MKT_KEY+'_'+_currentList,JSON.stringify(_mktItems));
+    mktRender();
   };
 
   /* ── Toggle check item ── */
   window.mktToggleCheck=function(id){
     const item=_mktItems.find(i=>i.id===id);
-    if(item){ item.checked=!item.checked; _save(); mktRender(); }
+    if(item){ item.checked=!item.checked; localStorage.setItem(MKT_KEY+'_'+_currentList,JSON.stringify(_mktItems)); mktRender(); }
   };
 
   /* ── Abrir edição inline ── */
@@ -5571,7 +5740,8 @@ document.addEventListener('DOMContentLoaded',function(){
     if(!preco||preco<=0){ showToast('Preço inválido'); return; }
     const item=_mktItems.find(i=>i.id===_mktEditId);
     if(item){ item.nome=nome; item.preco=preco; item.qtd=Math.max(1,qtd); }
-    _save(); mktCancelEdit(); mktRender();
+    localStorage.setItem(MKT_KEY+'_'+_currentList,JSON.stringify(_mktItems));
+    mktCancelEdit(); mktRender();
     showToast('✅ Produto atualizado');
   };
 
@@ -5585,7 +5755,9 @@ document.addEventListener('DOMContentLoaded',function(){
   /* ── Limpar lista ── */
   window.mktClearList=function(){
     if(!_mktItems.length) return;
-    _mktItems=[]; _save(); mktRender();
+    _mktItems=[]; 
+    localStorage.setItem(MKT_KEY+'_'+_currentList,JSON.stringify(_mktItems));
+    mktRender();
     showToast('Lista limpa');
   };
 
@@ -5626,6 +5798,12 @@ document.addEventListener('DOMContentLoaded',function(){
     const checkedLbl=document.getElementById('mkt-checked-label');
     if(!list) return;
 
+    // Aplicar filtro de busca
+    let displayItems=_mktItems;
+    if(_mktSearchFilter){
+      displayItems=_mktItems.filter(i=>i.nome.toLowerCase().includes(_mktSearchFilter));
+    }
+
     let total=0;
     _mktItems.forEach(i=>{ total+=i.preco*i.qtd; });
     totalEl.textContent='R$ '+total.toFixed(2).replace('.',',');
@@ -5652,9 +5830,14 @@ document.addEventListener('DOMContentLoaded',function(){
       return;
     }
 
+    if(!displayItems.length){
+      list.innerHTML='<div style="text-align:center;padding:32px 16px;color:var(--muted);font-size:13px;line-height:1.8"><div style="font-size:36px;margin-bottom:8px;opacity:.25">🔍</div>Nenhum produto encontrado<br><span style="font-size:11px;opacity:.7">Tente outro termo de busca</span></div>';
+      return;
+    }
+
     // Separar: não marcados primeiro, marcados no final
-    const unchecked=_mktItems.filter(i=>!i.checked);
-    const checked=_mktItems.filter(i=>i.checked);
+    const unchecked=displayItems.filter(i=>!i.checked);
+    const checked=displayItems.filter(i=>i.checked);
     const sorted=[...unchecked,...checked];
 
     let html='';
@@ -5678,6 +5861,8 @@ document.addEventListener('DOMContentLoaded',function(){
         // Botões editar / remover
         +'<div style="display:flex;gap:4px;flex-shrink:0">'
         +'<button onclick="mktOpenEdit('+item.id+')" title="Editar" style="width:30px;height:30px;border-radius:8px;border:1px solid rgba(91,158,255,.25);background:rgba(91,158,255,.07);color:var(--blue);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center">✏️</button>'
+        +'<button onclick="mktMoveItem('+item.id+',\'up\')" title="Mover para cima" style="width:30px;height:30px;border-radius:8px;border:1px solid rgba(100,200,255,.2);background:rgba(100,200,255,.05);color:var(--muted2);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700">↑</button>'
+        +'<button onclick="mktMoveItem('+item.id+',\'down\')" title="Mover para baixo" style="width:30px;height:30px;border-radius:8px;border:1px solid rgba(100,200,255,.2);background:rgba(100,200,255,.05);color:var(--muted2);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700">↓</button>'
         +'<button onclick="mktRemoveItem('+item.id+')" title="Remover" style="width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,90,90,.2);background:rgba(255,90,90,.06);color:var(--red);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>'
         +'</div>'
         +'</div>';
@@ -5820,9 +6005,11 @@ document.addEventListener('DOMContentLoaded',function(){
     });
     const editNome=document.getElementById('mkt-edit-nome');
     if(editNome) editNome.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); mktSaveEdit(); } });
+    mktRenderListSelector();
+    mktSelectList(_currentList);
     mktRender();
   });
-  if(document.readyState!=='loading'){ setTimeout(mktRender,100); }
+  if(document.readyState!=='loading'){ setTimeout(()=>{mktRenderListSelector(); mktSelectList(_currentList); mktRender();},100); }
 })();
 </script>
 
