@@ -5542,6 +5542,21 @@ document.addEventListener('DOMContentLoaded',function(){
 
   /* ── Selecionar Lista ── */
   window.mktSelectList=function(listId){
+    // Se clicar na lista que já está selecionada, desseleciona
+    if(_currentList===listId){
+      _currentList=null;
+      document.querySelectorAll('#mkt-list-selector .cat-chip').forEach(b=>b.classList.remove('on'));
+      document.querySelectorAll('#mkt-list-selector .cat-chip').forEach(b=>{
+        b.style.background='';
+        b.style.borderColor='';
+        b.style.color='';
+        b.style.fontWeight='';
+      });
+      _mktItems=[];
+      mktRender();
+      return;
+    }
+    
     _currentList=listId;
     _mktItems=JSON.parse(localStorage.getItem(MKT_KEY+'_'+listId)||'[]');
     document.querySelectorAll('#mkt-list-selector .cat-chip').forEach(b=>b.classList.remove('on'));
@@ -5762,16 +5777,31 @@ document.addEventListener('DOMContentLoaded',function(){
   /* ── Salvar compra no histórico ── */
   window.mktSaveToHistory=function(){
     if(!_mktItems.length){ showToast('Lista vazia'); return; }
+    
+    // Validar que todos os itens têm dados válidos
     let total=0;
-    _mktItems.forEach(i=>{ total+=i.preco*i.qtd; });
+    const itensValidos=[];
+    _mktItems.forEach(i=>{ 
+      if(i.nome && typeof i.preco==='number' && i.preco>0 && typeof i.qtd==='number' && i.qtd>0){
+        itensValidos.push({nome:i.nome,preco:i.preco,qtd:i.qtd});
+        total+=i.preco*i.qtd;
+      }
+    });
+    
+    if(!itensValidos.length){ showToast('Nenhum item válido'); return; }
+    
     const entry={
-      id:Date.now(), data:new Date().toISOString(), total:total,
-      itens:_mktItems.map(i=>({nome:i.nome,preco:i.preco,qtd:i.qtd}))
+      id:Date.now(), 
+      data:new Date().toISOString(), 
+      total:total,
+      itens:itensValidos
     };
     _mktHist.unshift(entry);
     if(_mktHist.length>50) _mktHist=_mktHist.slice(0,50);
     localStorage.setItem(HIST_KEY,JSON.stringify(_mktHist));
-    _mktItems=[]; _save(); mktRender();
+    _mktItems=[]; 
+    _save(); 
+    mktRender();
     showToast('✅ Compra salva no histórico');
     goMktTab('historico');
   };
@@ -5795,6 +5825,10 @@ document.addEventListener('DOMContentLoaded',function(){
     const progressBar=document.getElementById('mkt-progress-bar');
     const checkedLbl=document.getElementById('mkt-checked-label');
     if(!list) return;
+
+    // Limpar itens inválidos
+    _mktItems=_mktItems.filter(i=>i.nome && typeof i.preco==='number' && i.preco>=0 && typeof i.qtd==='number' && i.qtd>0);
+    _save();
 
     // Aplicar filtro de busca
     let displayItems=_mktItems;
@@ -5906,13 +5940,18 @@ document.addEventListener('DOMContentLoaded',function(){
 
     let html='';
     _mktHist.forEach((entry,idx)=>{
+      // Validar entrada
+      if(!entry.data || !Array.isArray(entry.itens) || entry.itens.length===0) return;
+      
       const d=new Date(entry.data);
       const dateStr=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'});
       const totalStr='R$ '+entry.total.toFixed(2).replace('.',',');
 
       const prev=_mktHist[idx+1]||null;
       const prevMap={};
-      if(prev) prev.itens.forEach(i=>{ prevMap[i.nome.toLowerCase()]=i.preco; });
+      if(prev && Array.isArray(prev.itens)) prev.itens.forEach(i=>{ 
+        if(i.nome && typeof i.preco==='number') prevMap[i.nome.toLowerCase()]=i.preco; 
+      });
 
       // Variação total vs compra anterior
       let totalVar='';
