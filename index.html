@@ -1184,6 +1184,17 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
                 style="width:100%;padding:12px 8px;background:var(--s2);border:1.5px solid var(--border2);border-radius:12px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-align:center;transition:border .15s"
                 onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border2)'">
             </div>
+            <!-- COMPARAÇÃO DE PREÇO EM TEMPO REAL -->
+            <div id="mkt-price-compare" style="display:none;background:rgba(91,158,255,.08);border:1px solid rgba(91,158,255,.15);border-radius:11px;padding:10px 12px;margin-bottom:10px;font-size:11.5px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <span style="color:var(--muted2);font-weight:600">Última compra</span>
+                <span id="mkt-last-price" style="color:var(--green);font-weight:700;font-family:'DM Mono',monospace">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="color:var(--muted2);font-weight:600">Diferença</span>
+                <span id="mkt-price-diff" style="color:var(--muted);font-weight:700;font-family:'DM Mono',monospace">—</span>
+              </div>
+            </div>
             <button onclick="mktAddItem()" id="mkt-btn-add" style="padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,#00C896,#00a87e);color:#0a1a13;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;width:100%">＋ Adicionar</button>
           </div>
         </div>
@@ -5700,6 +5711,58 @@ document.addEventListener('DOMContentLoaded',function(){
   };
 
   /* ── Adicionar item ── */
+  /* ── Atualizar comparação de preços em tempo real ── */
+  window.mktUpdatePriceComparison=function(){
+    const nomeEl=document.getElementById('mkt-nome');
+    const precoEl=document.getElementById('mkt-preco');
+    const compareBox=document.getElementById('mkt-price-compare');
+    const lastPriceEl=document.getElementById('mkt-last-price');
+    const diffEl=document.getElementById('mkt-price-diff');
+    
+    const nome=nomeEl.value.trim();
+    const preco=parseFloat(precoEl.value);
+    
+    if(!nome || !preco || preco<=0){
+      compareBox.style.display='none';
+      return;
+    }
+    
+    // Buscar última compra deste produto no histórico
+    let lastPrice=null;
+    for(let entry of _mktHist){
+      if(entry.itens){
+        const found=entry.itens.find(i=>i.nome.toLowerCase()===nome.toLowerCase());
+        if(found){
+          lastPrice=found.preco;
+          break;
+        }
+      }
+    }
+    
+    if(lastPrice===null){
+      compareBox.style.display='none';
+      return;
+    }
+    
+    // Mostrar comparação
+    compareBox.style.display='block';
+    lastPriceEl.textContent='R$ '+lastPrice.toFixed(2).replace('.',',');
+    
+    const diff=preco-lastPrice;
+    const diffPct=((diff/lastPrice)*100);
+    const isMore=diff>0;
+    
+    if(Math.abs(diff)<0.01){
+      diffEl.textContent='= Mesmo preço';
+      diffEl.style.color='var(--muted)';
+    } else {
+      const diffStr='R$ '+(Math.abs(diff)).toFixed(2).replace('.',',');
+      const pctStr=Math.abs(diffPct).toFixed(1);
+      diffEl.textContent=(isMore?'↑ +':'↓ -')+diffStr+' ('+pctStr+'%)';
+      diffEl.style.color=isMore?'var(--red)':'var(--green)';
+    }
+  };
+
   window.mktAddItem=function(){
     const nomeEl=document.getElementById('mkt-nome');
     const precoEl=document.getElementById('mkt-preco');
@@ -6112,7 +6175,13 @@ document.addEventListener('DOMContentLoaded',function(){
   document.addEventListener('DOMContentLoaded',function(){
     ['mkt-nome','mkt-preco','mkt-qtd'].forEach(id=>{
       const el=document.getElementById(id);
-      if(el) el.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); mktAddItem(); } });
+      if(el){
+        el.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); mktAddItem(); } });
+        // Atualizar comparação em tempo real
+        if(id==='mkt-nome' || id==='mkt-preco'){
+          el.addEventListener('input',mktUpdatePriceComparison);
+        }
+      }
     });
     const editNome=document.getElementById('mkt-edit-nome');
     if(editNome) editNome.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); mktSaveEdit(); } });
