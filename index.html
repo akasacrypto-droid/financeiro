@@ -1786,15 +1786,47 @@ function testNotif(){
 /* ── EXPORT / IMPORT ── */
 function exportData(){
   const total=txData.length;
-  if(total===0&&goalData.length===0&&budgetItems.length===0){showToast(t('toast.no.data'));return}
+  
+  // Buscar dados do Modo Mercado (se existir)
+  let mktLists=[],mktHistory=[],mktCurrentItems={};
+  try{
+    const listsKey='_fin_mkt_lists';
+    const histKey='_fin_mkt_history';
+    const listKey='_fin_mkt_list';
+    
+    mktLists=JSON.parse(localStorage.getItem(listsKey)||'["default"]');
+    mktHistory=JSON.parse(localStorage.getItem(histKey)||'[]');
+    // Salvar items de cada lista
+    mktLists.forEach(listId=>{
+      const items=JSON.parse(localStorage.getItem(listKey+'_'+listId)||'[]');
+      if(items.length>0){
+        mktCurrentItems[listId]=items;
+      }
+    });
+  }catch(e){
+    // Se houver erro, apenas continua sem dados do mercado
+  }
+  
+  if(total===0&&goalData.length===0&&budgetItems.length===0&&mktHistory.length===0&&Object.keys(mktCurrentItems).length===0){
+    showToast(t('toast.no.data'));
+    return;
+  }
+  
   const payload={
     version:2,
     exportedAt:new Date().toISOString(),
     totalRecords:total,
     data:txData,
     goals:goalData,
-    budget:budgetItems
+    budget:budgetItems,
+    // Novo: dados do Modo Mercado
+    mercado:{
+      lists:mktLists,
+      history:mktHistory,
+      currentItems:mktCurrentItems
+    }
   };
+  
   const json=JSON.stringify(payload,null,2);
   const blob=new Blob([json],{type:'application/json'});
   const url=URL.createObjectURL(blob);
@@ -1811,6 +1843,8 @@ function exportData(){
   if(total)parts.push(`📋 ${total} lançamentos`);
   if(goalData.length)parts.push(`🎯 ${goalData.length} metas`);
   if(budgetItems.length)parts.push(`⚖️ ${budgetItems.length} envelopes`);
+  if(mktHistory.length)parts.push(`🛒 ${mktHistory.length} compras (histórico)`);
+  if(Object.keys(mktCurrentItems).length>0)parts.push(`📝 Listas do mercado`);
   parts.push(`📦 ${kb} KB`);
   const infoEl=document.getElementById('backup-info');
   if(infoEl){ infoEl.style.display='flex'; infoEl.innerHTML=parts.map(p=>`<span>${p}</span>`).join('<span style="opacity:.3">·</span>'); }
@@ -1827,23 +1861,27 @@ function importData(event){
       const parsed=JSON.parse(e.target.result);
       let imported=[];
       let importedGoals=null,importedBudget=null;
+      let importedMercado=null;
+      
       if(Array.isArray(parsed)){imported=parsed;}
       else if(parsed.data&&Array.isArray(parsed.data)){
         imported=parsed.data;
         if(Array.isArray(parsed.goals))importedGoals=parsed.goals;
         if(Array.isArray(parsed.budget))importedBudget=parsed.budget;
+        if(parsed.mercado)importedMercado=parsed.mercado; // Novo: dados do mercado
       }else{showToast(t('toast.file.invalid'));return}
 
       const normalized=imported.map(normalizeImportedTx).filter(Boolean);
       // Pré-deduplica o próprio arquivo importado para evitar registros repetidos.
       const pre=dedupeTxList(normalized,[]);
-      pendingImport={txs:pre.keep,goals:importedGoals,budget:importedBudget,dupsInFile:pre.dup};
+      pendingImport={txs:pre.keep,goals:importedGoals,budget:importedBudget,mercado:importedMercado,dupsInFile:pre.dup};
       const el=document.getElementById('import-count');
       const parts=[];
       if(pre.keep.length)parts.push(pre.keep.length+' lançamentos');
       if(pre.dup)parts.push(pre.dup+' duplicados no arquivo');
       if(importedGoals&&importedGoals.length)parts.push(importedGoals.length+' metas');
       if(importedBudget&&importedBudget.length)parts.push(importedBudget.length+' envelopes');
+      if(importedMercado&&importedMercado.history)parts.push(importedMercado.history.length+' compras (mercado)'); // Novo
       if(el)el.textContent=parts.join(', ')||'0';
       document.getElementById('import-overlay').classList.add('open');
       document.getElementById('import-sheet').classList.add('open');
@@ -1856,12 +1894,22 @@ function importData(event){
 let pendingImport=null;
 function confirmImport(mode){
   if(!pendingImport)return;
-  const{txs,goals,budget,dupsInFile}=pendingImport;
+  const{txs,goals,budget,mercado,dupsInFile}=pendingImport;
   if(mode==='replace'){
     // Replace também deduplica para manter base limpa.
     txData=dedupeTxList(txs,[]).keep;
     if(goals)goalData=goals;
     if(budget)budgetItems=budget;
+    if(mercado){
+      // Restaurar dados do Mercado
+      if(mercado.lists)localStorage.setItem('_fin_mkt_lists',JSON.stringify(mercado.lists));
+      if(mercado.history)localStorage.setItem('_fin_mkt_history',JSON.stringify(mercado.history));
+      if(mercado.currentItems){
+        Object.keys(mercado.currentItems).forEach(listId=>{
+          localStorage.setItem('_fin_mkt_list_'+listId,JSON.stringify(mercado.currentItems[listId]));
+        });
+      }
+    }
     if(dupsInFile) showToast(`ℹ️ ${dupsInFile} duplicados ignorados no arquivo`);
   }else{
     const merged=dedupeTxList(txs,txData);
@@ -1869,6 +1917,37 @@ function confirmImport(mode){
     txData=[...txData,...newOnes];
     if(goals){const eG=new Set(goalData.map(g=>g.id));goalData=[...goalData,...goals.filter(g=>!eG.has(g.id))]}
     if(budget){const eB=new Set(budgetItems.map(b=>b.id));budgetItems=[...budgetItems,...budget.filter(b=>!eB.has(b.id))]}
+    // Mercado: mesclar histórico
+    if(mercado){
+      const currentHistory=JSON.parse(localStorage.getItem('_fin_mkt_history')||'[]');
+      const newHistory=mercado.history||[];
+      const historySet=new Set(currentHistory.map(h=>h.id));
+      const itemsToAdd=newHistory.filter(h=>!historySet.has(h.id));
+      if(itemsToAdd.length>0){
+        const merged=[...currentHistory,...itemsToAdd];
+        localStorage.setItem('_fin_mkt_history',JSON.stringify(merged));
+      }
+      // Mesclar listas
+      if(mercado.lists){
+        const currentLists=JSON.parse(localStorage.getItem('_fin_mkt_lists')||'["default"]');
+        const newLists=mercado.lists;
+        const listSet=new Set(currentLists);
+        newLists.forEach(l=>listSet.add(l));
+        localStorage.setItem('_fin_mkt_lists',JSON.stringify(Array.from(listSet)));
+      }
+      if(mercado.currentItems){
+        Object.keys(mercado.currentItems).forEach(listId=>{
+          const currentItems=JSON.parse(localStorage.getItem('_fin_mkt_list_'+listId)||'[]');
+          const newItems=mercado.currentItems[listId]||[];
+          const itemSet=new Set(currentItems.map(i=>i.id));
+          const itemsToAdd=newItems.filter(i=>!itemSet.has(i.id));
+          if(itemsToAdd.length>0){
+            const merged=[...currentItems,...itemsToAdd];
+            localStorage.setItem('_fin_mkt_list_'+listId,JSON.stringify(merged));
+          }
+        });
+      }
+    }
     const ignored=(dupsInFile||0)+merged.dup;
     showToast(`✅ ${newOnes.length} ${t('import.txs.added')}${ignored?` · ${ignored} duplicados ignorados`:''}`);
   }
