@@ -1,6 +1,12 @@
 const CACHE = 'controle-v1';
 const ASSETS = ['./', './index.html', './icon.svg'];
 
+const CRYPTO_CODES = ['BTC','ETH','BNB','SOL','XRP','ADA','DOGE','DOT'];
+const CRYPTO_IDS = {
+  BTC:'bitcoin', ETH:'ethereum', BNB:'binancecoin', SOL:'solana',
+  XRP:'ripple', ADA:'cardano', DOGE:'dogecoin', DOT:'polkadot'
+};
+
 // Instala e cacheia assets principais
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -19,7 +25,6 @@ self.addEventListener('activate', e => {
 
 // Fetch — network first, cache fallback
 self.addEventListener('fetch', e => {
-  // Ignora requests não-GET e externos
   if(e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
   if(url.origin !== location.origin) return;
@@ -44,7 +49,8 @@ self.addEventListener('message', e => {
   if(e.data?.type === 'UPDATE_ALERTS') {
     _alerts = e.data.alerts || [];
   }
-  if(e.data?.type === 'PING') {
+  // BUG FIX: handle START_ALERT_CHECK (was silently ignored before)
+  if(e.data?.type === 'PING' || e.data?.type === 'START_ALERT_CHECK') {
     checkAlerts();
   }
 });
@@ -53,38 +59,65 @@ self.addEventListener('periodicsync', e => {
   if(e.tag === 'price-alerts') e.waitUntil(checkAlerts());
 });
 
+async function fetchFiatRates(moedas) {
+  if(!moedas.length) return {};
+  const pairs = moedas.map(m => `${m}-BRL`).join(',');
+  const res = await fetch(`https://economia.awesomeapi.com.br/json/last/${pairs}`);
+  const data = await res.json();
+  const rates = {};
+  moedas.forEach(m => {
+    const key = `${m}BRL`;
+    if(data[key]) rates[m] = parseFloat(data[key].bid);
+  });
+  return rates;
+}
+
+async function fetchCryptoRates(codes) {
+  if(!codes.length) return {};
+  const ids = codes.map(c => CRYPTO_IDS[c]).filter(Boolean).join(',');
+  if(!ids) return {};
+  const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=brl`);
+  const data = await res.json();
+  const rates = {};
+  codes.forEach(c => {
+    const id = CRYPTO_IDS[c];
+    if(id && data[id]?.brl) rates[c] = data[id].brl;
+  });
+  return rates;
+}
+
 async function checkAlerts() {
   if(!_alerts.length) return;
-  const active = _alerts.filter(a => a.active !== false);
+  const active = _alerts.filter(a => a.active !== false && !a.triggered);
   if(!active.length) return;
 
   try {
-    const moedas = [...new Set(active.map(a => a.moeda).filter(m => !['BTC','ETH','BNB','SOL','XRP','ADA','DOGE','DOT'].includes(m)))];
-    if(!moedas.length) return;
+    const fiatCodes  = [...new Set(active.map(a => a.moeda).filter(m => !CRYPTO_CODES.includes(m)))];
+    const cryptoCodes = [...new Set(active.map(a => a.moeda).filter(m => CRYPTO_CODES.includes(m)))];
 
-    const pairs = moedas.map(m => `${m}-BRL`).join(',');
-    const res = await fetch(`https://economia.awesomeapi.com.br/json/last/${pairs}`);
-    const data = await res.json();
+    // BUG FIX: now fetches both fiat AND crypto rates
+    const [fiatRates, cryptoRates] = await Promise.all([
+      fiatCodes.length  ? fetchFiatRates(fiatCodes)   : Promise.resolve({}),
+      cryptoCodes.length ? fetchCryptoRates(cryptoCodes) : Promise.resolve({})
+    ]);
+    const allRates = { ...fiatRates, ...cryptoRates };
 
     const triggered = [];
     const updated = _alerts.map(a => {
-      const key = `${a.moeda}BRL`;
-      const rate = data[key] ? parseFloat(data[key].bid) : null;
+      const rate = allRates[a.moeda];
       if(!rate) return a;
       const hit = a.cond === 'acima' ? rate >= a.valor : rate <= a.valor;
-      if(hit && a.active !== false) {
+      if(hit && a.active !== false && !a.triggered) {
         triggered.push({ ...a, rateNow: rate });
-        return { ...a, active: false };
+        return { ...a, triggered: true };
       }
       return a;
     });
 
     if(triggered.length) {
       _alerts = updated;
-      // Notifica clientes abertos
       const clients = await self.clients.matchAll();
       clients.forEach(c => c.postMessage({ type: 'ALERTS_TRIGGERED', triggered, allAlerts: updated }));
-      // Push notification se app fechado
       triggered.forEach(a => {
         const ico = a.cond === 'acima' ? '▲' : '▼';
         self.registration.showNotification(`🔔 Alerta ${a.moeda} ${ico} R$ ${a.valor.toFixed(2)}`, {

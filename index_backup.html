@@ -1688,8 +1688,8 @@ function saveEdit(){
   const val=parseFloat(document.getElementById('e-val').value);
   const cat=document.getElementById('e-cat').value;
   if(!desc||isNaN(val)||val<=0)return;
-  const tx=txData.find(x=>x.id===editingId);
-  if(tx){tx.desc=desc;tx.val=val;tx.type=editType;tx.cat=cat;save();render();if(canSound())soundSave();showToast(window.t('toast.saved'))}
+  const t=txData.find(x=>x.id===editingId);
+  if(t){t.desc=desc;t.val=val;t.type=editType;t.cat=cat;save();render();if(canSound())soundSave();showToast(t('toast.saved'))}
   closeModal();
 }
 let pendingDelId=null;
@@ -1741,7 +1741,7 @@ function toggleNotif(){
     localStorage.setItem('fin_notif','0');
     document.getElementById('notif-badge').classList.remove('on');
     document.getElementById('notif-status').textContent=t('toast.notif.off');
-    if(notifInterval){clearTimeout(notifInterval);notifInterval=null}
+    if(notifInterval){clearInterval(notifInterval);notifInterval=null}
     showToast(t('toast.notif.off'));
   }
 }
@@ -1754,17 +1754,15 @@ function saveNotifTime(){
   if(soundOff&&document.getElementById('sound-toggle'))document.getElementById('sound-toggle').checked=false;
 }
 function scheduleNotif(){
-  if(notifInterval){clearTimeout(notifInterval);notifInterval=null}
+  if(notifInterval){clearInterval(notifInterval);notifInterval=null}
   if(localStorage.getItem('fin_notif')!=='1')return;
   const [h,m]=document.getElementById('notif-time').value.split(':').map(Number);
-  function scheduleNext(){
-    const now=new Date();
-    let next=new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,m,0,0);
-    if(next<=now) next.setDate(next.getDate()+1);
-    const delay=next.getTime()-now.getTime();
-    notifInterval=setTimeout(()=>{sendNotif();scheduleNext();},delay);
-  }
-  scheduleNext();
+  notifInterval=setInterval(()=>{
+    const n=new Date();
+    if(n.getHours()===h&&n.getMinutes()===m&&n.getSeconds()===0){
+      sendNotif();
+    }
+  },1000);
 }
 function sendNotif(){
   if(canSound())soundNotif();
@@ -1993,14 +1991,6 @@ let pendingClear=false;
 function confirmClear(){
   txData=[];goalData=[];budgetItems=[];
   save();saveGoals();saveBudgetData();render();
-  // Limpar dados do Mercado e Alertas do localStorage
-  try{
-    const mktLists=JSON.parse(localStorage.getItem('_fin_mkt_lists')||'["default"]');
-    mktLists.forEach(listId=>localStorage.removeItem('_fin_mkt_list_'+listId));
-    localStorage.removeItem('_fin_mkt_lists');
-    localStorage.removeItem('_fin_mkt_history');
-    localStorage.removeItem('_fin_alerts');
-  }catch(e){}
   pendingClear=false;closeClear();
   showToast('Todos os dados apagados');
 }
@@ -2081,7 +2071,6 @@ function renderTxList(all){
   list.innerHTML='';
   if(txs.length===0){empty.style.display='block';return}
   empty.style.display='none';
-  function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
   txs.forEach(t=>{
     const el=document.createElement('div');
     el.className='tx-item';
@@ -2090,8 +2079,8 @@ function renderTxList(all){
     el.innerHTML=`
       <div class="tx-ico ${t.type==='income'?'inc':'exp'}">${ico}</div>
       <div class="tx-body">
-        <div class="tx-desc">${esc(t.desc)}</div>
-        <div class="tx-meta">${t.type==='income'?'Receita':'Despesa'} <span class="tx-tag">${esc(catLabel)}</span></div>
+        <div class="tx-desc">${t.desc}</div>
+        <div class="tx-meta">${t.type==='income'?'Receita':'Despesa'} <span class="tx-tag">${catLabel}</span></div>
       </div>
       <div class="tx-right">
         <div class="tx-amt ${t.type==='income'?'pos':'neg'}">${t.type==='income'?'+ ':'− '}${fmt(t.val).replace('R$ ','R$')}</div>
@@ -2632,8 +2621,8 @@ function renderReport(){
       return`<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border)${i===topTx.length-1?';border-bottom:none':''}">
         <div style="width:32px;height:32px;border-radius:9px;background:${color}22;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">${ico}</div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${String(tx.desc||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:2px">${String(tx.cat||'Outros').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')} · ${MN[tm]} ${ty}</div>
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${tx.desc}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">${tx.cat||'Outros'} · ${MN[tm]} ${ty}</div>
         </div>
         <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--red);flex-shrink:0">− ${fmt(tx.val).replace('R$ ','R$')}</div>
       </div>`;
@@ -2893,9 +2882,9 @@ function parseAndAddText(){
     if(item.editMode){
       const existing=txData.find(t=>t.month===item.month&&t.desc.toLowerCase()===item.desc.toLowerCase());
       if(existing){existing.val=item.val;existing.type=item.type;existing.cat=item.cat;edited++;}
-      else{txData.push({id:genTxId(),month:item.month,desc:item.desc,val:item.val,type:item.type,cat:item.cat});added++;}
+      else{txData.push({id:Date.now()+Math.random(),month:item.month,desc:item.desc,val:item.val,type:item.type,cat:item.cat});added++;}
     }else{
-      txData.push({id:genTxId(),month:item.month,desc:item.desc,val:item.val,type:item.type,cat:item.cat});
+      txData.push({id:Date.now()+Math.random(),month:item.month,desc:item.desc,val:item.val,type:item.type,cat:item.cat});
       added++;
     }
   });
@@ -3044,8 +3033,8 @@ window.exportPDF = function(){
     return `<tr>
       <td style="padding:5px 8px;font-size:13px;width:26px">${ico}</td>
       <td style="padding:5px 6px">
-        <div style="font-size:10.5px;font-weight:600;white-space:nowrap;overflow:hidden;max-width:150px;text-overflow:ellipsis">${String(t.desc||'—').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-        <div style="font-size:8.5px;color:#aaa">${String(t.cat||'Outros').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')} · ${MN[tm]||''} ${ty||''}</div>
+        <div style="font-size:10.5px;font-weight:600;white-space:nowrap;overflow:hidden;max-width:150px;text-overflow:ellipsis">${t.desc||'—'}</div>
+        <div style="font-size:8.5px;color:#aaa">${t.cat||'Outros'} · ${MN[tm]||''} ${ty||''}</div>
       </td>
       <td style="padding:5px 8px;font-family:monospace;font-size:10.5px;font-weight:700;color:#FF5C5C;text-align:right;white-space:nowrap">−R$${fmtd}</td>
     </tr>`;
@@ -4335,8 +4324,8 @@ tr+tr td{border-top:1px solid #f3f3f3}
             <span style="font-size:8px;font-weight:700;color:${col}">${ico}</span>
           </div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">${String(n.title||'Alerta '+n.moeda).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-            <div style="font-size:11.5px;color:var(--muted2);margin-bottom:4px">${String(n.body||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">${n.title||'Alerta '+n.moeda}</div>
+            <div style="font-size:11.5px;color:var(--muted2);margin-bottom:4px">${n.body||''}</div>
             <div style="font-size:10px;color:var(--muted)">${timeStr}</div>
           </div>
           <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:${col};flex-shrink:0;text-align:right">
@@ -4784,7 +4773,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
 
   function buildSpendingContext() {
     try {
-      const txData      = JSON.parse(localStorage.getItem('fin_mob_tx') || '[]');
+      const txData      = JSON.parse(localStorage.getItem('fin_txs')   || '[]');
       const goalData    = JSON.parse(localStorage.getItem('fin_goals')  || '[]');
       const budgetItems = JSON.parse(localStorage.getItem('fin_budget') || '[]');
       const now = new Date();
@@ -5598,7 +5587,7 @@ document.addEventListener('DOMContentLoaded',function(){
   const LISTS_KEY='_fin_mkt_lists'; // chaves de listas disponíveis
   
   let _currentList='default'; // lista ativa
-  let _mktItems=JSON.parse(localStorage.getItem(MKT_KEY+'_'+_currentList)||localStorage.getItem(MKT_KEY)||'[]');
+  let _mktItems=JSON.parse(localStorage.getItem(MKT_KEY)||'[]');
   let _mktHist=JSON.parse(localStorage.getItem(HIST_KEY)||'[]');
   let _mktLists=JSON.parse(localStorage.getItem(LISTS_KEY)||'["default"]'); // lista de listas
   let _mktEditId=null; // id do item sendo editado
@@ -6259,7 +6248,7 @@ document.addEventListener('DOMContentLoaded',function(){
   }
 
   function _esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-  function _save(){ localStorage.setItem(MKT_KEY+'_'+_currentList,JSON.stringify(_mktItems)); }
+  function _save(){ localStorage.setItem(MKT_KEY,JSON.stringify(_mktItems)); }
 
   // Enter para adicionar
   document.addEventListener('DOMContentLoaded',function(){
