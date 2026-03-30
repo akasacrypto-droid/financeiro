@@ -220,8 +220,6 @@ body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;o
 .notif-time-row{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--border)}
 .notif-time-row label{font-size:12.5px;color:var(--muted2);flex:1;font-weight:500}
 .notif-time-row input[type=time]{background:var(--s2);border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:8px 10px;font-size:14px;font-family:var(--mono);outline:none;min-width:100px}
-.notif-time-row input[type=tel]{background:var(--s2);border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:8px 10px;font-size:13px;font-family:var(--mono);outline:none;min-width:148px;max-width:170px}
-.notif-time-row input[type=email]{background:var(--s2);border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:8px 10px;font-size:13px;font-family:var(--mono);outline:none;min-width:190px;max-width:280px}
 
 /* ── ANALYSIS ── */
 .an-hero{background:linear-gradient(135deg,#1a2040,#12192e);border:1px solid rgba(91,158,255,.15);border-radius:18px;padding:16px;margin-bottom:12px}
@@ -396,9 +394,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   .notif-row > *:last-child{align-self:flex-end}
   .notif-time-row{flex-wrap:wrap;align-items:flex-start}
   .notif-time-row label{flex:0 0 100%;margin-bottom:4px}
-  .notif-time-row input[type=time],
-  .notif-time-row input[type=tel],
-  .notif-time-row input[type=email]{width:100%;max-width:none;min-width:0}
+  .notif-time-row input[type=time]{width:100%;max-width:none;min-width:0}
   #page-cfg [style*='display:flex'][style*='justify-content:space-between']{flex-wrap:wrap;row-gap:8px}
   #page-cfg [style*='white-space:nowrap']{white-space:normal !important}
 
@@ -517,34 +513,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   <div class="topbar-logo">
     <div class="logo-ico"><img src="icon.svg" style="width:36px;height:36px;object-fit:contain;display:block"/></div>
     <span class="logo-txt">Controle+</span>
-  </div>
-  <div class="topbar-right">
-    <div id="online-badge" title="Online agora" style="display:flex;align-items:center;gap:5px;font-family:'DM Mono',monospace;font-size:10px;color:var(--green);background:var(--green-bg);border:1px solid rgba(0,200,150,.25);border-radius:6px;padding:4px 8px;user-select:none;flex-shrink:0">
-      <span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse-green 2s infinite;flex-shrink:0"></span>
-      <span id="online-count">1</span>
-    </div>
-    <div id="version-badge" onclick="showVersionInfo()" title="" style="display:none"><span id="vbadge-hash"></span><span id="vbadge-time"></span></div>
-    <div class="notif-btn" onclick="goTab('notif')" title="Notificações">
-      🔔<div class="notif-badge" id="notif-badge"></div>
-    </div>
-    <div class="month-nav">
-      <button class="mnav-btn" onclick="changeMonth(-1)">&#8592;</button>
-      <span id="month-label"></span>
-      <button class="mnav-btn" onclick="changeMonth(1)">&#8594;</button>
-    </div>
-  </div>
-</div>
-
-<!-- TICKER DE COTAÇÕES -->
-<div id="ticker-wrap" style="overflow:hidden;background:var(--s1);border-bottom:1px solid var(--border);height:36px;display:flex;align-items:center;flex-shrink:0">
-  <div id="ticker-track" style="display:inline-flex;align-items:center;white-space:nowrap;height:100%"></div>
-</div>
-
-<!-- NAV TABS -->
-<div class="nav-tabs">
-  <button class="nav-tab on" onclick="goTab('report')" id="tab-report"><span class="tab-ico">📈</span><span data-i18n="nav.report">Relatório</span></button>
-  <button class="nav-tab" onclick="goTab('txs')" id="tab-txs"><span class="tab-ico">📋</span><span data-i18n="nav.txs">Extratos</span></button>
-  <button class="nav-tab" onclick="goTab('plan')" id="tab-plan"><span class="tab-ico">🎯</span><span data-i18n="nav.plan">Planejar</span></button>
   <button class="nav-tab" onclick="goTab('cfg')" id="tab-cfg"><span class="tab-ico">⚙️</span><span data-i18n="nav.cfg">Config</span></button>
   <button class="nav-tab" onclick="goTab('outros')" id="tab-outros"><span class="tab-ico">🧩</span><span>Outros</span></button>
 </div>
@@ -1050,34 +1018,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     </div>
     <div class="notif-row">
       <div class="notif-info">
-        <div class="ntitle">Lembrete de vencimento no WhatsApp</div>
-        <div class="nsub">Gratuito: abre conversa pronta para envio em 1 toque</div>
-      </div>
-      <label class="toggle-wrap">
-        <input type="checkbox" id="wa-due-toggle" onchange="toggleWaDueReminder()"/>
-        <span class="toggle-slider"></span>
-      </label>
-    </div>
-    <div class="notif-time-row">
-      <label>WhatsApp destino (55 + DDD + número)</label>
-      <input type="tel" id="wa-due-phone" inputmode="numeric" placeholder="5511999999999" onchange="saveWaDuePhone()"/>
-    </div>
-    <div class="notif-row">
-      <div class="notif-info">
-        <div class="ntitle">Lembrete de vencimento por E-mail</div>
-        <div class="nsub">Gratuito: abre seu e-mail com assunto e mensagem prontos</div>
-      </div>
-      <label class="toggle-wrap">
-        <input type="checkbox" id="email-due-toggle" onchange="toggleEmailDueReminder()"/>
-        <span class="toggle-slider"></span>
-      </label>
-    </div>
-    <div class="notif-time-row">
-      <label>E-mail destino</label>
-      <input type="email" id="email-due-to" placeholder="seuemail@exemplo.com" onchange="saveEmailDueTo()"/>
-    </div>
-    <div class="notif-row">
-      <div class="notif-info">
         <div class="ntitle" data-i18n="cfg.notif.sound">Sons do app</div>
         <div class="nsub" data-i18n="cfg.notif.sound.sub">Efeitos sonoros nos lançamentos</div>
       </div>
@@ -1559,11 +1499,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   <div class="sheet-title" data-i18n="sheet.text.title">📝 Lançar por texto</div>
   <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6;background:var(--s2);border-radius:10px;padding:10px 12px">
     <b style="color:var(--muted2)">Formato:</b><br>
-    <span style="font-family:var(--mono);font-size:11px;color:var(--muted2)">📅 Julho (opcional)<br>despesas<br>* Aluguel → R$1500<br>* Luz - 150<br>receitas<br>* Salário - 3000<br><br><b style="color:var(--amber)">editar</b> (substitui existentes)<br>salario - 2980</span>
+    <span style="font-family:var(--mono);font-size:11px;color:var(--muted2)">📅 Julho (opcional)<br>despesas<br>* Aluguel → R$1500<br>* Luz - 150<br>receitas<br>* Salário - 3000<br><br>Formato vencimento:<br>25/04/2026 - Internet - 129,90<br><br><b style="color:var(--amber)">editar</b> (substitui existentes)<br>salario - 2980</span>
   </div>
   <div class="field">
     <label data-i18n="sheet.text.placeholder.lbl">Cole ou escreva seus lançamentos</label>
-    <textarea id="text-input" rows="8" placeholder="despesas&#10;* 99Emp → R$723&#10;* Água → R$58&#10;* Internet → R$123&#10;&#10;receitas&#10;* Salário → R$3000" style="width:100%;padding:13px 14px;background:var(--s2);border:1px solid var(--border2);border-radius:12px;color:var(--text);font-size:14px;font-family:var(--mono);outline:none;resize:vertical;line-height:1.6;transition:border .15s" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border2)'"></textarea>
+    <textarea id="text-input" rows="8" placeholder="despesas&#10;* 99Emp → R$723&#10;* Água → R$58&#10;25/04/2026 - Internet - 129,90&#10;&#10;receitas&#10;* Salário → R$3000" style="width:100%;padding:13px 14px;background:var(--s2);border:1px solid var(--border2);border-radius:12px;color:var(--text);font-size:14px;font-family:var(--mono);outline:none;resize:vertical;line-height:1.6;transition:border .15s" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border2)'"></textarea>
   </div>
   <div id="text-preview" style="display:none;margin-bottom:12px;background:var(--s2);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--muted2);max-height:150px;overflow-y:auto"></div>
   <button class="sheet-save" onclick="parseAndAddText()" data-i18n="sheet.text.add.btn">Adicionar lançamentos</button>
@@ -2075,124 +2015,8 @@ function saveEdit(){
 }
 let pendingDelId=null;
 const DUE_ALERT_SENT_KEY='fin_due_alert_sent';
-const WA_DUE_CFG_KEY='fin_wa_due_cfg';
-const EMAIL_DUE_CFG_KEY='fin_email_due_cfg';
 const DAILY_NOTIF_LAST_KEY='fin_notif_last_daily';
 let dueNotifInterval=null;
-
-function getWaDueConfig(){
-  try{
-    const cfg=JSON.parse(localStorage.getItem(WA_DUE_CFG_KEY)||'{}');
-    return {enabled:cfg.enabled===true,phone:typeof cfg.phone==='string'?cfg.phone:''};
-  }catch(e){
-    return {enabled:false,phone:''};
-  }
-}
-function saveWaDueConfig(cfg){
-  localStorage.setItem(WA_DUE_CFG_KEY, JSON.stringify({enabled:cfg.enabled===true,phone:(cfg.phone||'')}));
-}
-function normalizeWhatsPhone(raw){
-  let d=String(raw||'').replace(/\D/g,'');
-  if(!d)return '';
-  if(d.startsWith('00'))d=d.slice(2);
-  if((d.length===10||d.length===11)&&!d.startsWith('55'))d='55'+d;
-  return d;
-}
-function getDueWhatsLink(tx,days){
-  const cfg=getWaDueConfig();
-  const phone=normalizeWhatsPhone(cfg.phone);
-  if(!cfg.enabled||!phone||!tx)return '';
-  const dayLabel=days===0?'vence hoje':`vence em ${days} dia${days>1?'s':''}`;
-  const text=`Oi! Lembrete do Controle+: "${tx.desc||'Conta'}" ${dayLabel} (${formatDueDateBR(tx.dueDate)}), valor ${fmt(tx.val)}.`;
-  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
-}
-function hasWaDueChannel(){
-  const cfg=getWaDueConfig();
-  return cfg.enabled && !!normalizeWhatsPhone(cfg.phone);
-}
-function getEmailDueConfig(){
-  try{
-    const cfg=JSON.parse(localStorage.getItem(EMAIL_DUE_CFG_KEY)||'{}');
-    return {enabled:cfg.enabled===true,to:typeof cfg.to==='string'?cfg.to:''};
-  }catch(e){
-    return {enabled:false,to:''};
-  }
-}
-function saveEmailDueConfig(cfg){
-  localStorage.setItem(EMAIL_DUE_CFG_KEY, JSON.stringify({enabled:cfg.enabled===true,to:(cfg.to||'')}));
-}
-function normalizeEmail(v){
-  return String(v||'').trim().toLowerCase();
-}
-function isValidEmail(v){
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v||''));
-}
-function hasEmailDueChannel(){
-  const cfg=getEmailDueConfig();
-  const to=normalizeEmail(cfg.to);
-  return cfg.enabled && isValidEmail(to);
-}
-function getDueEmailLink(tx,days){
-  const cfg=getEmailDueConfig();
-  const to=normalizeEmail(cfg.to);
-  if(!cfg.enabled||!isValidEmail(to)||!tx)return '';
-  const dayLabel=days===0?'vence hoje':`vence em ${days} dia${days>1?'s':''}`;
-  const subject=encodeURIComponent(`Lembrete de vencimento: ${tx.desc||'Conta'}`);
-  const body=encodeURIComponent(`Lembrete do Controle+%0D%0A%0D%0AConta: ${tx.desc||'Conta'}%0D%0AStatus: ${dayLabel}%0D%0AVencimento: ${formatDueDateBR(tx.dueDate)}%0D%0AValor: ${fmt(tx.val)}%0D%0A%0D%0AEnviado automaticamente pelo lembrete do app.`);
-  return `mailto:${to}?subject=${subject}&body=${body}`;
-}
-function toggleWaDueReminder(){
-  const el=document.getElementById('wa-due-toggle');
-  if(!el)return;
-  const cfg=getWaDueConfig();
-  cfg.enabled=el.checked;
-  saveWaDueConfig(cfg);
-  startDueNotifWatcher();
-  showToast(cfg.enabled?'WhatsApp de vencimento ativado':'WhatsApp de vencimento desativado');
-}
-function saveWaDuePhone(){
-  const input=document.getElementById('wa-due-phone');
-  if(!input)return;
-  const cfg=getWaDueConfig();
-  cfg.phone=normalizeWhatsPhone(input.value);
-  saveWaDueConfig(cfg);
-  input.value=cfg.phone;
-  startDueNotifWatcher();
-  showToast(cfg.phone?'WhatsApp salvo':'Informe um WhatsApp para lembretes');
-}
-function toggleEmailDueReminder(){
-  const el=document.getElementById('email-due-toggle');
-  if(!el)return;
-  const cfg=getEmailDueConfig();
-  cfg.enabled=el.checked;
-  saveEmailDueConfig(cfg);
-  startDueNotifWatcher();
-  showToast(cfg.enabled?'E-mail de vencimento ativado':'E-mail de vencimento desativado');
-}
-function saveEmailDueTo(){
-  const input=document.getElementById('email-due-to');
-  if(!input)return;
-  const cfg=getEmailDueConfig();
-  cfg.to=normalizeEmail(input.value);
-  saveEmailDueConfig(cfg);
-  input.value=cfg.to;
-  startDueNotifWatcher();
-  showToast(isValidEmail(cfg.to)?'E-mail salvo':'Informe um e-mail válido');
-}
-function initWaDueSettings(){
-  const cfg=getWaDueConfig();
-  const tg=document.getElementById('wa-due-toggle');
-  const ph=document.getElementById('wa-due-phone');
-  if(tg)tg.checked=cfg.enabled;
-  if(ph)ph.value=cfg.phone||'';
-}
-function initEmailDueSettings(){
-  const cfg=getEmailDueConfig();
-  const tg=document.getElementById('email-due-toggle');
-  const em=document.getElementById('email-due-to');
-  if(tg)tg.checked=cfg.enabled;
-  if(em)em.value=cfg.to||'';
-}
 
 function getDueAlertState(){
   try{return JSON.parse(localStorage.getItem(DUE_ALERT_SENT_KEY)||'{}')}catch(e){return {}}
@@ -2201,10 +2025,8 @@ function saveDueAlertState(state){
   localStorage.setItem(DUE_ALERT_SENT_KEY, JSON.stringify(state||{}));
 }
 function checkDueNotifications(){
-  const canNative=(localStorage.getItem('fin_notif')==='1')&&('Notification' in window)&&Notification.permission==='granted';
-  const canWA=hasWaDueChannel();
-  const canEmail=hasEmailDueChannel();
-  if(!canNative&&!canWA&&!canEmail)return;
+  if(localStorage.getItem('fin_notif')!=='1')return;
+  const canNative=('Notification' in window)&&Notification.permission==='granted';
   const today=toLocalISODate(new Date());
   const sent=getDueAlertState();
   let changed=false;
@@ -2212,19 +2034,17 @@ function checkDueNotifications(){
   txData.forEach(tx=>{
     if(!tx||tx.type!=='expense'||!tx.dueDate)return;
     const days=dueDaysLeft(tx.dueDate);
-    if(days===null||days<0||days>3)return;
+    if(days===null||days<-1||days>3)return;
     const key=`${tx.id}_${tx.dueDate}_${days}_${today}`;
     if(sent[key])return;
 
-    const dayLabel=days===0?'vence hoje':`vence em ${days} dia${days>1?'s':''}`;
+    const dayLabel=days<0?'venceu ontem':(days===0?'vence hoje':`vence em ${days} dia${days>1?'s':''}`);
     const body=`${tx.desc||'Conta'} ${dayLabel} (${formatDueDateBR(tx.dueDate)}) · ${fmt(tx.val).replace('R$ ','R$')}`;
-    const waLink=getDueWhatsLink(tx,days);
-    const emailLink=getDueEmailLink(tx,days);
 
     if(canNative){
       new Notification('⏰ Vencimento próximo',{body,icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%23FFB020"/><text y=".9em" font-size="80">⏰</text></svg>'});
     }
-    if(window.addNotifHistory)window.addNotifHistory({title:'⏰ Vencimento próximo',body,type:'due',time:Date.now(),daysLeft:days,dueDate:tx.dueDate,waLink,emailLink});
+    if(window.addNotifHistory)window.addNotifHistory({title:'⏰ Vencimento próximo',body,type:'due',time:Date.now(),daysLeft:days,dueDate:tx.dueDate});
     sent[key]=1;
     changed=true;
   });
@@ -2233,8 +2053,7 @@ function checkDueNotifications(){
 }
 function startDueNotifWatcher(){
   if(dueNotifInterval){clearInterval(dueNotifInterval);dueNotifInterval=null;}
-  const shouldWatch=((localStorage.getItem('fin_notif')==='1')&&('Notification' in window)&&Notification.permission==='granted')||hasWaDueChannel()||hasEmailDueChannel();
-  if(!shouldWatch)return;
+  if(localStorage.getItem('fin_notif')!=='1')return;
   checkDueNotifications();
   dueNotifInterval=setInterval(checkDueNotifications,60*60*1000);
 }
@@ -2298,10 +2117,11 @@ function toggleNotif(){
   const on=document.getElementById('notif-toggle').checked;
   if(on){
     if(!isNativeNotifAvailable()){
-      showToast('No arquivo local (file://) a notificação pode falhar. Abra em localhost/HTTPS.');
-      document.getElementById('notif-toggle').checked=false;
-      localStorage.setItem('fin_notif','0');
-      document.getElementById('notif-status').textContent='⚠️ Use localhost/HTTPS para notificações';
+      localStorage.setItem('fin_notif','1');
+      document.getElementById('notif-toggle').checked=true;
+      document.getElementById('notif-status').textContent='🔔 Lembretes no sino ativos';
+      startDueNotifWatcher();
+      showToast('Lembretes ativados no sino do app.');
       return;
     }
     Notification.requestPermission().then(perm=>{
@@ -2312,10 +2132,11 @@ function toggleNotif(){
         startDueNotifWatcher();
         scheduleNotif();showToast('Notificações ativadas! 🔔');
       }else{
-        localStorage.setItem('fin_notif','0');
-        document.getElementById('notif-toggle').checked=false;
-        document.getElementById('notif-status').textContent='❌ Permissão negada';
-        showToast(t('toast.notif.denied'));
+        localStorage.setItem('fin_notif','1');
+        document.getElementById('notif-toggle').checked=true;
+        document.getElementById('notif-status').textContent='🔔 Lembretes no sino ativos';
+        startDueNotifWatcher();
+        showToast('Permissão do sistema negada. Usando lembretes no sino.');
       }
     });
   }else{
@@ -2618,13 +2439,10 @@ function canSound(){return localStorage.getItem('fin_sound')!=='0'}
 function initNotif(){
   const saved=localStorage.getItem('fin_notif')==='1';
   const savedTime=localStorage.getItem('fin_notif_time')||'20:00';
-  initWaDueSettings();
-  initEmailDueSettings();
   document.getElementById('notif-time').value=savedTime;
   if(!isNativeNotifAvailable()){
-    localStorage.setItem('fin_notif','0');
-    document.getElementById('notif-toggle').checked=false;
-    document.getElementById('notif-status').textContent='⚠️ Use localhost/HTTPS para notificações';
+    document.getElementById('notif-toggle').checked=saved;
+    document.getElementById('notif-status').textContent=saved?'🔔 Lembretes no sino ativos':'Notificações desativadas';
     startDueNotifWatcher();
     return;
   }
@@ -3951,6 +3769,30 @@ function closeTextSheet(){
 const MONTH_NAMES_PT=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const MONTH_NAMES_DISPLAY=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
+function parseDueDateFlexible(rawDate){
+  const s=String(rawDate||'').trim();
+  if(!s)return '';
+  let d,m,y;
+  let mt=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})$/);
+  if(mt){
+    d=parseInt(mt[1],10);
+    m=parseInt(mt[2],10);
+    y=parseInt(mt[3],10);
+    if(y<100)y+=2000;
+  }else{
+    mt=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!mt)return '';
+    y=parseInt(mt[1],10);
+    m=parseInt(mt[2],10);
+    d=parseInt(mt[3],10);
+  }
+  if(!Number.isFinite(d)||!Number.isFinite(m)||!Number.isFinite(y))return '';
+  if(m<1||m>12||d<1||d>31)return '';
+  const dt=new Date(y,m-1,d);
+  if(dt.getFullYear()!==y||dt.getMonth()!==m-1||dt.getDate()!==d)return '';
+  return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
 function parseTextInput(raw){
   const lines=raw.split('\n');
   const items=[];
@@ -3979,6 +3821,28 @@ function parseTextInput(raw){
     if(/^despesas?$/.test(tl)||tl==='gastos'||tl==='saidas'||tl==='saídas'){type='expense';editMode=false;continue;}
     if(/^receitas?$/.test(tl)||tl==='entradas'||tl==='renda'||/^salarios?$/.test(tl)){type='income';editMode=false;continue;}
     if(IGNORE_WORDS.test(tl))continue;
+
+    // due format: dd/mm/yyyy - nome - valor
+    const dueItemMatch=clean.match(/^(\d{1,2}[\/.\-]\d{1,2}[\/.\-]\d{2,4}|\d{4}-\d{2}-\d{2})\s*[-–—]\s*(.+?)\s*[-–—]\s*R?\$?\s*([\d.,]+)\s*$/i);
+    if(dueItemMatch){
+      const dueDate=parseDueDateFlexible(dueItemMatch[1]);
+      const desc=dueItemMatch[2].trim();
+      const valRaw=dueItemMatch[3].replace(/\.(?=\d{3})/g,'').replace(',','.');
+      const val=parseFloat(valRaw);
+      if(dueDate&&desc&&!isNaN(val)&&val>0){
+        const [yy,mm]=dueDate.split('-').map(Number);
+        items.push({
+          desc,
+          val,
+          type:'expense',
+          cat:guessCategory(desc,'expense'),
+          month:`${yy}-${mm-1}`,
+          editMode,
+          dueDate
+        });
+      }
+      continue;
+    }
 
     // parse item
     const itemMatch=line.match(/^\s*[\*\•·]\s*(.+?)\s*[→\-–>]+\s*R?\$?\s*([\d.,]+)\s*$/i)
@@ -4028,10 +3892,10 @@ function parseAndAddText(){
   items.forEach(item=>{
     if(item.editMode){
       const existing=txData.find(t=>t.month===item.month&&t.desc.toLowerCase()===item.desc.toLowerCase());
-      if(existing){existing.val=item.val;existing.type=item.type;existing.cat=item.cat;edited++;}
-      else{txData.push({id:genTxId(),month:item.month,desc:item.desc,val:item.val,type:item.type,cat:item.cat});added++;}
+      if(existing){existing.val=item.val;existing.type=item.type;existing.cat=item.cat;existing.dueDate=item.dueDate||undefined;edited++;}
+      else{txData.push({id:genTxId(),month:item.month,desc:item.desc,val:item.val,type:item.type,cat:item.cat,dueDate:item.dueDate||undefined});added++;}
     }else{
-      txData.push({id:genTxId(),month:item.month,desc:item.desc,val:item.val,type:item.type,cat:item.cat});
+      txData.push({id:genTxId(),month:item.month,desc:item.desc,val:item.val,type:item.type,cat:item.cat,dueDate:item.dueDate||undefined});
       added++;
     }
   });
@@ -4058,7 +3922,8 @@ document.addEventListener('input',function(e){
     items.map(i=>{
       const[y,m]=i.month.split('-').map(Number);
       const editTag=i.editMode?'<span style="color:var(--amber);font-size:10px"> ✏️</span>':'';
-      return'<span style="color:'+(i.type==='expense'?'var(--red)':'var(--green)')+'">'+(i.type==='expense'?'↓':'↑')+' '+i.desc+' — R$'+i.val.toFixed(2)+'</span>'+editTag+' <span style="color:var(--muted);font-size:10px">['+i.cat+'] '+MND[m]+'/'+y+'</span>';
+      const dueInfo=i.dueDate?(' · vence '+formatDueDateBR(i.dueDate)):'';
+      return'<span style="color:'+(i.type==='expense'?'var(--red)':'var(--green)')+'">'+(i.type==='expense'?'↓':'↑')+' '+i.desc+' — R$'+i.val.toFixed(2)+dueInfo+'</span>'+editTag+' <span style="color:var(--muted);font-size:10px">['+i.cat+'] '+MND[m]+'/'+y+'</span>';
     }).join('<br>');
 });
 
@@ -5491,8 +5356,7 @@ tr+tr td{border-top:1px solid #f3f3f3}
             <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">${n.title||'Alerta '+n.moeda}</div>
             <div style="font-size:11.5px;color:var(--muted2);margin-bottom:4px">${n.body||''}</div>
             <div style="font-size:10px;color:var(--muted)">${timeStr}</div>
-            ${isDue&&n.waLink?`<a href="${n.waLink}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;margin-top:7px;margin-right:6px;padding:6px 10px;border-radius:8px;background:rgba(37,211,102,.14);border:1px solid rgba(37,211,102,.35);color:#25D366;font-size:11px;font-weight:700;text-decoration:none">📲 WhatsApp</a>`:''}
-            ${isDue&&n.emailLink?`<a href="${n.emailLink}" style="display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:6px 10px;border-radius:8px;background:rgba(91,158,255,.14);border:1px solid rgba(91,158,255,.35);color:var(--blue);font-size:11px;font-weight:700;text-decoration:none">✉️ E-mail</a>`:''}
+            ${isDue?`<span style="display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:6px 10px;border-radius:8px;background:rgba(255,176,32,.14);border:1px solid rgba(255,176,32,.35);color:var(--amber);font-size:11px;font-weight:700;text-decoration:none">🔔 No sino</span>`:''}
           </div>
           <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:${col};flex-shrink:0;text-align:right">
             ${rightText}
