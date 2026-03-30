@@ -8,13 +8,19 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Controle+"/>
-<link rel="manifest" href="manifest.json"/>
+<link rel="manifest" href="manifest.json" id="app-manifest-link"/>
 <link rel="icon" type="image/svg+xml" href="icon.svg"/>
 <link rel="apple-touch-icon" href="icon.svg"/>
 <link rel="shortcut icon" href="icon.svg"/>
 <title>Controle+</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+if(location.protocol==='file:'){
+  const m=document.getElementById('app-manifest-link');
+  if(m)m.remove();
+}
+</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
 :root{
@@ -215,6 +221,7 @@ body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;o
 .notif-time-row label{font-size:12.5px;color:var(--muted2);flex:1;font-weight:500}
 .notif-time-row input[type=time]{background:var(--s2);border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:8px 10px;font-size:14px;font-family:var(--mono);outline:none;min-width:100px}
 .notif-time-row input[type=tel]{background:var(--s2);border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:8px 10px;font-size:13px;font-family:var(--mono);outline:none;min-width:148px;max-width:170px}
+.notif-time-row input[type=email]{background:var(--s2);border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:8px 10px;font-size:13px;font-family:var(--mono);outline:none;min-width:190px;max-width:280px}
 
 /* ── ANALYSIS ── */
 .an-hero{background:linear-gradient(135deg,#1a2040,#12192e);border:1px solid rgba(91,158,255,.15);border-radius:18px;padding:16px;margin-bottom:12px}
@@ -324,6 +331,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   .page{padding:22px max(36px,var(--sl)) calc(var(--sb) + 84px) max(36px,var(--sr))}
 }
 @media(max-width:560px){
+  #ticker-wrap{height:32px}
+  .ticker-item{padding:0 10px;height:32px}
+  .ticker-price{font-size:10px}
+  .ticker-var{font-size:9px;padding:1px 4px}
   #online-badge{font-size:9px;padding:3px 6px}
   #month-label{min-width:auto;font-size:10px}
   .topbar{gap:4px}
@@ -340,9 +351,17 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   img,canvas,svg,video,iframe{max-width:100%;height:auto}
   table{display:block;max-width:100%;overflow-x:auto}
 
+  .topbar{min-height:auto;align-items:center}
+  .topbar-logo{max-width:44%}
+  #online-badge{display:none}
+
   .topbar{padding-right:max(10px,var(--sr));padding-left:max(10px,var(--sl))}
   .topbar-right{min-width:0}
   .month-nav{min-width:0}
+
+  .nav-tabs{gap:2px;padding:0 4px;overflow-x:auto}
+  .nav-tab{flex:0 0 auto;min-width:72px;padding:8px 6px 7px;font-size:10px}
+  .nav-tab .tab-ico{font-size:15px}
 
   .tx-toolbar{flex-wrap:wrap;align-items:stretch}
   .tx-search-wrap{min-width:100%}
@@ -355,6 +374,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   #page-report div[style*='grid-template-columns:1fr 1fr 1fr']{grid-template-columns:1fr !important}
   #page-report div[style*='grid-template-columns:1fr 1fr']{grid-template-columns:1fr !important}
   #page-report div[style*='display:flex;gap:8px;margin-bottom:14px']{flex-direction:column !important}
+  .rep-period-line{flex-wrap:wrap;align-items:stretch;gap:8px}
+  .rep-period-scroll{width:100%;padding-bottom:2px}
+  .rep-tools-wrap{width:100%;justify-content:flex-end}
+  .rep-org-item{gap:7px}
+  .rep-org-title{font-size:12px;line-height:1.3}
 
   /* Plan/Cambio and moeda sheet dense grids */
   #page-plan div[style*='grid-template-columns:1fr 1fr 1fr 1fr']{grid-template-columns:1fr 1fr !important}
@@ -367,8 +391,14 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   .tr-lang-row .tr-lang-swap{margin:0 auto !important}
 
   /* Config rows/actions */
-  .notif-row{align-items:flex-start}
-  .notif-row > *:last-child{align-self:center}
+  .notif-row{align-items:flex-start;flex-wrap:wrap}
+  .notif-info{min-width:100%}
+  .notif-row > *:last-child{align-self:flex-end}
+  .notif-time-row{flex-wrap:wrap;align-items:flex-start}
+  .notif-time-row label{flex:0 0 100%;margin-bottom:4px}
+  .notif-time-row input[type=time],
+  .notif-time-row input[type=tel],
+  .notif-time-row input[type=email]{width:100%;max-width:none;min-width:0}
   #page-cfg [style*='display:flex'][style*='justify-content:space-between']{flex-wrap:wrap;row-gap:8px}
   #page-cfg [style*='white-space:nowrap']{white-space:normal !important}
 
@@ -397,6 +427,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   .tx-item{padding:11px 10px}
   .act-btn{min-width:28px;min-height:28px;padding:4px}
   #rep-orderable .rep-block-handle{font-size:9px}
+  .rep-org-item{align-items:flex-start;flex-wrap:wrap}
+  .rep-org-title{flex:1 1 100%}
+  .rep-org-move,.rep-org-toggle{height:28px}
 }
 
 @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
@@ -428,15 +461,16 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 .due-badge.near{background:var(--amber-bg);color:var(--amber)}
 .due-badge.today{background:rgba(255,92,92,.14);color:var(--red)}
 .due-badge.overdue{background:rgba(255,92,92,.2);color:var(--red)}
-.due-row{touch-action:none}
+.due-row{touch-action:pan-y}
 .due-row.dragging{opacity:.55;background:var(--s2)}
 .due-handle{cursor:grab;user-select:none;color:var(--muted)}
 .rep-orderable{display:flex;flex-direction:column;gap:0}
-.rep-block{touch-action:none}
+.rep-block{touch-action:pan-y}
 .rep-block.dragging{opacity:.55;transform:scale(.995)}
 .rep-block-handle{display:none;align-items:center;justify-content:flex-end;gap:8px;font-size:10px;color:var(--muted);margin-bottom:6px;user-select:none;cursor:grab}
 .rep-block-handle b{font-size:13px;line-height:1}
 #rep-orderable.organize-on .rep-block-handle{display:flex}
+#rep-orderable.organize-on .rep-block{touch-action:none}
 .rep-period-line{display:flex;align-items:center;gap:6px;margin-bottom:12px}
 .rep-period-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;flex:1;min-width:0}
 .rep-period-scroll::-webkit-scrollbar{display:none}
@@ -447,6 +481,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 .rep-tools-menu.open{display:block}
 .rep-tools-item{width:100%;text-align:left;padding:9px 10px;border:none;background:none;color:var(--text);font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:7px}
 .rep-tools-item:hover{background:var(--s2)}
+.rep-org-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.rep-org-item:last-child{border-bottom:none}
+.rep-org-title{flex:1;font-size:13px;font-weight:600;color:var(--text)}
+.rep-org-move{width:30px;height:30px;border-radius:8px;border:1px solid var(--border2);background:var(--s2);color:var(--text);font-size:14px;font-weight:700;cursor:pointer}
+.rep-org-toggle{height:30px;border-radius:8px;border:1px solid var(--border2);background:var(--s2);color:var(--muted2);font-size:11px;font-weight:700;font-family:'DM Sans',sans-serif;padding:0 10px;cursor:pointer;white-space:nowrap}
+.rep-org-toggle.on{background:var(--green-bg);border-color:rgba(0,200,150,.35);color:var(--green)}
 .voice-wave-bar{width:4px;height:20px;background:var(--green);border-radius:4px;margin:0 3px;animation:voiceWave .6s ease-in-out infinite alternate}
 .voice-wave-bar:nth-child(2){animation-delay:.1s;height:28px}
 .voice-wave-bar:nth-child(3){animation-delay:.2s;height:34px}
@@ -576,7 +616,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     <div class="rep-tools-wrap" style="margin-left:auto;flex-shrink:0">
       <button id="rep-tools-btn" class="rep-tools-btn" onclick="toggleReportToolsMenu(event)" title="Ações do relatório">⚙️</button>
       <div id="rep-tools-menu" class="rep-tools-menu">
-        <button class="rep-tools-item" id="rpb-organize" onclick="toggleReportOrganizeMode();closeReportToolsMenu()">↕️ Organizar blocos</button>
+        <button class="rep-tools-item" id="rpb-organize" onclick="openReportOrganizeSheet();closeReportToolsMenu()">🗂️ Organizar por tópicos</button>
         <button class="rep-tools-item" onclick="closeReportToolsMenu();exportPDF()">📄 Exportar PDF</button>
       </div>
     </div>
@@ -680,6 +720,15 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     </div>
   </div><!-- fim reportpage-ai -->
 
+</div>
+
+<div id="rep-org-overlay" class="sheet-overlay" onclick="closeReportOrganizeSheet()"></div>
+<div id="rep-org-sheet" class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Organizar tópicos do relatório</div>
+  <div id="rep-org-list"></div>
+  <button class="modal-save" onclick="completeReportOrganize()">Salvar ordem</button>
+  <button class="sheet-cancel" onclick="closeReportOrganizeSheet()">Fechar</button>
 </div>
 
 <!-- ── PAGE: PLANEJAR ── -->
@@ -1012,6 +1061,34 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     <div class="notif-time-row">
       <label>WhatsApp destino (55 + DDD + número)</label>
       <input type="tel" id="wa-due-phone" inputmode="numeric" placeholder="5511999999999" onchange="saveWaDuePhone()"/>
+    </div>
+    <div class="notif-row">
+      <div class="notif-info">
+        <div class="ntitle">Teste WhatsApp</div>
+        <div class="nsub">Abre agora uma conversa de teste com mensagem pronta</div>
+      </div>
+      <button onclick="testWaDueReminder()" style="background:rgba(37,211,102,.14);border:1px solid rgba(37,211,102,.35);color:#25D366;border-radius:8px;padding:7px 12px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700;white-space:nowrap">Testar WhatsApp</button>
+    </div>
+    <div class="notif-row">
+      <div class="notif-info">
+        <div class="ntitle">Lembrete de vencimento por E-mail</div>
+        <div class="nsub">Gratuito: abre seu e-mail com assunto e mensagem prontos</div>
+      </div>
+      <label class="toggle-wrap">
+        <input type="checkbox" id="email-due-toggle" onchange="toggleEmailDueReminder()"/>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="notif-time-row">
+      <label>E-mail destino</label>
+      <input type="email" id="email-due-to" placeholder="seuemail@exemplo.com" onchange="saveEmailDueTo()"/>
+    </div>
+    <div class="notif-row">
+      <div class="notif-info">
+        <div class="ntitle">Teste E-mail</div>
+        <div class="nsub">Abre agora um e-mail de teste para você</div>
+      </div>
+      <button onclick="testEmailDueReminder()" style="background:rgba(91,158,255,.14);border:1px solid rgba(91,158,255,.35);color:var(--blue);border-radius:8px;padding:7px 12px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700;white-space:nowrap">Testar E-mail</button>
     </div>
     <div class="notif-row">
       <div class="notif-info">
@@ -1875,6 +1952,7 @@ function goTab(tab){
   document.getElementById('fab').style.display=(tab==='txs'||tab==='report')?'flex':'none';
   if(tab==='plan')renderPlan();
   if(tab==='report')renderReport();
+  if(window.applyReportOrganizeUI)applyReportOrganizeUI();
   // (mercado actions são inline, não precisam esconder ao trocar aba)
 
   if(tab==='notif'){
@@ -2012,6 +2090,7 @@ function saveEdit(){
 let pendingDelId=null;
 const DUE_ALERT_SENT_KEY='fin_due_alert_sent';
 const WA_DUE_CFG_KEY='fin_wa_due_cfg';
+const EMAIL_DUE_CFG_KEY='fin_email_due_cfg';
 const DAILY_NOTIF_LAST_KEY='fin_notif_last_daily';
 let dueNotifInterval=null;
 
@@ -2045,6 +2124,37 @@ function hasWaDueChannel(){
   const cfg=getWaDueConfig();
   return cfg.enabled && !!normalizeWhatsPhone(cfg.phone);
 }
+function getEmailDueConfig(){
+  try{
+    const cfg=JSON.parse(localStorage.getItem(EMAIL_DUE_CFG_KEY)||'{}');
+    return {enabled:cfg.enabled===true,to:typeof cfg.to==='string'?cfg.to:''};
+  }catch(e){
+    return {enabled:false,to:''};
+  }
+}
+function saveEmailDueConfig(cfg){
+  localStorage.setItem(EMAIL_DUE_CFG_KEY, JSON.stringify({enabled:cfg.enabled===true,to:(cfg.to||'')}));
+}
+function normalizeEmail(v){
+  return String(v||'').trim().toLowerCase();
+}
+function isValidEmail(v){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v||''));
+}
+function hasEmailDueChannel(){
+  const cfg=getEmailDueConfig();
+  const to=normalizeEmail(cfg.to);
+  return cfg.enabled && isValidEmail(to);
+}
+function getDueEmailLink(tx,days){
+  const cfg=getEmailDueConfig();
+  const to=normalizeEmail(cfg.to);
+  if(!cfg.enabled||!isValidEmail(to)||!tx)return '';
+  const dayLabel=days===0?'vence hoje':`vence em ${days} dia${days>1?'s':''}`;
+  const subject=encodeURIComponent(`Lembrete de vencimento: ${tx.desc||'Conta'}`);
+  const body=encodeURIComponent(`Lembrete do Controle+%0D%0A%0D%0AConta: ${tx.desc||'Conta'}%0D%0AStatus: ${dayLabel}%0D%0AVencimento: ${formatDueDateBR(tx.dueDate)}%0D%0AValor: ${fmt(tx.val)}%0D%0A%0D%0AEnviado automaticamente pelo lembrete do app.`);
+  return `mailto:${to}?subject=${subject}&body=${body}`;
+}
 function toggleWaDueReminder(){
   const el=document.getElementById('wa-due-toggle');
   if(!el)return;
@@ -2064,12 +2174,71 @@ function saveWaDuePhone(){
   startDueNotifWatcher();
   showToast(cfg.phone?'WhatsApp salvo':'Informe um WhatsApp para lembretes');
 }
+function testWaDueReminder(){
+  const input=document.getElementById('wa-due-phone');
+  const phone=normalizeWhatsPhone(input?input.value:'');
+  if(!phone){
+    showToast('Informe seu WhatsApp no formato 55DDDNUMERO');
+    if(input)input.focus();
+    return;
+  }
+  const now=new Date();
+  const dueIso=toLocalISODate(new Date(now.getFullYear(),now.getMonth(),now.getDate()+1));
+  const link=`https://wa.me/${phone}?text=${encodeURIComponent(`Teste Controle+: lembrete de vencimento ativo para ${formatDueDateBR(dueIso)}.`)}`;
+  try{
+    window.open(link,'_blank','noopener');
+  }catch(e){
+    location.href=link;
+  }
+  showToast('Abrindo WhatsApp de teste...');
+}
+function toggleEmailDueReminder(){
+  const el=document.getElementById('email-due-toggle');
+  if(!el)return;
+  const cfg=getEmailDueConfig();
+  cfg.enabled=el.checked;
+  saveEmailDueConfig(cfg);
+  startDueNotifWatcher();
+  showToast(cfg.enabled?'E-mail de vencimento ativado':'E-mail de vencimento desativado');
+}
+function saveEmailDueTo(){
+  const input=document.getElementById('email-due-to');
+  if(!input)return;
+  const cfg=getEmailDueConfig();
+  cfg.to=normalizeEmail(input.value);
+  saveEmailDueConfig(cfg);
+  input.value=cfg.to;
+  startDueNotifWatcher();
+  showToast(isValidEmail(cfg.to)?'E-mail salvo':'Informe um e-mail válido');
+}
+function testEmailDueReminder(){
+  const input=document.getElementById('email-due-to');
+  const to=normalizeEmail(input?input.value:'');
+  if(!isValidEmail(to)){
+    showToast('Informe um e-mail válido');
+    if(input)input.focus();
+    return;
+  }
+  const dueIso=toLocalISODate(new Date(Date.now()+86400000));
+  const subject=encodeURIComponent('Teste Controle+ - lembrete de vencimento');
+  const body=encodeURIComponent(`Teste de e-mail do Controle+.%0D%0AVencimento de exemplo: ${formatDueDateBR(dueIso)}.`);
+  const link=`mailto:${to}?subject=${subject}&body=${body}`;
+  try{ window.open(link,'_self'); }catch(e){ location.href=link; }
+  showToast('Abrindo e-mail de teste...');
+}
 function initWaDueSettings(){
   const cfg=getWaDueConfig();
   const tg=document.getElementById('wa-due-toggle');
   const ph=document.getElementById('wa-due-phone');
   if(tg)tg.checked=cfg.enabled;
   if(ph)ph.value=cfg.phone||'';
+}
+function initEmailDueSettings(){
+  const cfg=getEmailDueConfig();
+  const tg=document.getElementById('email-due-toggle');
+  const em=document.getElementById('email-due-to');
+  if(tg)tg.checked=cfg.enabled;
+  if(em)em.value=cfg.to||'';
 }
 
 function getDueAlertState(){
@@ -2081,7 +2250,8 @@ function saveDueAlertState(state){
 function checkDueNotifications(){
   const canNative=(localStorage.getItem('fin_notif')==='1')&&('Notification' in window)&&Notification.permission==='granted';
   const canWA=hasWaDueChannel();
-  if(!canNative&&!canWA)return;
+  const canEmail=hasEmailDueChannel();
+  if(!canNative&&!canWA&&!canEmail)return;
   const today=toLocalISODate(new Date());
   const sent=getDueAlertState();
   let changed=false;
@@ -2096,11 +2266,12 @@ function checkDueNotifications(){
     const dayLabel=days===0?'vence hoje':`vence em ${days} dia${days>1?'s':''}`;
     const body=`${tx.desc||'Conta'} ${dayLabel} (${formatDueDateBR(tx.dueDate)}) · ${fmt(tx.val).replace('R$ ','R$')}`;
     const waLink=getDueWhatsLink(tx,days);
+    const emailLink=getDueEmailLink(tx,days);
 
     if(canNative){
       new Notification('⏰ Vencimento próximo',{body,icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%23FFB020"/><text y=".9em" font-size="80">⏰</text></svg>'});
     }
-    if(window.addNotifHistory)window.addNotifHistory({title:'⏰ Vencimento próximo',body,type:'due',time:Date.now(),daysLeft:days,dueDate:tx.dueDate,waLink});
+    if(window.addNotifHistory)window.addNotifHistory({title:'⏰ Vencimento próximo',body,type:'due',time:Date.now(),daysLeft:days,dueDate:tx.dueDate,waLink,emailLink});
     sent[key]=1;
     changed=true;
   });
@@ -2109,7 +2280,7 @@ function checkDueNotifications(){
 }
 function startDueNotifWatcher(){
   if(dueNotifInterval){clearInterval(dueNotifInterval);dueNotifInterval=null;}
-  const shouldWatch=((localStorage.getItem('fin_notif')==='1')&&('Notification' in window)&&Notification.permission==='granted')||hasWaDueChannel();
+  const shouldWatch=((localStorage.getItem('fin_notif')==='1')&&('Notification' in window)&&Notification.permission==='granted')||hasWaDueChannel()||hasEmailDueChannel();
   if(!shouldWatch)return;
   checkDueNotifications();
   dueNotifInterval=setInterval(checkDueNotifications,60*60*1000);
@@ -2495,6 +2666,7 @@ function initNotif(){
   const saved=localStorage.getItem('fin_notif')==='1';
   const savedTime=localStorage.getItem('fin_notif_time')||'20:00';
   initWaDueSettings();
+  initEmailDueSettings();
   document.getElementById('notif-time').value=savedTime;
   if(!isNativeNotifAvailable()){
     localStorage.setItem('fin_notif','0');
@@ -3055,6 +3227,7 @@ let repPieInst=null,repBarInst=null;
 let repAnnualYear=null;
 let repOrganizeMode=false;
 const REPORT_BLOCK_ORDER_KEY='fin_report_block_order';
+const REPORT_BLOCK_HIDDEN_KEY='fin_report_block_hidden';
 
 function getRepAvailableYears(){
   const years=[];
@@ -3110,6 +3283,34 @@ function persistReportBlockOrderFromDom(){
   const ids=[...wrap.querySelectorAll('.rep-block[data-rblock]')].map(b=>b.dataset.rblock);
   saveReportBlockOrder(ids);
 }
+function getReportHiddenMap(){
+  try{
+    const raw=JSON.parse(localStorage.getItem(REPORT_BLOCK_HIDDEN_KEY)||'{}');
+    return (raw&&typeof raw==='object')?raw:{};
+  }catch(e){return {}}
+}
+function saveReportHiddenMap(map){
+  localStorage.setItem(REPORT_BLOCK_HIDDEN_KEY, JSON.stringify(map||{}));
+}
+function isReportBlockVisible(id){
+  const hidden=getReportHiddenMap();
+  return hidden[String(id)]!==true;
+}
+function setReportBlockHidden(id,hidden){
+  const map=getReportHiddenMap();
+  const key=String(id);
+  if(hidden)map[key]=true;
+  else delete map[key];
+  saveReportHiddenMap(map);
+}
+function applyReportBlockVisibility(){
+  const wrap=document.getElementById('rep-orderable');
+  if(!wrap)return;
+  [...wrap.querySelectorAll('.rep-block[data-rblock]')].forEach(b=>{
+    const id=b.dataset.rblock;
+    b.style.display=isReportBlockVisible(id)?'':'none';
+  });
+}
 window.toggleReportToolsMenu=function(ev){
   if(ev&&ev.stopPropagation)ev.stopPropagation();
   const menu=document.getElementById('rep-tools-menu');
@@ -3134,16 +3335,73 @@ function applyReportOrganizeUI(){
   const wrap=document.getElementById('rep-orderable');
   const btn=document.getElementById('rpb-organize');
   if(!wrap)return;
-  wrap.classList.toggle('organize-on',repOrganizeMode);
-  [...wrap.querySelectorAll('.rep-block[data-rblock]')].forEach(b=>b.draggable=repOrganizeMode);
+  repOrganizeMode=false;
+  wrap.classList.remove('organize-on');
+  [...wrap.querySelectorAll('.rep-block[data-rblock]')].forEach(b=>b.draggable=false);
   if(btn){
-    btn.classList.toggle('on',repOrganizeMode);
-    btn.textContent=repOrganizeMode?'✅ Concluir organização':'↕️ Organizar blocos';
+    btn.classList.remove('on');
+    btn.textContent='🗂️ Organizar por tópicos';
   }
 }
+function getReportBlockLabel(id){
+  const labels={
+    ranking:'🏆 Ranking de gastos',
+    top:'💸 Maiores gastos individuais',
+    pie:'📊 Distribuição por categoria',
+    trend:'📅 Tendência mês a mês',
+    dues:'⏰ Vencimentos',
+    annual:'📊 Resumo anual'
+  };
+  return labels[id]||id;
+}
+function renderReportOrganizeSheet(){
+  const list=document.getElementById('rep-org-list');
+  const wrap=document.getElementById('rep-orderable');
+  if(!list||!wrap)return;
+  const ids=[...wrap.querySelectorAll('.rep-block[data-rblock]')].map(b=>b.dataset.rblock);
+  list.innerHTML=ids.map((id,idx)=>`<div class="rep-org-item">
+      <div class="rep-org-title">${getReportBlockLabel(id)}</div>
+      <button class="rep-org-toggle ${isReportBlockVisible(id)?'on':''}" onclick="toggleReportBlockVisibility('${id}')">${isReportBlockVisible(id)?'Visível':'Oculto'}</button>
+      <button class="rep-org-move" onclick="moveReportBlock('${id}',-1)" ${idx===0?'disabled':''}>▲</button>
+      <button class="rep-org-move" onclick="moveReportBlock('${id}',1)" ${idx===ids.length-1?'disabled':''}>▼</button>
+    </div>`).join('');
+}
+window.toggleReportBlockVisibility=function(id){
+  setReportBlockHidden(id,isReportBlockVisible(id));
+  applyReportBlockVisibility();
+  renderReportOrganizeSheet();
+};
+window.moveReportBlock=function(id,dir){
+  const wrap=document.getElementById('rep-orderable');
+  if(!wrap)return;
+  const blocks=[...wrap.querySelectorAll('.rep-block[data-rblock]')];
+  const idx=blocks.findIndex(b=>b.dataset.rblock===id);
+  if(idx<0)return;
+  const next=idx+dir;
+  if(next<0||next>=blocks.length)return;
+  const moving=blocks[idx];
+  const target=blocks[next];
+  if(dir<0)wrap.insertBefore(moving,target);
+  else wrap.insertBefore(target,moving);
+  persistReportBlockOrderFromDom();
+  renderReportOrganizeSheet();
+};
+window.openReportOrganizeSheet=function(){
+  renderReportOrganizeSheet();
+  document.getElementById('rep-org-overlay')?.classList.add('open');
+  document.getElementById('rep-org-sheet')?.classList.add('open');
+};
+window.closeReportOrganizeSheet=function(){
+  document.getElementById('rep-org-overlay')?.classList.remove('open');
+  document.getElementById('rep-org-sheet')?.classList.remove('open');
+};
+window.completeReportOrganize=function(){
+  persistReportBlockOrderFromDom();
+  closeReportOrganizeSheet();
+  showToast('✅ Organização salva');
+};
 window.toggleReportOrganizeMode=function(){
-  repOrganizeMode=!repOrganizeMode;
-  applyReportOrganizeUI();
+  openReportOrganizeSheet();
 };
 function initReportBlockDnD(){
   const wrap=document.getElementById('rep-orderable');
@@ -3384,6 +3642,7 @@ function renderReport(){
 
   // ── ORDEM MANUAL DOS BLOCOS DO RELATÓRIO ──
   applyReportBlockOrder();
+  applyReportBlockVisibility();
   initReportBlockDnD();
   applyReportOrganizeUI();
 }
@@ -5279,7 +5538,8 @@ tr+tr td{border-top:1px solid #f3f3f3}
             <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">${n.title||'Alerta '+n.moeda}</div>
             <div style="font-size:11.5px;color:var(--muted2);margin-bottom:4px">${n.body||''}</div>
             <div style="font-size:10px;color:var(--muted)">${timeStr}</div>
-            ${isDue&&n.waLink?`<a href="${n.waLink}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:6px 10px;border-radius:8px;background:rgba(37,211,102,.14);border:1px solid rgba(37,211,102,.35);color:#25D366;font-size:11px;font-weight:700;text-decoration:none">📲 WhatsApp</a>`:''}
+            ${isDue&&n.waLink?`<a href="${n.waLink}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;margin-top:7px;margin-right:6px;padding:6px 10px;border-radius:8px;background:rgba(37,211,102,.14);border:1px solid rgba(37,211,102,.35);color:#25D366;font-size:11px;font-weight:700;text-decoration:none">📲 WhatsApp</a>`:''}
+            ${isDue&&n.emailLink?`<a href="${n.emailLink}" style="display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:6px 10px;border-radius:8px;background:rgba(91,158,255,.14);border:1px solid rgba(91,158,255,.35);color:var(--blue);font-size:11px;font-weight:700;text-decoration:none">✉️ E-mail</a>`:''}
           </div>
           <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:${col};flex-shrink:0;text-align:right">
             ${rightText}
