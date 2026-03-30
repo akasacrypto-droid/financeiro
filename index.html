@@ -1064,13 +1064,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     </div>
     <div class="notif-row">
       <div class="notif-info">
-        <div class="ntitle">Teste WhatsApp</div>
-        <div class="nsub">Abre agora uma conversa de teste com mensagem pronta</div>
-      </div>
-      <button onclick="testWaDueReminder()" style="background:rgba(37,211,102,.14);border:1px solid rgba(37,211,102,.35);color:#25D366;border-radius:8px;padding:7px 12px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700;white-space:nowrap">Testar WhatsApp</button>
-    </div>
-    <div class="notif-row">
-      <div class="notif-info">
         <div class="ntitle">Lembrete de vencimento por E-mail</div>
         <div class="nsub">Gratuito: abre seu e-mail com assunto e mensagem prontos</div>
       </div>
@@ -1082,13 +1075,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     <div class="notif-time-row">
       <label>E-mail destino</label>
       <input type="email" id="email-due-to" placeholder="seuemail@exemplo.com" onchange="saveEmailDueTo()"/>
-    </div>
-    <div class="notif-row">
-      <div class="notif-info">
-        <div class="ntitle">Teste E-mail</div>
-        <div class="nsub">Abre agora um e-mail de teste para você</div>
-      </div>
-      <button onclick="testEmailDueReminder()" style="background:rgba(91,158,255,.14);border:1px solid rgba(91,158,255,.35);color:var(--blue);border-radius:8px;padding:7px 12px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:700;white-space:nowrap">Testar E-mail</button>
     </div>
     <div class="notif-row">
       <div class="notif-info">
@@ -2174,24 +2160,6 @@ function saveWaDuePhone(){
   startDueNotifWatcher();
   showToast(cfg.phone?'WhatsApp salvo':'Informe um WhatsApp para lembretes');
 }
-function testWaDueReminder(){
-  const input=document.getElementById('wa-due-phone');
-  const phone=normalizeWhatsPhone(input?input.value:'');
-  if(!phone){
-    showToast('Informe seu WhatsApp no formato 55DDDNUMERO');
-    if(input)input.focus();
-    return;
-  }
-  const now=new Date();
-  const dueIso=toLocalISODate(new Date(now.getFullYear(),now.getMonth(),now.getDate()+1));
-  const link=`https://wa.me/${phone}?text=${encodeURIComponent(`Teste Controle+: lembrete de vencimento ativo para ${formatDueDateBR(dueIso)}.`)}`;
-  try{
-    window.open(link,'_blank','noopener');
-  }catch(e){
-    location.href=link;
-  }
-  showToast('Abrindo WhatsApp de teste...');
-}
 function toggleEmailDueReminder(){
   const el=document.getElementById('email-due-toggle');
   if(!el)return;
@@ -2210,21 +2178,6 @@ function saveEmailDueTo(){
   input.value=cfg.to;
   startDueNotifWatcher();
   showToast(isValidEmail(cfg.to)?'E-mail salvo':'Informe um e-mail válido');
-}
-function testEmailDueReminder(){
-  const input=document.getElementById('email-due-to');
-  const to=normalizeEmail(input?input.value:'');
-  if(!isValidEmail(to)){
-    showToast('Informe um e-mail válido');
-    if(input)input.focus();
-    return;
-  }
-  const dueIso=toLocalISODate(new Date(Date.now()+86400000));
-  const subject=encodeURIComponent('Teste Controle+ - lembrete de vencimento');
-  const body=encodeURIComponent(`Teste de e-mail do Controle+.%0D%0AVencimento de exemplo: ${formatDueDateBR(dueIso)}.`);
-  const link=`mailto:${to}?subject=${subject}&body=${body}`;
-  try{ window.open(link,'_self'); }catch(e){ location.href=link; }
-  showToast('Abrindo e-mail de teste...');
 }
 function initWaDueSettings(){
   const cfg=getWaDueConfig();
