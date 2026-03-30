@@ -511,82 +511,45 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   #tr-voice-btn{width:70px !important;height:70px !important;font-size:30px !important}
 }
 
-/* ── MOBILE FIX PACK (LAYOUT STABILITY) ── */
+/* ── MOBILE FIX PACK (PC-LIKE RESPONSIVE) ── */
 @media(max-width:900px){
   html,body{width:100%;max-width:100%;overflow-x:hidden}
   .topbar,.nav-tabs,#ticker-wrap,.page,.sheet{max-width:100%}
 
-  .topbar{
-    gap:4px;
-    padding-top:calc(var(--st) + 8px);
-    padding-bottom:8px;
-  }
-  .topbar-logo{min-width:0;max-width:42%}
-  .logo-ico{width:30px;height:30px}
-  .logo-txt{font-size:13px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .topbar{padding-top:calc(var(--st) + 10px);padding-bottom:10px;gap:6px}
+  .topbar-logo{min-width:0;max-width:45%}
+  .logo-ico{width:34px;height:34px}
+  .logo-txt{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-  .topbar-right{gap:4px;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+  .topbar-right{gap:6px;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
   .topbar-right::-webkit-scrollbar{display:none}
-  #online-badge{display:none}
 
-  .notif-btn{width:30px;height:30px;font-size:14px;border-radius:8px}
-  .month-nav{gap:3px}
-  .mnav-btn{width:26px;height:26px;font-size:13px;border-radius:7px}
-  #month-label{min-width:58px;font-size:10px}
+  .month-nav{gap:4px}
+  .mnav-btn{width:28px;height:28px;font-size:14px}
+  #month-label{min-width:68px;font-size:10px}
 
-  #ticker-wrap{height:30px}
-  .ticker-item{height:30px;padding:0 9px;gap:5px}
-  .ticker-flag{font-size:12px}
-  .ticker-code{font-size:9px}
-  .ticker-price{font-size:10px}
-  .ticker-var{font-size:8.5px;padding:1px 4px}
+  #ticker-wrap{height:34px}
+  .ticker-item{height:34px;padding:0 10px}
 
-  .nav-tabs{
-    display:grid;
-    grid-template-columns:repeat(5,minmax(0,1fr));
-    gap:0;
-    overflow:hidden;
-    padding:0;
-  }
-  .nav-tab{
-    min-width:0;
-    width:100%;
-    padding:7px 2px 6px;
-    gap:1px;
-  }
-  .nav-tab .tab-ico{font-size:14px}
-  .nav-tab span:last-child{font-size:9px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nav-tabs{display:flex !important;overflow-x:auto !important;gap:0;padding:0}
+  .nav-tabs::-webkit-scrollbar{display:none}
+  .nav-tab{flex:1 1 0;min-width:84px;padding:9px 4px 7px;gap:2px}
+  .nav-tab .tab-ico{font-size:15px}
+  .nav-tab span:last-child{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-  .page{padding:10px max(10px,var(--sr)) calc(var(--sb) + 74px) max(10px,var(--sl))}
-  .card,.an-chart-card,.cat-breakdown,.cat-breakdown-head,.an-hero{border-radius:12px}
-
-  #page-report .rep-period-line{gap:6px;align-items:center}
-  #page-report .rep-period-scroll{flex-wrap:nowrap}
-  #page-report .rep-period-btn{padding:6px 9px;font-size:10px}
-  #page-report .rep-tools-btn{width:30px;height:30px;border-radius:8px;font-size:14px}
-
-  .tx-item{gap:8px;padding:10px 10px;min-height:56px}
-  .tx-ico{width:32px;height:32px;font-size:13px;border-radius:9px}
-  .tx-desc{font-size:12px}
-  .tx-meta{font-size:10px}
-  .tx-amt{font-size:12px}
-  .act-btn{min-width:28px;min-height:28px;padding:4px}
-
-  .sheet{max-height:88vh}
-  .sheet-title{font-size:14px}
-  .sheet-save,.modal-save{min-height:48px;padding:13px;font-size:14px}
-  .sheet-cancel{min-height:42px}
+  .page{padding:12px max(10px,var(--sr)) calc(var(--sb) + 72px) max(10px,var(--sl))}
+  .sheet{max-height:90vh}
 }
 
 @media(max-width:420px){
-  .topbar-logo{max-width:38%}
+  .topbar-logo{max-width:40%}
   .logo-txt{font-size:12px}
-  #month-label{min-width:52px;font-size:9px}
-  .nav-tab{padding:6px 1px 5px}
-  .nav-tab .tab-ico{font-size:13px}
-  .nav-tab span:last-child{font-size:8px}
-  #ticker-wrap{height:28px}
-  .ticker-item{height:28px;padding:0 7px}
+  #month-label{min-width:58px;font-size:9px}
+  .nav-tab{min-width:76px;padding:8px 3px 6px}
+  .nav-tab .tab-ico{font-size:14px}
+  .nav-tab span:last-child{font-size:9px}
+  #ticker-wrap{height:30px}
+  .ticker-item{height:30px;padding:0 8px}
 }
 
 </style>
