@@ -513,8 +513,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 
 /* ── MOBILE FIX PACK (PC-LIKE RESPONSIVE) ── */
 @media(max-width:900px){
-  html,body{width:100%;max-width:100%;overflow-x:hidden}
+  html,body{width:100%;max-width:100%;overflow-x:hidden;position:relative;left:0}
   .topbar,.nav-tabs,#ticker-wrap,.page,.sheet{max-width:100%}
+  body,.topbar,.nav-tabs,.page{transform:none !important;left:0 !important;margin-left:0 !important}
+  #page-report,#page-txs,#page-plan,#page-cfg,#page-outros,#page-notif{margin-left:0 !important;margin-right:0 !important;left:0 !important;transform:none !important}
 
   .topbar{padding-top:calc(var(--st) + 10px);padding-bottom:10px;padding-left:12px;padding-right:12px;gap:6px}
   .topbar-logo{min-width:0;max-width:45%}
@@ -531,9 +533,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   #ticker-wrap{height:34px}
   .ticker-item{height:34px;padding:0 10px}
 
-  .nav-tabs{display:flex !important;overflow-x:auto !important;gap:0;padding:0}
-  .nav-tabs::-webkit-scrollbar{display:none}
-  .nav-tab{flex:1 1 0;min-width:84px;padding:9px 4px 7px;gap:2px}
+  .nav-tabs{display:grid !important;grid-template-columns:repeat(5,minmax(0,1fr));overflow:hidden !important;gap:0;padding:0}
+  .nav-tab{flex:unset;min-width:0;padding:9px 4px 7px;gap:2px}
   .nav-tab .tab-ico{font-size:15px}
   .nav-tab span:last-child{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -547,7 +548,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   .topbar-logo{max-width:40%}
   .logo-txt{font-size:12px}
   #month-label{min-width:58px;font-size:9px}
-  .nav-tab{min-width:76px;padding:8px 3px 6px}
+  .nav-tab{min-width:0;padding:8px 3px 6px}
   .nav-tab .tab-ico{font-size:14px}
   .nav-tab span:last-child{font-size:9px}
   #ticker-wrap{height:30px}
@@ -1982,6 +1983,9 @@ function goTab(tab){
     if(monthLabelEl)monthLabelEl.textContent=`${getMonthsShort()[curM]} ${curY}`;
     renderNotifHistory();
   }
+  if(window.normalizeMobileViewport){
+    try{window.normalizeMobileViewport();}catch(e){}
+  }
 }
 
 let activePlanSubTab='metas';
@@ -2182,12 +2186,21 @@ function checkDueNotifications(){
     const dayLabel=days<0?'venceu ontem':(days===0?'vence hoje':`vence em ${days} dia${days>1?'s':''}`);
     const body=`${tx.desc||'Conta'} ${dayLabel} (${formatDueDateBR(tx.dueDate)}) · ${fmt(tx.val).replace('R$ ','R$')}`;
 
+    let delivered=false;
     if(canNative){
-      new Notification('⏰ Vencimento próximo',{body,icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%23FFB020"/><text y=".9em" font-size="80">⏰</text></svg>'});
+      try{
+        new Notification('⏰ Vencimento próximo',{body,icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%23FFB020"/><text y=".9em" font-size="80">⏰</text></svg>'});
+        delivered=true;
+      }catch(e){}
     }
-    if(window.addNotifHistory)window.addNotifHistory({title:'⏰ Vencimento próximo',body,type:'due',time:Date.now(),daysLeft:days,dueDate:tx.dueDate});
-    sent[key]=1;
-    changed=true;
+    if(window.addNotifHistory){
+      window.addNotifHistory({title:'⏰ Vencimento próximo',body,type:'due',time:Date.now(),daysLeft:days,dueDate:tx.dueDate});
+      delivered=true;
+    }
+    if(delivered){
+      sent[key]=1;
+      changed=true;
+    }
   });
 
   if(changed)saveDueAlertState(sent);
@@ -2196,7 +2209,7 @@ function startDueNotifWatcher(){
   if(dueNotifInterval){clearInterval(dueNotifInterval);dueNotifInterval=null;}
   if(localStorage.getItem('fin_notif')!=='1')return;
   checkDueNotifications();
-  dueNotifInterval=setInterval(checkDueNotifications,60*60*1000);
+  dueNotifInterval=setInterval(checkDueNotifications,5*60*1000);
 }
 
 function delTx(id){
@@ -2338,9 +2351,11 @@ function sendNotif(){
       });
       document.getElementById('notif-status').textContent=(window.t?window.t('toast.notif.on'):'🔔 Notificações ativas');
     }catch(e){
-      document.getElementById('notif-status').textContent='⚠️ Navegador bloqueou o aviso';
-      showToast('Navegador bloqueou notificação. Use HTTPS/localhost.');
+      document.getElementById('notif-status').textContent='🔔 Lembretes no sino ativos';
+      showToast('Aviso nativo indisponível no momento. Usando lembretes no sino.');
     }
+  }else{
+    document.getElementById('notif-status').textContent='🔔 Lembretes no sino ativos';
   }
 }
 function testNotif(){
@@ -2350,7 +2365,11 @@ function testNotif(){
     return;
   }
   if(!('Notification' in window)){showToast(t('toast.notif.notsup'));return}
-  if(Notification.permission!=='granted'){showToast(t('toast.notif.noperm'));return}
+  if(Notification.permission!=='granted'){
+    document.getElementById('notif-status').textContent='🔔 Lembretes no sino ativos';
+    showToast('Permissão do navegador não concedida. Lembretes seguem no sino.');
+    return;
+  }
   sendNotif();showToast(t('toast.notif.test'));
 }
 /* ── EXPORT / IMPORT ── */
@@ -2595,9 +2614,8 @@ function initNotif(){
     document.getElementById('notif-status').textContent=t('toast.notif.on');
     scheduleNotif();
   }else if(saved&&Notification.permission!=='granted'){
-    localStorage.setItem('fin_notif','0');
-    document.getElementById('notif-toggle').checked=false;
-    document.getElementById('notif-status').textContent='❌ Permissão ausente no navegador';
+    document.getElementById('notif-toggle').checked=true;
+    document.getElementById('notif-status').textContent='🔔 Lembretes no sino ativos';
   }
   startDueNotifWatcher();
 }
@@ -2624,6 +2642,9 @@ function processRecurring(){
 
 /* ── RENDER ── */
 function render(){
+  if(window.normalizeMobileViewport){
+    try{window.normalizeMobileViewport();}catch(e){}
+  }
   const monthLabelEl=document.getElementById('month-label');
   if(monthLabelEl)monthLabelEl.textContent=`${getMonthsShort()[curM]} ${curY}`;
   const all=txData.filter(t=>t.month===curKey());
@@ -4164,6 +4185,7 @@ function normalizeMobileViewport(){
     if(el)el.scrollLeft=0;
   });
 }
+window.normalizeMobileViewport=normalizeMobileViewport;
 setTimeout(normalizeMobileViewport,60);
 setTimeout(normalizeMobileViewport,240);
 
@@ -5604,6 +5626,8 @@ tr+tr td{border-top:1px solid #f3f3f3}
       if(badge) badge.classList.add('on');
     }
   })();
+
+  try{ if(window.checkDueNotifications) window.checkDueNotifications(); }catch(e){}
 
 })();
 </script>
