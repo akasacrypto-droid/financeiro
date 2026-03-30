@@ -516,7 +516,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   html,body{width:100%;max-width:100%;overflow-x:hidden}
   .topbar,.nav-tabs,#ticker-wrap,.page,.sheet{max-width:100%}
 
-  .topbar{padding-top:calc(var(--st) + 10px);padding-bottom:10px;gap:6px}
+  .topbar{padding-top:calc(var(--st) + 10px);padding-bottom:10px;padding-left:12px;padding-right:12px;gap:6px}
   .topbar-logo{min-width:0;max-width:45%}
   .logo-ico{width:34px;height:34px}
   .logo-txt{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -537,7 +537,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   .nav-tab .tab-ico{font-size:15px}
   .nav-tab span:last-child{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-  .page{padding:12px max(10px,var(--sr)) calc(var(--sb) + 72px) max(10px,var(--sl))}
+  .page{padding:12px 12px calc(var(--sb) + 72px) 12px}
+  .sheet{padding-left:12px;padding-right:12px}
+  .fab{right:14px}
   .sheet{max-height:90vh}
 }
 
@@ -4152,14 +4154,29 @@ checkDueNotifications();
 render();
 renderReport();
 
+function normalizeMobileViewport(){
+  if(window.innerWidth>900)return;
+  try{window.scrollTo(0,0);}catch(e){}
+  try{document.documentElement.scrollLeft=0;}catch(e){}
+  try{document.body.scrollLeft=0;}catch(e){}
+  ['.nav-tabs','.topbar-right','.page.on','#page-report','#page-txs','#page-plan','#page-cfg','#page-outros'].forEach(sel=>{
+    const el=document.querySelector(sel);
+    if(el)el.scrollLeft=0;
+  });
+}
+setTimeout(normalizeMobileViewport,60);
+setTimeout(normalizeMobileViewport,240);
+
 window.addEventListener('focus',()=>{
   try{runDailyReminderCheck();}catch(e){}
   try{checkDueNotifications();}catch(e){}
+  try{normalizeMobileViewport();}catch(e){}
 });
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible'){
     try{runDailyReminderCheck();}catch(e){}
     try{checkDueNotifications();}catch(e){}
+    try{normalizeMobileViewport();}catch(e){}
   }
 });
 
@@ -4171,6 +4188,8 @@ function redrawOnResize(){
 }
 window.addEventListener('resize',redrawOnResize);
 window.addEventListener('orientationchange',()=>setTimeout(redrawOnResize,200));
+window.addEventListener('resize',()=>setTimeout(normalizeMobileViewport,120));
+window.addEventListener('orientationchange',()=>setTimeout(normalizeMobileViewport,260));
 if(window.ResizeObserver){
   const ro=new ResizeObserver(redrawOnResize);
   const pg=document.getElementById('page-plan');
